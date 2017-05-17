@@ -20,6 +20,7 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
+import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{GroupId, Regime, RegistrationNumber}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -29,8 +30,8 @@ import scala.concurrent.Future
 
 class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig : AppConfig) extends FrontendController {
 
-  def goToQuery = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))//uk.gov.hmrc.eeittadminfrontend.views.html.()))
+  def goToQuery = Authentication { implicit request =>
+    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())//uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }
 
   def registrationQuery() = {

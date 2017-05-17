@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.json._
-
+import play.api.Logger
 
 case class RegistrationNumber(registration: String, database: Database)
 
@@ -26,7 +26,7 @@ object RegistrationNumber  { //BusinessUser both ETMP and Enrollments
   implicit val registrationNumberFormat: Reads[RegistrationNumber] = Json.format[RegistrationNumber]
 }
 
-case class GroupId(groupid: String, user: User)
+case class GroupId(groupid: String, userType: UserType)
 
 object GroupId { //Enrollments only but both Agents and Business Users
 
@@ -37,6 +37,33 @@ case class Regime(regime: String, database: Database)
 
 case class Arn(arn: String, database: Database)
 
+trait UserType
+
+object UserType {
+
+  implicit val format: Format[UserType] = new Format[UserType] {
+    override def reads(json: JsValue): JsResult[UserType] = {
+      (json \ "user").getOrElse(JsString("Error")) match {
+        case JsString("Agent") => JsSuccess(Agent)
+        case JsString("Business") => JsSuccess(Business)
+        case _ => JsError("Bob")
+      }
+    }
+
+    override def writes(o: UserType): JsString = {
+      o match {
+        case Agent => JsString("Agent")
+        case Business => JsString("Business")
+        case _ =>
+          Logger.error("illegal arguement")
+          JsString("Error")
+      }
+    }
+  }
+}
+
+object Agent extends UserType
+object Business extends UserType
 object Arn {  //Agent Only ETMP and Enrollments
 
   implicit val format: OFormat[Arn] = Json.format[Arn]

@@ -16,21 +16,42 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{JsValue, Json, OFormat, Reads}
+import play.api.Logger
+import play.api.libs.json._
 
 case class Permission(value : String)
 object QueryPermission extends Permission("Query")
 object DeltasPermission extends Permission("Deltas")
-object GFormsPermission extends Permission("GForms")
+object GFormsPermission extends Permission("Gforms")
 object MaintenancePermission extends Permission("Maintenance")
 
 
 object Permission {
 
-//  implicit val reads = new Reads[Permission] {
-//    override def reads(json: JsValue) = {
-//      json
-//    }
-//  }
-  implicit val format: OFormat[Permission] = Json.format[Permission]
+  implicit val format: Format[Permission] = new Format[Permission] {
+  override def reads(json: JsValue): JsResult[Permission] = {
+    println("BOB" + Json.prettyPrint(json))
+    (json \ "value").getOrElse(JsString("Error")) match {
+      case JsString("Query") => JsSuccess(QueryPermission)
+      case JsString("Deltas") => JsSuccess(DeltasPermission)
+      case JsString("Gforms") => JsSuccess(GFormsPermission)
+      case JsString("Maintenance") => JsSuccess(MaintenancePermission)
+      case _ =>
+        Logger.error("Some error")
+        JsError("Some error")
+    }
+  }
+
+  override def writes(o: Permission) = {
+    o match {
+      case QueryPermission => Json.obj("value" -> "Query")
+      case DeltasPermission => Json.obj("value" -> "Deltas")
+      case GFormsPermission => Json.obj("value" -> "Gforms")
+      case MaintenancePermission => Json.obj("value" -> "Maintenance")
+      case _ =>
+        Logger.error("Some writes Error")
+        JsString("Error")
+    }
+  }
+}
 }

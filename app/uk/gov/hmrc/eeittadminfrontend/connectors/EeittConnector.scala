@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -45,17 +45,15 @@ object EeittConnector {
         fromAtoB(value) match {
           case ETMP => httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
           case Enrollments => httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
-          case Agent =>
-          case User =>
+          case Agent => httpGet.GET[JsValue](eeittAdminUrl + path + "-business-users/" + fromAtoString(value))
+          case Business => httpGet.GET[JsValue](eeittAdminUrl + path + "agents/" + fromAtoString(value))
+          case _ =>
+            Logger.error("typeclasses not met")
+            Future.successful(Json.obj("bob" -> "hello"))
         }
       }
     }
   }
-
-//  implicit def query : EeittAdminConnector[Query] = {
-//    Logger.error("Query")
-//    thingy[Query](_.value)
-//  }
 
   implicit def regArn : EeittConnector[Arn] = {
     Logger.info("ARN")
@@ -69,7 +67,7 @@ object EeittConnector {
 
   implicit def group: EeittConnector[GroupId] = {
     Logger.info("GROUP")
-    thingy[GroupId](_.groupid, _.database, "")
+    thingy[GroupId, UserType](_.groupid, _.userType, "/get-")
   }
 
   implicit def regime: EeittConnector[Regime] = {
@@ -77,14 +75,5 @@ object EeittConnector {
     thingy[Regime, Database](_.regime, _.database, "") // Business Only
   }
 }
-
-//object EeittAdminConnector extends EeittAdminConnector {
-//
-//  val eeittAdminUrl : String = "http://localhost:9191/eeitt"
-//
-//  def apply(value: RegistrationNumber)(implicit hc : HeaderCarrier, ec : ExecutionContext): Future[JsValue] = {
-//    httpPost.POSTString[JsValue](eeittAdminUrl, value.value)
-//  }
-//}
 
 
