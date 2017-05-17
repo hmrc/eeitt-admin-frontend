@@ -1,0 +1,86 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import helper._
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+
+@()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
+
+
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.registrationQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+
+    @CSRF.formField
+
+    <select id="database" class="drop-down" name="database">
+        <option value="ETMP"> ETMP </option>
+        <option value="Enrollments"> Enrollments </option>
+    </select>
+
+    <fieldset class="form-field-group">
+    <label for="registration">
+        Username:
+        <input
+                type="text"
+                name="registration"
+                id="registration"
+                value=""
+        class="form-control form-control--block"
+        />
+    </label>
+    </fieldset>
+    <input type="submit" class="button" value="search"/>
+</form>
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.groupIdQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+
+    @CSRF.formField
+
+    <fieldset class="form-field-group">
+        <label for="groupid">
+            Username:
+            <input
+                    type="text"
+                    name="groupid"
+                    id="groupid"
+                    value=""
+                    class="form-control form-control--block"
+                    />
+        </label>
+    </fieldset>
+    <input type="submit" class="button" value="search"/>
+</form>
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.registrationQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+
+    @CSRF.formField
+
+    <fieldset class="form-field-group">
+        <label for="regime">
+            Username:
+            <input
+                    type="text"
+                    name="regime"
+                    id="regime"
+                    value=""
+                    class="form-control form-control--block"
+            />
+        </label>
+    </fieldset>
+
+    <input type="submit" class="button" value="search"/>
+</form>
+}

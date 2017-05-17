@@ -1,3 +1,15 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.eeittadminfrontend.controllers.HelloWorld.helloWorld
+GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
+GET        /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.getRegistration
+POST       /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.register
+POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+GET        /test                     uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.test
+
+GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
+POST       /query/registration       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.registrationQuery
+POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.groupIdQuery
+POST       /query/regime             uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.regimeQuery
+
+
+GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index

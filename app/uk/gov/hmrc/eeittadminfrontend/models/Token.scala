@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@(appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig, pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages)
+package uk.gov.hmrc.eeittadminfrontend.models
 
-@contentHeader = {
-  <h1>@heading</h1>
+import play.api.libs.json.{Json, OFormat}
+
+case class Token(value : String)
+
+object Token {
+
+  implicit val format: OFormat[Token] = Json.format[Token]
+
 }
-
-@mainContent = {
-  <p>@message</p>
-}
-
-@govuk_wrapper(appConfig = appConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)
