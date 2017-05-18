@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
-import play.api.mvc.Action
+import play.api.libs.streams.Accumulator
+import play.api.mvc.{Action, BodyParser, Request, RequestHeader}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
@@ -46,11 +48,16 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     query[Regime]()
   }
 
-  private def query[A:  Reads]()(implicit connector : EeittConnector[A]) = Action.async(parse.urlFormEncoded) { implicit request =>
-    val search = Json.toJson(request.body).validate match {
-      case JsSuccess(x, _) => connector(x)
+  private def query[A:  Reads]()(implicit connector : EeittConnector[A]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
+    Logger.debug("REQUEST ::: " + Json.toJson(request.body.map(x => x._1 -> x._2.head)))
+    Json.toJson(request.body.map(x => x._1 -> x._2.head)).validate match {
+      case JsSuccess(x, _) =>
+        Logger.debug("x " + x.toString)
+        connector(x).map { b =>
+          Ok(b.toString)
+        }
       case JsError(err) =>
+        Future.successful(Ok("Bad"))
     }
-    Future.successful(Ok(search.toString))
   }
 }

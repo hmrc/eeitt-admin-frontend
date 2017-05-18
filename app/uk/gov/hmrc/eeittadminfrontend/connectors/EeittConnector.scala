@@ -39,14 +39,27 @@ object EeittConnector {
   private def thingy[A, B](fromAtoString: A => String, fromAtoB: A => B, path: String): EeittConnector[A] = {
     new EeittConnector[A] {
 
-      override val eeittAdminUrl: String = "http://localhost:9191/eeitt/"
+      override val eeittAdminUrl: String = "http://localhost:9191/eeitt"
 
       override def apply(value: A)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+        Logger.debug("WHY WHY WHY")
         fromAtoB(value) match {
-          case ETMP => httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
-          case Enrollments => httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
-          case Agent => httpGet.GET[JsValue](eeittAdminUrl + path + "-business-users/" + fromAtoString(value))
-          case Business => httpGet.GET[JsValue](eeittAdminUrl + path + "agents/" + fromAtoString(value))
+          case ETMP =>
+            Logger.error("ETMP HIT")
+            println(eeittAdminUrl+path+fromAtoString(value))
+            httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
+          case Enrollments =>
+            Logger.error("ENROLLMENT HIT")
+            println(eeittAdminUrl+path+fromAtoString(value))
+            httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
+          case Agent =>
+            Logger.error("AGENT HIT")
+            println(eeittAdminUrl+path+fromAtoString(value))
+            httpGet.GET[JsValue](eeittAdminUrl + path + "-business-users/" + fromAtoString(value))
+          case Business =>
+            Logger.error("Business User HIT")
+            println(eeittAdminUrl+path+fromAtoString(value))
+            httpGet.GET[JsValue](eeittAdminUrl + path + "agents/" + fromAtoString(value))
           case _ =>
             Logger.error("typeclasses not met")
             Future.successful(Json.obj("bob" -> "hello"))
@@ -61,7 +74,7 @@ object EeittConnector {
   }
 
   implicit def reg: EeittConnector[RegistrationNumber] = {
-    Logger.info("REG")
+    Logger.info("REG SEARCH")
     thingy[RegistrationNumber, Database](_.registration, _.database, "/get-business-users/")
   }
 

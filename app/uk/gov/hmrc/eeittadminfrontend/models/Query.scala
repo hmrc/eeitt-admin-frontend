@@ -21,55 +21,56 @@ import play.api.Logger
 
 case class RegistrationNumber(registration: String, database: Database)
 
+object Format {
+
+  def format[A, B: Format](path: String, func : (String, B) => A, revFuncAToB : A => B, revFuncAToString: A => String): Format[A] = new Format[A] {
+  override def reads(json : JsValue) = {
+    json.validate match {
+      case JsSuccess(x, _) =>
+        (json \ path).getOrElse(JsString("ERROR")) match {
+          case JsString("ERROR") =>
+            JsError("Some Error")
+          case JsString(y) =>
+            JsSuccess(func(y, x))
+        }
+      case JsError(err) =>
+        JsError("Some Error")
+    }
+  }
+
+    override def writes(o: A) = {
+      Json.obj(path -> JsString(revFuncAToString(o)))
+        .++(Json.toJson(revFuncAToB(o)).as[JsObject])
+    }
+  }
+}
+
+
 object RegistrationNumber  { //BusinessUser both ETMP and Enrollments
 
-  implicit val registrationNumberFormat: Reads[RegistrationNumber] = Json.format[RegistrationNumber]
+  implicit val registrationNumberFormat: Format[RegistrationNumber] =
+    Format.format[RegistrationNumber, Database]("registration", RegistrationNumber(_ , _), _.database, _.registration)
+
 }
 
 case class GroupId(groupid: String, userType: UserType)
 
 object GroupId { //Enrollments only but both Agents and Business Users
 
-  implicit val groupIdFormat: Reads[GroupId] = Json.format[GroupId]
+  implicit val groupIdFormat: Format[GroupId] = Format.format[GroupId, UserType]("groupid", GroupId(_, _), _.userType, _.groupid)
 }
 
 case class Regime(regime: String, database: Database)
 
-case class Arn(arn: String, database: Database)
-
-trait UserType
-
-object UserType {
-
-  implicit val format: Format[UserType] = new Format[UserType] {
-    override def reads(json: JsValue): JsResult[UserType] = {
-      (json \ "user").getOrElse(JsString("Error")) match {
-        case JsString("Agent") => JsSuccess(Agent)
-        case JsString("Business") => JsSuccess(Business)
-        case _ => JsError("Bob")
-      }
-    }
-
-    override def writes(o: UserType): JsString = {
-      o match {
-        case Agent => JsString("Agent")
-        case Business => JsString("Business")
-        case _ =>
-          Logger.error("illegal arguement")
-          JsString("Error")
-      }
-    }
-  }
-}
-
-object Agent extends UserType
-object Business extends UserType
-object Arn {  //Agent Only ETMP and Enrollments
-
-  implicit val format: OFormat[Arn] = Json.format[Arn]
-}
-
 object Regime { //Business Users only ETMP and Enrollments
 
-  implicit val regimeFormat: Reads[Regime] = Json.format[Regime]
+  implicit val regimeFormat: Format[Regime] = Format.format[Regime, Database]("regime", Regime(_, _), _.database, _.regime)
+}
+
+
+case class Arn(arn: String, database: Database)
+
+object Arn {  //Agent Only ETMP and Enrollments
+
+  implicit val format: Format[Arn] = Format.format[Arn, Database]("arn", Arn(_, _), _.database, _.arn)
 }

@@ -106,7 +106,7 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.test_page()))
   }
 
-  def checkCredentials(): Action[AnyContent] = Authentication.async { implicit request =>
+  def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
       error => {
         Logger.error(s"Failed to Login $error")

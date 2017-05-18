@@ -35,10 +35,10 @@ object Database {
       }
     }
 
-    override def writes(o: Database): JsString = {
+    override def writes(o: Database): JsValue = {
       o match {
-        case ETMP => JsString("ETMP")
-        case Enrollments => JsString("Enrollments")
+        case ETMP => Json.obj("database" -> "ETMP")
+        case Enrollments => Json.obj("database" -> "Enrollments")
         case Error =>
           Logger.error("Illegal arguement")
           JsString("Error")
