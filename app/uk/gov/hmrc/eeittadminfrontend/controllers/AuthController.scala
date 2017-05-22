@@ -54,7 +54,7 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
   )
 
   lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList("<CLIENT_ID>"))
+    .setAudience(Collections.singletonList("671898979086-ide1j7oogjsrmsv19n1lrm43n538im85.apps.googleusercontent.com"))
     .build()
   //TODO move the client ID to application.conf
 
@@ -124,4 +124,8 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
       }
     )
   }
+def choicePage()= Action.async{ implicit request =>
+  Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.select_wht_to_do()))
+}
+
 }

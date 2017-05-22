@@ -5,6 +5,7 @@ GET        /registration             uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.register
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
 GET        /test                     uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.test
+GET        /selection                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.choicePage
 
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 POST       /query/registration       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.registrationQuery

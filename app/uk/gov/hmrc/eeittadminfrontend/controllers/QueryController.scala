@@ -57,7 +57,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
           Ok(b.toString)
         }
       case JsError(err) =>
-        Future.successful(Ok("Bad"))
+        Future.successful(Ok(err.toString))
     }
   }
 }

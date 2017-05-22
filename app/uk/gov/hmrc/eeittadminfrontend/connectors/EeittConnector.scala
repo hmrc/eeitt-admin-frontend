@@ -42,7 +42,6 @@ object EeittConnector {
       override val eeittAdminUrl: String = "http://localhost:9191/eeitt"
 
       override def apply(value: A)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
-        Logger.debug("WHY WHY WHY")
         fromAtoB(value) match {
           case ETMP =>
             Logger.error("ETMP HIT")
@@ -80,12 +79,12 @@ object EeittConnector {
 
   implicit def group: EeittConnector[GroupId] = {
     Logger.info("GROUP")
-    thingy[GroupId, UserType](_.groupid, _.userType, "/get-")
+    thingy[GroupId, UserType](_.groupid, _.userType, s"/get-")
   }
 
   implicit def regime: EeittConnector[Regime] = {
     Logger.info("REGIME")
-    thingy[Regime, Database](_.regime, _.database, "") // Business Only
+    thingy[Regime, Database](_.regime, _.database, "/business-user-by-regime/") // Business Only
   }
 }
 

@@ -1,0 +1,58 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import helper._
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+
+@()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<h1>Please select what to do</h1>
+
+<ul class="nav nav-tabs">
+    <li role="presentation" class="active"><a href="#">Select what to do</a></li>
+    <li role="presentation"><a href="#">Query</a></li>
+    <li role="presentation"><a href="#">Update Deltas</a></li>
+    <li role="presentation"><a href="#">Gforms</a></li>
+    <li role="presentation"><a href="#">Maintenance Scripts a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+}

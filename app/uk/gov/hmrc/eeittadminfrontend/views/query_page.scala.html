@@ -21,66 +21,69 @@
 @()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
+<title>Query</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<h2 class="text-center">Query</h2>
+@CSRF.formField
 
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.registrationQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
-
-    @CSRF.formField
-
-    <select id="database" class="drop-down" name="database">
-        <option value="ETMP"> ETMP </option>
-        <option value="Enrollments"> Enrollments </option>
-    </select>
-
-    <fieldset class="form-field-group">
-    <label for="registration">
-        Username:
-        <input
-                type="text"
-                name="registration"
-                id="registration"
-                value=""
-        class="form-control form-control--block"
-        />
-    </label>
-    </fieldset>
-    <input type="submit" class="button" value="search"/>
-</form>
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.groupIdQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
-
-    @CSRF.formField
-
-    <fieldset class="form-field-group">
-        <label for="groupid">
-            Username:
-            <input
-                    type="text"
-                    name="groupid"
-                    id="groupid"
-                    value=""
-                    class="form-control form-control--block"
+<div class="text-center">
+    <div class="col-md-4 col-md-offset-2">
+        <h3 value="ETMP">ETMP</h3>
+        <a value="uniqueId">Find business users by Registration Number or Agents by ARN:</a>
+        <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.registrationQuery method="POST"
+              class="js-form" autocomplete="off" novalidate="novalidate">
+            <fieldset class="form-field-group">
+                <label for="registration">
+                    <input
+                            type="text"
+                            name="registration"
+                            id="registration"
+                            value=""
+                            class="form-control form-control--block"
                     />
-        </label>
-    </fieldset>
-    <input type="submit" class="button" value="search"/>
-</form>
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.registrationQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+                </label>
+            </fieldset>
+        </form>
+        <input type="submit" class="button" value="search"/>
+    </div>
+    <div class="col-md-4">
+        <h3 value="Enrollments">Enrollments</h3>
+        <a>Please select the type of use rto find and then the thing you want to find</a>
+        <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.groupIdQuery method="POST"
+              class="js-form" autocomplete="off" novalidate="novalidate">
 
-    @CSRF.formField
+            @CSRF.formField
 
-    <fieldset class="form-field-group">
-        <label for="regime">
-            Username:
-            <input
-                    type="text"
-                    name="regime"
-                    id="regime"
-                    value=""
-                    class="form-control form-control--block"
-            />
-        </label>
-    </fieldset>
+            <select id="database" class="drop-down" name="database">
+                <option value="Agent">Agent</option>
+                <option value="Business Users">Business Users</option>
+            </select>
 
-    <input type="submit" class="button" value="search"/>
-</form>
+            <select id="queryType" class="drop-down" name="queryType">
+                <option value="GroupId">Group ID</option>
+                <option value="Regime">Regime</option>
+            </select>
+
+            <fieldset class="form-field-group">
+                <label for="groupid">
+                    <input
+                            type="text"
+                            name="groupid"
+                            id="groupid"
+                            value=""
+                            class="form-control form-control--block"
+                    />
+                </label>
+            </fieldset>
+            <input type="submit" class="button" value="search"/>
+        </form>
+    </div>
+</div>
+
 }
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
