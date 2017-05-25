@@ -19,10 +19,34 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import play.api.Logger
 import play.api.libs.json._
 
-trait Database
-object ETMP extends Database
-object Enrollments extends Database
-object Error extends Database
+trait Database {
+
+  override def toString: String
+  val reg : Option[String] = None
+  val agent : Option[String] = None
+  val regime : Option[String] = None
+}
+
+object ETMP extends Database {
+
+  override def toString: String = "ETMP"
+  override val reg = Some("/get-business-users/")
+  override val agent = Some("/get-agents/")
+}
+
+object Enrollments extends Database {
+
+  override def toString: String = "Enrollments"
+  override val reg = Some("/business-enrollment-by-reg/")
+  override val agent = Some("/agent-enrollment-by-reg/")
+  override val regime = Some("/business-user-by-regime/")
+
+}
+
+object Error extends Database {
+
+  override def toString: String = "Not Known"
+}
 
 object Database {
 

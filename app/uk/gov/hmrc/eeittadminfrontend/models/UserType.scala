@@ -19,7 +19,26 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import play.api.Logger
 import play.api.libs.json._
 
-trait UserType
+trait UserType {
+  val url : String
+}
+
+object Agent extends UserType {
+
+  override def toString() = {
+    "Enrollment Agent "
+  }
+
+  override val url: String = "/agent-by-gid/"
+}
+object Business extends UserType {
+
+  override def toString() = {
+    "Enrollment Business "
+  }
+
+  override val url: String = "/business-by-gid/"
+}
 
 object UserType {
 
@@ -43,6 +62,3 @@ object UserType {
     }
   }
 }
-
-object Agent extends UserType
-object Business extends UserType

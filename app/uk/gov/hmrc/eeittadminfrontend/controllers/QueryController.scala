@@ -24,7 +24,7 @@ import play.api.mvc.{Action, BodyParser, Request, RequestHeader}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{GroupId, Regime, RegistrationNumber}
+import uk.gov.hmrc.eeittadminfrontend.models.{Arn, GroupId, Regime, RegistrationNumber}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
@@ -36,28 +36,38 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())//uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }
 
-  def registrationQuery() = {
-    query[RegistrationNumber]()
+  def goToDelta = Authentication { implicit request =>
+    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta())
   }
 
-  def groupIdQuery() = {
-    query[GroupId]()
+  def UidQuery = {
+    query[Arn, RegistrationNumber]
   }
 
-  def regimeQuery() = {
-    query[Regime]()
+  def enrollmentQuery() = {
+    query[GroupId, Regime]
   }
 
-  private def query[A:  Reads]()(implicit connector : EeittConnector[A]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
+
+  private def query[A:  Reads, B: Reads]()(implicit connectorA : EeittConnector[A], connectorB: EeittConnector[B]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
     Logger.debug("REQUEST ::: " + Json.toJson(request.body.map(x => x._1 -> x._2.head)))
-    Json.toJson(request.body.map(x => x._1 -> x._2.head)).validate match {
+    val json = Json.toJson(request.body.map(x => x._1 -> x._2.head))
+    json.validate[A] match {
       case JsSuccess(x, _) =>
         Logger.debug("x " + x.toString)
-        connector(x).map { b =>
+        connectorA(x).map { b =>
           Ok(b.toString)
         }
       case JsError(err) =>
-        Future.successful(Ok(err.toString))
+        json.validate[B] match {
+          case JsSuccess(y , _ ) =>
+            Logger.debug("y " + y.toString)
+            connectorB(y).map { b =>
+              Ok(b.toString)
+            }
+          case JsError(error) =>
+            Future.successful(Ok("Bad"))
+        }
     }
   }
 }

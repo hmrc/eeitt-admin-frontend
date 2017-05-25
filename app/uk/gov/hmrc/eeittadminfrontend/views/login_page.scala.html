@@ -21,11 +21,16 @@
 @(loginForm : Form[uk.gov.hmrc.eeittadminfrontend.models.Token])(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
-<header class="page-header" xmlns:margin="http://www.w3.org/1999/xhtml">
 
+<header class="page-header">
+    <h1>Sign-In to EEITT-Admin</h1>
 </header>
+<meta name="google-signin-client_id" content="ID HERE">
+
+<div class="g-signin2" data-onsuccess="onSignIn" ></div>
 
 
+<a href="#" onclick="signOut();">Sign out</a>
 
 @form(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.checkCredentials, 'name -> "LoginForm"){
     @loginForm.globalError.map { error =>
@@ -37,9 +42,8 @@
     @CSRF.formField
 
     <input type="hidden" id="token" name="token" />
-<button type="submit" value="Login" >Login</button>
+    <input type="submit" value="Login" />
 }
-<button href="#"  class="button" onclick="signOut();">Sign out</button>
 
 <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 <script>

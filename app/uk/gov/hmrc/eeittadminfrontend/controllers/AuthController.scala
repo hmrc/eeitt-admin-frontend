@@ -54,7 +54,7 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
   )
 
   lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList("671898979086-ide1j7oogjsrmsv19n1lrm43n538im85.apps.googleusercontent.com"))
+    .setAudience(Collections.singletonList("ID HERE"))
     .build()
   //TODO move the client ID to application.conf
 

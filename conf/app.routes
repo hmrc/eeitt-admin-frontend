@@ -5,12 +5,11 @@ GET        /registration             uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.register
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
 GET        /test                     uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.test
-GET        /selection                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.choicePage
 
+GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
-POST       /query/registration       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.registrationQuery
-POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.groupIdQuery
-POST       /query/regime             uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.regimeQuery
+POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
+POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
 
 
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index

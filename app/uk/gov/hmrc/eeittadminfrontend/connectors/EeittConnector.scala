@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -28,63 +28,70 @@ import scala.concurrent.{ExecutionContext, Future}
 trait EeittConnector[A] extends ServicesConfig {
 
   val httpGet : HttpGet = WSHttp
+  val httpPost : HttpPost = WSHttp
 
-  val eeittAdminUrl : String
+  val eeittAdminUrl : String = "http://localhost:9191/eeitt"
 
-  def apply(a : A)(implicit hc : HeaderCarrier, ec: ExecutionContext) : Future[JsValue]
+  def apply(a : A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) : Future[List[Response]]
 }
 
 object EeittConnector {
 
-  private def thingy[A, B](fromAtoString: A => String, fromAtoB: A => B, path: String): EeittConnector[A] = {
+  private def getEeittConnector[A](getPath : A => String): EeittConnector[A] = {
     new EeittConnector[A] {
 
-      override val eeittAdminUrl: String = "http://localhost:9191/eeitt"
+      override def apply(value: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]): Future[List[Response]] = {
+        def call[B](a : String, b : B): Future[List[Response]] = {
+          b match {
+            case ETMP =>
+              httpGet.GET[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]](eeittAdminUrl + getPath(value) + a).map{
+                case Left(x) => x
+                case Right(y) => y
+              }
+            case x =>
+              httpGet.GET[List[EnrollmentResponse]](eeittAdminUrl + getPath(value) + a)
+          }
+        }
 
-      override def apply(value: A)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
-        fromAtoB(value) match {
-          case ETMP =>
-            Logger.error("ETMP HIT")
-            println(eeittAdminUrl+path+fromAtoString(value))
-            httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
-          case Enrollments =>
-            Logger.error("ENROLLMENT HIT")
-            println(eeittAdminUrl+path+fromAtoString(value))
-            httpGet.GET[JsValue](eeittAdminUrl + path + fromAtoString(value))
-          case Agent =>
-            Logger.error("AGENT HIT")
-            println(eeittAdminUrl+path+fromAtoString(value))
-            httpGet.GET[JsValue](eeittAdminUrl + path + "-business-users/" + fromAtoString(value))
-          case Business =>
-            Logger.error("Business User HIT")
-            println(eeittAdminUrl+path+fromAtoString(value))
-            httpGet.GET[JsValue](eeittAdminUrl + path + "agents/" + fromAtoString(value))
+        value match {
+          case RegistrationNumber(x, y) =>
+            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            call(x, y)
+          case Arn(x, y) =>
+            Logger.info(s" ${request.session.get("token").get} Queried for Arn in $y Database")
+            call(x, y)
+          case GroupId(x, y) =>
+            Logger.info(s" ${request.session.get("token").get} Queried for GroupId in $y Database")
+            call(x, y)
+          case Regime(x, y) =>
+            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            call(x, y)
           case _ =>
-            Logger.error("typeclasses not met")
-            Future.successful(Json.obj("bob" -> "hello"))
+            Logger.error("No Database nor User detected")
+            Future.successful(List(FailureResponse("No Database nor User detected")))
         }
       }
     }
   }
 
-  implicit def regArn : EeittConnector[Arn] = {
+  implicit def arnConnector : EeittConnector[Arn] = {
     Logger.info("ARN")
-    thingy[Arn, Database](_.arn, _.database, "/get-agents/")
+    getEeittConnector[Arn](_.database.agent.get)
   }
 
-  implicit def reg: EeittConnector[RegistrationNumber] = {
+  implicit def regConnector: EeittConnector[RegistrationNumber] = {
     Logger.info("REG SEARCH")
-    thingy[RegistrationNumber, Database](_.registration, _.database, "/get-business-users/")
+    getEeittConnector[RegistrationNumber](_.database.reg.get)
   }
 
-  implicit def group: EeittConnector[GroupId] = {
+  implicit def groupIdConnector: EeittConnector[GroupId] = {
     Logger.info("GROUP")
-    thingy[GroupId, UserType](_.groupid, _.userType, s"/get-")
+    getEeittConnector[GroupId](_.userType.url)
   }
 
-  implicit def regime: EeittConnector[Regime] = {
+  implicit def regimeConnector: EeittConnector[Regime] = {
     Logger.info("REGIME")
-    thingy[Regime, Database](_.regime, _.database, "/business-user-by-regime/") // Business Only
+    getEeittConnector[Regime](_.database.regime.get) // Business Only
   }
 }
 
