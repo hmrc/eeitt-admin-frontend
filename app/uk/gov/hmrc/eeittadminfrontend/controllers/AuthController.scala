@@ -33,13 +33,14 @@ import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittAdminConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActions
 import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.eeittadminfrontend.services.GoogleVerifier
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector,eeittAdminConnector: EeittAdminConnector, sa : SecuredActions)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class AuthController(val authConnector: AuthConnector,eeittAdminConnector: EeittAdminConnector, sa : SecuredActions, googleService : GoogleVerifier)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
 
   val loginForm = Form(
     mapping(
@@ -53,9 +54,6 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     )(Email.apply)(Email.unapply)
   )
 
-  lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList("ID HERE"))
-    .build()
 
   val registerForm = Form(
     mapping(
@@ -77,7 +75,7 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.registration(registerForm)))
   }
 
-  def register: Action[AnyContent] = Authentication.async { implicit request =>
+  def register: Action[AnyContent] = Action.async { implicit request =>
     Logger.debug(request.body.toString)
     registerForm.bindFromRequest.fold(
       error =>{
@@ -100,8 +98,8 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error)))
       },
       success => {
-        val token = tokenVerifier.verify(success.value)
-        val email = Email(token.getPayload.getEmail)
+        val token = googleService(success.value)
+        val email = Email(token)
         eeittAdminConnector.checkAuth(email).map{
           case Valid(x) =>
             Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", x.email.value))
