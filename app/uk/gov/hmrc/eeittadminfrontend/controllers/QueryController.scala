@@ -40,6 +40,11 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
 
+  def goToScripts = Authentication.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.maintenance_scripts()))
+
+  }
+
   def UidQuery = {
     query[Arn, RegistrationNumber]
   }

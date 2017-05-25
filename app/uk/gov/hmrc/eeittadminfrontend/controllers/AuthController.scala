@@ -54,7 +54,7 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
   )
 
   lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList("ID HERE"))
+    .setAudience(Collections.singletonList("ID GOES HERE"))
     .build()
 
   val registerForm = Form(
