@@ -56,7 +56,6 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
   lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
     .setAudience(Collections.singletonList("ID HERE"))
     .build()
-  //TODO move the client ID to application.conf
 
   val registerForm = Form(
     mapping(
@@ -78,14 +77,6 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.registration(registerForm)))
   }
 
-//  def deleteUser = Action.async { implicit request =>
-//    deleteForm.bindFromRequest.fold(
-//      error => ,
-//      success =>
-//
-//    )
-//  }
-
   def register: Action[AnyContent] = Authentication.async { implicit request =>
     Logger.debug(request.body.toString)
     registerForm.bindFromRequest.fold(
@@ -100,10 +91,6 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
         }
       }
     )
-  }
-
-  def test() = Authentication.async {
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.test_page()))
   }
 
   def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
@@ -124,8 +111,5 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
       }
     )
   }
-def choicePage()= Action.async{ implicit request =>
-  Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.select_wht_to_do()))
-}
 
 }

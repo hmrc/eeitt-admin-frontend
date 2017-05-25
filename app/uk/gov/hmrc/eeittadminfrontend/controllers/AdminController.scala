@@ -18,6 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Action
+import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -26,16 +27,16 @@ import scala.concurrent.Future
 
 class EeittAdminController(val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  def index = Action.async {
+  def index = Authentication.async {
     Future.successful(Ok("HOME PAGE"))
   }
 
 
-  def goToLogging = Action.async {
+  def goToLogging = Authentication.async {
     Future.successful(Ok("Logging Page"))
   }
 
-  def goToDeltaAutomation = Action.async {
+  def goToDeltaAutomation = Authentication.async {
     Future.successful(Ok("Delta Automation"))
   }
 }
