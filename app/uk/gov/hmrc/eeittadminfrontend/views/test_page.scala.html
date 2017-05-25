@@ -14,14 +14,23 @@
  * limitations under the License.
  *@
 
-@(appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig, pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages)
+<html>
+<head>
+    <title>Directory API Quickstart</title>
+    <meta charset='utf-8' />
+</head>
+<body>
+<p>Directory API Quickstart</p>
 
-@contentHeader = {
-  <h1>@heading</h1>
-}
+<!--Add buttons to initiate auth sequence and sign out-->
+<button id="authorize-button" style="display: none;">Authorize</button>
+<button id="signout-button" style="display: none;">Sign Out</button>
 
-@mainContent = {
-  <p>@message</p>
-}
+<pre id="content"></pre>
 
-@govuk_wrapper(appConfig = appConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)
+<script async defer src="https://apis.google.com/js/api.js"
+        onload="this.onload=function(){};handleClientLoad()"
+        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+</script>
+</body>
+</html>
