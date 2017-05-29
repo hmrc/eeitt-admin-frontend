@@ -91,6 +91,10 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     )
   }
 
+  def signOut() = Action.async { implicit request =>
+    Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
+  }
+
   def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
       error => {
