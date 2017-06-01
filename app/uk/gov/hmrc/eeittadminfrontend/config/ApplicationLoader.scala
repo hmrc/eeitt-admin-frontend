@@ -247,6 +247,8 @@ trait ApplicationModule extends BuiltInComponents
 
   val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
 
+
+
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val googleVerifier = new GoogleVerifier
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
@@ -255,6 +257,7 @@ trait ApplicationModule extends BuiltInComponents
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
 
+  lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 //  val eeittConnector = new EeittConnector(eeittUrl)
 //
 //  val securedActions = new SecuredActionsImpl(configuration, authConnector)
@@ -263,7 +266,7 @@ trait ApplicationModule extends BuiltInComponents
 //  val etmpDataLoaderProxy = new EtmpDataLoaderProxy(eeittConnector, securedActions)
 //  val signOutController = new SignOutController()
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
