@@ -1,0 +1,64 @@
+.list-group-item .list-group-item-heading {
+  font-size: 16px;
+  margin: 0 0 6px;
+  padding: 0; }
+
+.list-group-item .list-group-item-actions .btn + .btn {
+  margin-left: 5px; }
+
+.form-builder__page-break {
+  border-top: 1px dashed #ccc;
+  color: #ccc;
+  font-size: 11px;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center; }
+
+.form-builder__page-break-number {
+  background: #fff;
+  display: inline-block;
+  padding: 3px;
+  position: relative;
+  top: -12px;
+  margin: 0 auto; }
+
+.form-builder .form-builder__actions {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  width: 250px; }
+
+.form-builder .form-builder__output {
+  width: 100%;
+  height: 100%;
+  padding: 15px; }
+  .form-builder .form-builder__output .form-builder__output-editor {
+    height: 90%;
+    margin-bottom: 15px; }
+  .form-builder .form-builder__output .form-builder__output-area {
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+    height: 100%;
+    width: 100%;
+    display: block;
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+    word-break: break-all;
+    word-wrap: break-word;
+    background-color: #fafafa;
+    border: 1px solid #ccc;
+    border-radius: 3px; }
+  .form-builder .form-builder__output.has-error .form-builder__output-editor {
+    height: 60%; }
+  .form-builder .form-builder__output.has-error .form-builder__output-area {
+    border-color: #b10e1e;
+    background-color: rgba(177, 14, 30, 0.1); }
+
+html, body, iframe, #app-root, .app-container-full {
+  height: 100%; }
+
+svg {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden; }
