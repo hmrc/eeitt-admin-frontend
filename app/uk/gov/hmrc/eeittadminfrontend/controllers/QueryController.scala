@@ -42,7 +42,10 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
 
   def goToScripts = Authentication.async{ implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.maintenance_scripts()))
+  }
 
+  def goToGform = Authentication.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform))
   }
 
   def UidQuery = {
