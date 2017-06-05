@@ -45,7 +45,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
   }
 
   def goToGform = Authentication.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform()))
   }
 
   def UidQuery = {
