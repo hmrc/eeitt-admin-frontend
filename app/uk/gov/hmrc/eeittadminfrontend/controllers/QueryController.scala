@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import java.io.FileReader
+import javax.script.ScriptEngineManager
+
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -44,8 +47,21 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.maintenance_scripts()))
   }
 
-  def goToGform = Authentication.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform()))
+  def goToGform = Action{
+
+    val engine = new ScriptEngineManager(null).getEngineByName("nashorn")
+    if (engine == null) {
+      BadRequest("Nashorn script engine not found. Are you using JDK 8?")
+    } else {
+      // React expects `window` or `global` to exist. Create a `global` pointing
+      // to Nashorn's context to give React a place to define its global namespace.
+      engine.eval("var global = this;")
+      engine.eval(new FileReader("target/web/public/main/javascripts/components/App.js"))
+
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform())){
+    play.twirl.api.Html(engine.eval("React.renderToString(React.createElement(bundle)):"))
+    }
+    }
   }
 
   def UidQuery = {
