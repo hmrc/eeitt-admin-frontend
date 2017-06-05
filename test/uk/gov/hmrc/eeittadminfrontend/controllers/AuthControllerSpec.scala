@@ -1,16 +1,34 @@
+/*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.Validated
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import org.scalatest.concurrent.ScalaFutures
 import play.api.http.Status
 import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
-import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.mvc.{Action, AnyContent, AnyContentAsEmpty, Result}
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.eeittadminfrontend._
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittAdminConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
-import uk.gov.hmrc.eeittadminfrontend.models.{Email, LoginError, QueryPermission, User}
+import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.eeittadminfrontend.services.GoogleVerifier
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -32,7 +50,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
 
      val result: Result = authController.checkCredentials()(fakeRequest).futureValue
 
-      result.header.status shouldBe Status.OK
+      result.header.status shouldBe Status.SEE_OTHER
     }
 
     "deny access when given an invalid email" in {
@@ -92,7 +110,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
   val langs = new DefaultLangs(configuration)
   val messageApi = new DefaultMessagesApi(env, configuration, langs)
 
-  val authController = new AuthController(new FakeAuthConnector(), new FakeAdminConnector, securedActions)(appConfig, messageApi)
+  val authController = new AuthController(new FakeAuthConnector(), new FakeAdminConnector, securedActions, new FakeGoogleVerifier)(appConfig, messageApi)
   class FakeAdminConnector extends EeittAdminConnector {
     override def checkAuth(email: Email)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Validated[LoginError, User]] = {
       if (email == Email("test@test.com")) {
@@ -101,7 +119,27 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
         Validated.invalid(LoginError(List("Failed")))
       }
     }
+
+    override def register(user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Validated[RegisterError, String]] = {
+      if(user.email.value == "test@test.com") {
+        Validated.valid("Passed")
+      } else {
+        Validated.invalid(RegisterError(List("Failed")))
+      }
+    }
   }
+
+  class FakeGoogleVerifier extends GoogleVerifier {
+
+    override def apply(string: String) = {
+      if(string == "test@test.com"){
+        "test@test.com"
+      } else {
+        "invalidtest@test.com"
+      }
+    }
+  }
+
     class FakeAuthConnector extends AuthConnector {
 
       override val serviceUrl: String = ""

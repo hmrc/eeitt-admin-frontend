@@ -36,6 +36,7 @@ import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittAdminConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.controllers.{AuthController, EeittAdminController, QueryController}
+import uk.gov.hmrc.eeittadminfrontend.services.GoogleVerifier
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.ErrorAuditingSettings
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -246,13 +247,17 @@ trait ApplicationModule extends BuiltInComponents
 
   val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
 
+
+
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
+  val googleVerifier = new GoogleVerifier
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val eeittAdminConnector = new EeittAdminConnector
-  val authController = new AuthController(authConnector, eeittAdminConnector, securedActions)(appConfig, messagesApi)
+  val authController = new AuthController(authConnector, eeittAdminConnector, securedActions, googleVerifier)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
 
+  lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 //  val eeittConnector = new EeittConnector(eeittUrl)
 //
 //  val securedActions = new SecuredActionsImpl(configuration, authConnector)
@@ -261,7 +266,7 @@ trait ApplicationModule extends BuiltInComponents
 //  val etmpDataLoaderProxy = new EtmpDataLoaderProxy(eeittConnector, securedActions)
 //  val signOutController = new SignOutController()
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
