@@ -21,9 +21,9 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Session}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActions
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ClientID, SecuredActions}
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.{AuthService, GoogleVerifier}
 import uk.gov.hmrc.play.frontend.auth.Actions
@@ -32,9 +32,9 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector, sa : SecuredActions, googleService : GoogleVerifier, authService: AuthService)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class AuthController(val authConnector: AuthConnector, sa : SecuredActions, authService: AuthService)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
 
-  val clientID: String = googleService.clientID.get
+  val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
   val loginForm = Form(
     mapping(
@@ -44,7 +44,7 @@ class AuthController(val authConnector: AuthConnector, sa : SecuredActions, goog
 
   def loginPage(): Action[AnyContent] = Action.async { implicit request =>
     sa.whiteListing {
-      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm, clientID)))
+      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm, clientID.id)))
     }
   }
 
@@ -56,10 +56,10 @@ class AuthController(val authConnector: AuthConnector, sa : SecuredActions, goog
     loginForm.bindFromRequest.fold(
       error => {
         Logger.error(s"Failed to Login $error")
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID)))
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
-        val email = Email(googleService(success.value))
+        val email = Email(GoogleVerifier(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
             Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", email.value)))

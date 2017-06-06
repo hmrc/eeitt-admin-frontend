@@ -16,18 +16,16 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
-import cats.data.Validated
+import cats.data._
+import cats.syntax.all._
 import play.api.Configuration
 import uk.gov.hmrc.eeittadminfrontend.models.{Email, LoginError}
 
 class AuthService(config: Configuration) {
 
+  val validUserList: Array[String] = config.getString("basicAuth.user").getOrElse("").split(":")
+
   def checkUser(email: Email): Validated[LoginError, Unit] = {
-    val validUserList = config.getString("basicAuth.user").getOrElse("").split(":")
-    if(validUserList.contains(email.value)) {
-      Validated.invalid(LoginError("Unauthorised User"))
-    } else {
-      Validated.valid(())
-    }
+    if(validUserList.contains(email.value)) LoginError("Unauthorised User").invalid else ().valid
   }
 }
