@@ -1,8 +1,6 @@
 # microservice specific routes
 
 GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
-GET        /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.getRegistration
-POST       /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.register
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
