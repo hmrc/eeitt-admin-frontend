@@ -251,8 +251,9 @@ trait ApplicationModule extends BuiltInComponents
   val clientID = configuration.getString("ClientID")
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
-  val authService = new AuthService(configuration)
-  val authController = new AuthController(authConnector, securedActions, authService)(appConfig, messagesApi)
+  val authService = new AuthService()
+  val googleService = new GoogleVerifier()
+  val authController = new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
 
