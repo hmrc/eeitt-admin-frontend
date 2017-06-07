@@ -16,31 +16,25 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import java.util.Collections
-
 import cats.data.Validated.{Invalid, Valid}
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Session}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittAdminConnector
-import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActions
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ClientID, SecuredActions}
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.GoogleVerifier
+import uk.gov.hmrc.eeittadminfrontend.services.{AuthService, GoogleVerifier}
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector,eeittAdminConnector: EeittAdminConnector, sa : SecuredActions, googleService : GoogleVerifier)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class AuthController(val authConnector: AuthConnector, sa : SecuredActions, authService: AuthService)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+
+  val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
   val loginForm = Form(
     mapping(
@@ -48,63 +42,29 @@ class AuthController(val authConnector: AuthConnector,eeittAdminConnector: Eeitt
     )(Token.apply)(Token.unapply)
   )
 
-  val deleteForm = Form(
-    mapping(
-      "email" -> nonEmptyText
-    )(Email.apply)(Email.unapply)
-  )
-
-
-  val registerForm = Form(
-    mapping(
-        "email" -> mapping(
-          "value" -> nonEmptyText
-        )(Email.apply)(Email.unapply),
-        "permissions" -> seq[Permission](mapping(
-          "value" -> nonEmptyText
-      )(Permission.apply)(Permission.unapply))
-    )(User.apply)(User.unapply))
-
-  def loginPage() = Action.async { implicit request =>
+  def loginPage(): Action[AnyContent] = Action.async { implicit request =>
     sa.whiteListing {
-      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm)))
+      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm, clientID.id)))
     }
   }
 
-  def getRegistration = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.registration(registerForm)))
-  }
-
-  def register: Action[AnyContent] = Action.async { implicit request =>
-    Logger.debug(request.body.toString)
-    registerForm.bindFromRequest.fold(
-      error =>{
-        Future.successful(Ok(error.errors.toString))
-      },
-      success => {
-        Logger.debug(request.body.toString)
-        eeittAdminConnector.register(success).map {
-          case Valid(x) => Ok("Worked")
-          case Invalid(y) => Ok("Failed")
-        }
-      }
-    )
+  def signOut(): Action[AnyContent] = Action.async { implicit request =>
+    Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
   }
 
   def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
       error => {
         Logger.error(s"Failed to Login $error")
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error)))
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
-        val token = googleService(success.value)
-        val email = Email(token)
-        eeittAdminConnector.checkAuth(email).map{
-          case Valid(x) =>
-            Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", x.email.value))
+        val email = Email(GoogleVerifier(success.value))
+        authService.checkUser(email) match {
+          case Valid(()) =>
+            Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", email.value)))
           case Invalid(err) =>
-            Unauthorized(s"Failed ${err.error}")
+            Future.successful(Unauthorized(s"Failed ${err.error}"))
         }
       }
     )

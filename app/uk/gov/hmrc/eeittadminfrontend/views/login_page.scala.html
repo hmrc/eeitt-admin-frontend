@@ -18,14 +18,14 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 
-@(loginForm : Form[uk.gov.hmrc.eeittadminfrontend.models.Token])(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@(loginForm : Form[uk.gov.hmrc.eeittadminfrontend.models.Token], clientID : String)(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
 
 <header class="page-header">
     <h1>Sign-In to EEITT-Admin</h1>
 </header>
-<meta name="google-signin-client_id" content="ID HERE">
+<meta name="google-signin-client_id" content=@clientID >
 
 <div class="g-signin2" data-onsuccess="onSignIn" ></div>
 

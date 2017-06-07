@@ -21,6 +21,7 @@ object FrontendBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "govuk-template" % "5.2.0",
     "uk.gov.hmrc" %% "play-health" % "2.1.0",
     "uk.gov.hmrc" %% "play-ui" % "7.2.1",
+    "com.github.pureconfig" %% "pureconfig" % "0.7.2",
     "com.google.gdata" % "core" % "1.47.1",
     "com.google.apis" % "google-api-services-oauth2" % "v2-rev124-1.22.0",
     "org.typelevel" % "cats-core_2.11" % "0.9.0",
