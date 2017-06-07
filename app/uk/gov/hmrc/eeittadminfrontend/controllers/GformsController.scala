@@ -16,10 +16,21 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.JsObject
+import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
-class GformsController(val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport
+import scala.concurrent.Future
 
+class GformsController (val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+  def getGformByFormType(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
+    GformConnector.getGformsTemplate(formTypeId, version)
+  }
+  }

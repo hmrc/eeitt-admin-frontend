@@ -1,8 +1,9 @@
 import sbt.Keys._
-import sbt.Tests.{SubProcess, Group}
+import sbt.Tests.{Group, SubProcess}
 import sbt._
 import play.routes.compiler.StaticRoutesGenerator
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import play.sbt.routes.RoutesKeys.{routesGenerator, routesImport}
 
 
 trait MicroService {
@@ -33,7 +34,11 @@ trait MicroService {
     .settings(
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
-      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
+      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
+      routesImport ++= Seq(
+"uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
+        "uk.gov.hmrc.eeittadminfrontend.models.FormTypeId"
+      )
     )
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
