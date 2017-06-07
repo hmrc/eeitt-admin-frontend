@@ -25,7 +25,6 @@ import play.api.mvc.{Action, AnyContent, AnyContentAsEmpty, Result}
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.eeittadminfrontend._
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittAdminConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.GoogleVerifier
