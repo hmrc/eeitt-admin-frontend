@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, Session}
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ClientID, SecuredActions}
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -32,7 +32,7 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector, sa : SecuredActions, authService: AuthService)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class AuthController(val authConnector: AuthConnector, sa : SecuredActions, authService: AuthService, googleService : GoogleVerifier)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
@@ -59,7 +59,7 @@ class AuthController(val authConnector: AuthConnector, sa : SecuredActions, auth
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
-        val email = Email(GoogleVerifier(success.value))
+        val email = Email(googleService(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
             Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", email.value)))

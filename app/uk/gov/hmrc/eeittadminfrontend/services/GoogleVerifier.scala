@@ -24,7 +24,9 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import play.api.Logger
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.ClientID
 
-object GoogleVerifier {
+class GoogleVerifier extends GoogleVerifierHelper
+
+trait GoogleVerifierHelper {
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
