@@ -22,12 +22,30 @@
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Query"){
 
+<script>
+function colorFunction(){
+  var color = document.getElementById("isLiveAgent");
+
+    console.log = color.options[color.selectedIndex].value
+  if(color.options[color.selectedIndex].value == "LIVE"){
+    document.body.style.backgroundColor = "#ff0000";
+  } else {
+    document.body.style.backgroundColor = "#fff";
+  }
+}
+</script>
+
+
 
 <div class="text-center">
-    <div class="col-md-4 col-md-offset-2">
+    <div class="col-md-4 col-md-offset-2 red">
         <h3>Agent Delta</h3>
         <div class="form-group">
             <form>
+                <select id="isLiveAgent" name="isLive" onchange='colorFunction()' >
+                    <option value="DRY-RUN">DRY-RUN</option>
+                    <option value="LIVE">LIVE</option>
+                </select>
                 <fieldset class="form-field-group">
             <label for="agent">Please enter the agent delta:</label>
             <textarea class="form-control" rows="5" id="agent"></textarea>
@@ -40,6 +58,10 @@
         <h3>Business Users</h3>
         <div class="form-group">
             <form>
+                <select id="isLiveBusiness" name="isLive">
+                    <option value="DRY-RUN">DRY-RUN</option>
+                    <option value="LIVE">LIVE</option>
+                </select>
             <fieldset class="form-field-group">
             <label for="BusinessUser">Please enter the business user delta:</label>
             <textarea class="form-control" rows="5" id="BusinessUser"></textarea>
@@ -49,13 +71,4 @@
         </div>
     </div>
 </div>
-
-
-
-
-
-
-
-
-
 }

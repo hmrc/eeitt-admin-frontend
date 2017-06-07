@@ -248,7 +248,6 @@ trait ApplicationModule extends BuiltInComponents
 
   val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
 
-  val clientID = configuration.getString("ClientID")
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService(configuration)

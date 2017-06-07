@@ -26,6 +26,6 @@ class AuthService(config: Configuration) {
   val validUserList: Array[String] = config.getString("basicAuth.user").getOrElse("").split(":")
 
   def checkUser(email: Email): Validated[LoginError, Unit] = {
-    if(validUserList.contains(email.value)) LoginError("Unauthorised User").invalid else ().valid
+    if(validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
   }
 }

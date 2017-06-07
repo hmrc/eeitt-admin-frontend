@@ -30,8 +30,8 @@ import scala.concurrent.Future
 
 class DeltaController(val authConnector: AuthConnector)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  def getDeltaPage() = Authentication.async {
-    Future.successful(Ok("TBM"))
+  def getDeltaPage() = Authentication.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
 
   def agent() = {
