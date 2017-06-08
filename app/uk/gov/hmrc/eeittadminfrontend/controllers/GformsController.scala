@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import org.mortbay.util.ajax.JSON
 import play.api.Logger
-import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
+import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformIdAndVersion}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -37,5 +37,14 @@ class GformsController (val authConnector: AuthConnector, val messagesApi: Messa
   def getGformByFormType(formTypeId: FormTypeId, version: String) = Action.async{ implicit request =>
     (GformConnector.getGformsTemplate(formTypeId, version)).map(x => Ok(Json.toJson(x)))
     }
+
+  val gFormForm = Form(
+    mapping(
+      "formTypeId" -> mapping(
+        "value" -> nonEmptyText
+      )(FormTypeId.apply)(FormTypeId.unapply),
+      "version" -> nonEmptyText
+    )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
+  )
     }
 

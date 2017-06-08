@@ -30,3 +30,5 @@ object FormTypeId{
   implicit val format: Format[FormTypeId] = ValueClassFormatter.format(FormTypeId.apply)(_.value)
 }
 
+case class GformIdAndVersion(formTypeId: FormTypeId, version: String)
+
