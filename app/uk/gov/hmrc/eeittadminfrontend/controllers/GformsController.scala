@@ -16,11 +16,14 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import org.mortbay.util.ajax.JSON
+import play.api.Logger
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, JsSuccess, Json}
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -30,7 +33,9 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.Future
 
 class GformsController (val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
-  def getGformByFormType(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
-    GformConnector.getGformsTemplate(formTypeId, version)
-  }
-  }
+
+  def getGformByFormType(formTypeId: FormTypeId, version: String) = Action.async{ implicit request =>
+    (GformConnector.getGformsTemplate(formTypeId, version)).map(x => Ok(Json.toJson(x)))
+    }
+    }
+

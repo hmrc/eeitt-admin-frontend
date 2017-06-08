@@ -32,7 +32,7 @@ trait GformConnector {
   def httpPost: HttpPost = WSHttp
   def gformUrl: String
 
-def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsObject]] = {
+def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
   httpGet.GET[Option[JsObject]](gformUrl + s"/forms/$formTypeId/$version")
 }
 }
@@ -41,6 +41,6 @@ object GformConnector extends  GformConnector with ServicesConfig{
   lazy val HttpGet = WSHttp
   lazy val HttpPost = WSHttp
 
-  override def gformUrl = "localhost:9196/gform"
+  override def gformUrl = "http://localhost:9196/gform"
 
 }
