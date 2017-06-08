@@ -8,6 +8,7 @@ GET        /get-gform/:formTypeId/:version                uk.gov.hmrc.eeittadmin
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
+GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
 POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
 

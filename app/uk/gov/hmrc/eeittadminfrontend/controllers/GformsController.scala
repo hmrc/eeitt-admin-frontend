@@ -24,6 +24,8 @@ import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.mvc.Action
+import uk.gov.hmrc.eeittadminfrontend.AppConfig
+import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -32,11 +34,18 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-class GformsController (val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class GformsController (val authConnector: AuthConnector)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
 
   def getGformByFormType(formTypeId: FormTypeId, version: String) = Action.async{ implicit request =>
     (GformConnector.getGformsTemplate(formTypeId, version)).map(x => Ok(Json.toJson(x)))
     }
+
+
+  def gformPage = Authentication.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
+
+  }
+
 
   val gFormForm = Form(
     mapping(

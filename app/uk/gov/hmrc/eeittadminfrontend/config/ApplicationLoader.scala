@@ -256,7 +256,7 @@ trait ApplicationModule extends BuiltInComponents
   val authController = new AuthController(authConnector, eeittAdminConnector, securedActions, googleVerifier)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
-  val gformController = new GformsController(authConnector, messagesApi)
+  val gformController = new GformsController(authConnector)(appConfig, messagesApi)
 
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 //  val eeittConnector = new EeittConnector(eeittUrl)
