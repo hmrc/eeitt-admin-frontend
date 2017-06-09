@@ -246,8 +246,6 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val metricsController = new MetricsController(metrics)
 
-  val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
-
   val clientID = configuration.getString("ClientID")
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)

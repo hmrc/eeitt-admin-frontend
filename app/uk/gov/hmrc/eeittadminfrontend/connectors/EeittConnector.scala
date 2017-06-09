@@ -30,7 +30,7 @@ trait EeittConnector[A] extends ServicesConfig {
   val httpGet : HttpGet = WSHttp
   val httpPost : HttpPost = WSHttp
 
-  val eeittAdminUrl : String = "http://localhost:9191/eeitt"
+  val eeittUrl : String = baseUrl("eeitt")+"/eeitt"
 
   def apply(a : A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) : Future[List[Response]]
 }
@@ -44,12 +44,12 @@ object EeittConnector {
         def call[B](a : String, b : B): Future[List[Response]] = {
           b match {
             case ETMP =>
-              httpGet.GET[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]](eeittAdminUrl + getPath(value) + a).map{
+              httpGet.GET[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]](eeittUrl + getPath(value) + a).map{
                 case Left(x) => x
                 case Right(y) => y
               }
             case x =>
-              httpGet.GET[List[EnrollmentResponse]](eeittAdminUrl + getPath(value) + a)
+              httpGet.GET[List[EnrollmentResponse]](eeittUrl + getPath(value) + a)
           }
         }
 
