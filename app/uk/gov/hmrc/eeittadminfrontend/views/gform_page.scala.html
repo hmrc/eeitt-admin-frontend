@@ -24,7 +24,7 @@
 @(form: Form[GformIdAndVersion])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST" class="js-form" novalidate="novalidate">
 
  @CSRF.formField
 

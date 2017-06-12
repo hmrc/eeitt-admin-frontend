@@ -18,6 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 
 
+import play.api.Logger
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
@@ -33,7 +34,9 @@ trait GformConnector {
   def gformUrl: String
 
 def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
-  httpGet.GET[Option[JsObject]](gformUrl + s"/forms/$formTypeId/$version")
+  Logger.debug(s"$formTypeId, $version" + "///////")
+  httpGet.GET[Option[JsObject]](gformUrl + s"/formtemplates/$formTypeId/$version")
+
 }
 }
 
