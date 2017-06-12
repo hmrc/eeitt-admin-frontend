@@ -16,42 +16,38 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import org.mortbay.util.ajax.JSON
-import play.api
-import play.api.Logger
-import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformIdAndVersion}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.{JsObject, JsSuccess, Json}
-import play.api.mvc.{Action, Result}
+import play.api.libs.json.Json
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
+import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformIdAndVersion}
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
 
-import scala.concurrent
 import scala.concurrent.Future
 
-class GformsController (val authConnector: AuthConnector)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  def getGformByFormType = Action.async{ implicit request =>
+  def getGformByFormType = Action.async { implicit request =>
     gFormForm.bindFromRequest().fold(
       formWithErrors => {
-        Logger.error(formWithErrors.toString + "///////////////////")
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(formWithErrors)))
       },
-        gformIdAndVersion =>
-  GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map{x =>
-   Ok(Json.toJson(x))
- }
+      gformIdAndVersion =>
+        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x =>
+          x match {
+            case Some(x) => Ok(Json.toJson(x))
+            case _ => Ok("Error")
+          }
+
+        }
     )
   }
-
-
 
 
   def gformPage = Authentication.async { implicit request =>
@@ -68,5 +64,5 @@ class GformsController (val authConnector: AuthConnector)(implicit appConfig : A
       "version" -> nonEmptyText
     )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
   )
-    }
+}
 

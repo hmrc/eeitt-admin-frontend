@@ -25,9 +25,9 @@
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST" class="js-form" novalidate="novalidate">
-
+ <h2>Find a Gform Schema</h2>
  @CSRF.formField
-
+ <p>Form Type ID:</p>
  <fieldset class="form-field-group">
   <input
           type="text"
@@ -38,7 +38,7 @@
   />
   </label>
  </fieldset>
-
+ <p>Form Version:</p>
  <fieldset class="form-field-group">
   <input
           type="text"

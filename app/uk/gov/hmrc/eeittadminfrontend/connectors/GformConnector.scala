@@ -34,7 +34,6 @@ trait GformConnector {
   def gformUrl: String
 
 def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
-  Logger.debug(s"$formTypeId, $version" + "///////")
   httpGet.GET[Option[JsObject]](gformUrl + s"/formtemplates/$formTypeId/$version")
 
 }
