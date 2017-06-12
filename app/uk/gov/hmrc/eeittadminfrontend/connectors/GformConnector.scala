@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 
 import play.api.Logger
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
@@ -33,10 +33,15 @@ trait GformConnector {
   def httpPost: HttpPost = WSHttp
   def gformUrl: String
 
-def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsObject]] = {
-  httpGet.GET[Option[JsObject]](gformUrl + s"/formtemplates/$formTypeId/$version")
-
+def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
+  httpGet.GET[Option[JsValue]](gformUrl + s"/formtemplates/$formTypeId/$version")
 }
+
+  def getAllGformsTemplates(implicit  hc: HeaderCarrier): Future[Option[JsValue]] = {
+    httpGet.GET[Option[JsValue]](gformUrl + "/formtemplates")
+  }
+
+
 }
 
 object GformConnector extends  GformConnector with ServicesConfig{

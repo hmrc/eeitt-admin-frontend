@@ -33,7 +33,7 @@ import scala.concurrent.Future
 
 class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  def getGformByFormType = Action.async { implicit request =>
+  def getGformByFormType = Authentication.async { implicit request =>
     gFormForm.bindFromRequest().fold(
       formWithErrors => {
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(formWithErrors)))
@@ -42,13 +42,22 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x =>
           x match {
             case Some(x) => Ok(Json.toJson(x))
-            case _ => Ok("Error")
+            case _ => Ok("Error or does not exist")
           }
-
         }
     )
   }
 
+  def getAllTemplates = Authentication.async { implicit request =>
+    GformConnector.getAllGformsTemplates.map{x =>
+      x match {
+        case Some(x) => Ok(Json.toJson(x))
+        case _ => Ok("Error")
+      }
+    }
+
+
+  }
 
   def gformPage = Authentication.async { implicit request =>
 
