@@ -4,7 +4,7 @@ GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.getRegistration
 POST       /registration             uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.register
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
-GET        /get-gform/:formTypeId/:version                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType(formTypeId: FormTypeId, version: String)
+POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery

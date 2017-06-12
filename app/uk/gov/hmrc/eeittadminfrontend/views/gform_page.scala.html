@@ -14,28 +14,25 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders
-@import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
-@import uk.gov.hmrc.eeittadminfrontend.models.GformIdAndVersion
 @import uk.gov.hmrc.eeittadminfrontend.AppConfig
 @import helper._
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 @import views.html.helper.CSRF
+@import uk.gov.hmrc.eeittadminfrontend.models.GformIdAndVersion
 
+@(form: Form[GformIdAndVersion])(implicit request : Request[_], appConfig: AppConfig)
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
-@(form: Form[GformIdAndVersion] )(implicit request : Request[_], appConfig: AppConfig)
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Find Gform Schema"){
-
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType(GformIdAndVersion.FormTypeId.value, GformIdAndVersion.version)" method="POST" autocomplete="on" novalidate="novalidate">
-
+ @CSRF.formField
 
  <fieldset class="form-field-group">
   <input
           type="text"
-          name="formTypeId"
-          id="formTypeId"
+          name="formTypeId.value"
+          id="value"
           value=""
           class="form-control form-control--block"
   />
@@ -52,9 +49,6 @@
   />
   </label>
  </fieldset>
-
- <input type="submit" class="button" value="Find"/>
-
+ <input type="submit" class="button" value="search"/>
 </form>
-
 }
