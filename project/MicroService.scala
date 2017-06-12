@@ -38,8 +38,7 @@ trait MicroService {
       routesImport ++= Seq(
 "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
         "uk.gov.hmrc.eeittadminfrontend.models.FormTypeId"
-      )
-    )
+      ))
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(

@@ -21,14 +21,20 @@ import java.util.Collections
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
+import play.api.Logger
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.ClientID
 
-class GoogleVerifier {
+class GoogleVerifier extends GoogleVerifierHelper
+
+trait GoogleVerifierHelper {
+
+  val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
   lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList("ID HERE"))
+    .setAudience(Collections.singletonList(clientID.id))
     .build()
 
-  def apply(string: String) = {
-    tokenVerifier.verify(string).getPayload.getEmail
+  def apply(token: String): String = {
+    tokenVerifier.verify(token).getPayload.getEmail
   }
 }

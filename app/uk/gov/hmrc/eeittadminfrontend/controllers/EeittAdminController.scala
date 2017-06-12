@@ -31,7 +31,6 @@ class EeittAdminController(val authConnector: AuthConnector, val messagesApi: Me
     Future.successful(Ok("HOME PAGE"))
   }
 
-
   def goToLogging = Authentication.async {
     Future.successful(Ok("Logging Page"))
   }

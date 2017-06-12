@@ -70,3 +70,5 @@ object WhiteListingConf {
   }
 }
 
+final case class ClientID(id: String)
+
