@@ -23,8 +23,10 @@ trait MicroService {
   lazy val plugins : Seq[Plugins] = Seq.empty
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
+  lazy val eeittLogReporting = ProjectRef(uri("git://github.com/hmrc/eeitt-dashboard#master"), "eeitt-dashboard")
 
   lazy val microservice = Project(appName, file("."))
+    .dependsOn(eeittLogReporting)
     .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)

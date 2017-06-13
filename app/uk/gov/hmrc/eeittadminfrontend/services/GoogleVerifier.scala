@@ -35,6 +35,8 @@ trait GoogleVerifierHelper {
     .build()
 
   def apply(token: String): String = {
-    tokenVerifier.verify(token).getPayload.getEmail
+    val payload = tokenVerifier.verify(token).getPayload
+    Logger.info(payload.getAccessTokenHash)
+    payload.getEmail
   }
 }

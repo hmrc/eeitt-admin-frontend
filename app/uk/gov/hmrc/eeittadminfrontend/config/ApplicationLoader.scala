@@ -34,7 +34,7 @@ import play.filters.csrf.{CSRFComponents, CSRFFilter}
 import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
-import uk.gov.hmrc.eeittadminfrontend.controllers.{AuthController, EeittAdminController, QueryController}
+import uk.gov.hmrc.eeittadminfrontend.controllers.{AuthController, EeittAdminController, MaintenanceController, QueryController}
 import uk.gov.hmrc.eeittadminfrontend.services.{AuthService, GoogleVerifier}
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.ErrorAuditingSettings
@@ -248,7 +248,7 @@ trait ApplicationModule extends BuiltInComponents
 
   val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
 
-  val clientID = configuration.getString("ClientID")
+
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
@@ -256,10 +256,11 @@ trait ApplicationModule extends BuiltInComponents
   val authController = new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
+  val maintenanceController = new MaintenanceController(authConnector)(messagesApi)
 
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController, assets)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController, assets, maintenanceController)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
