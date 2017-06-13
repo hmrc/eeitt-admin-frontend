@@ -27,7 +27,7 @@
 <div class="text-center">
 <div class="col-md-4 col-md-offset-2">
     <h3>ETMP</h3>
-    <form   action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+    <form   action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery method="POST" class="js-form" autocomplete="on" novalidate="novalidate">
 
         @CSRF.formField
 
@@ -55,7 +55,7 @@
 
     <div class="col-md-4 col-md-offset-8">
 <h3>Enrollments</h3>
-        <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery method="POST" class="js-form" autocomplete="off" novalidate="novalidate">
+        <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery method="POST" class="js-form" autocomplete="on" novalidate="novalidate">
 
             @CSRF.formField
 

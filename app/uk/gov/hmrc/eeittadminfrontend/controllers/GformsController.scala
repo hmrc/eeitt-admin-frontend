@@ -49,15 +49,24 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   def getAllTemplates = Authentication.async { implicit request =>
-    GformConnector.getAllGformsTemplates.map{x =>
+    GformConnector.getAllGformsTemplates.map { x =>
       x match {
         case Some(x) => Ok(Json.toJson(x))
         case _ => Ok("Error")
       }
     }
-
-
   }
+
+    def getAllSchema = Authentication.async{ implicit request =>
+      GformConnector.getAllSchema.map{x =>
+        x match{
+          case Some(x) => Ok(Json.toJson(x))
+          case _ => Ok("Error or none exist")
+        }
+      }
+
+    }
+
 
   def gformPage = Authentication.async { implicit request =>
 

@@ -41,6 +41,9 @@ def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: Head
     httpGet.GET[Option[JsValue]](gformUrl + "/formtemplates")
   }
 
+def getAllSchema(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
+  httpGet.GET[Option[JsValue]](gformUrl + "/schemas")
+}
 
 }
 
