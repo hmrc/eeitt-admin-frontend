@@ -22,13 +22,19 @@ import play.api.libs.json._
 /**
   * Created by harrison on 06/06/17.
   */
-case class FormTypeId(value: String)extends AnyVal{
+case class FormTypeId(value: String) extends AnyVal {
   override def toString = value
 }
 
-object FormTypeId{
+object FormTypeId {
   implicit val format: Format[FormTypeId] = ValueClassFormatter.format(FormTypeId.apply)(_.value)
 }
 
 case class GformIdAndVersion(formTypeId: FormTypeId, version: String)
+
+case class GformTemplate(formTypeId: FormTypeId, version: String, template: String)
+
+object GformTemplate {
+  implicit val format: Format[GformTemplate] = Json.format[GformTemplate]
+}
 

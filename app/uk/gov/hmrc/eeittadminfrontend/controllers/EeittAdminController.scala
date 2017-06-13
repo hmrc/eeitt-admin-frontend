@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector

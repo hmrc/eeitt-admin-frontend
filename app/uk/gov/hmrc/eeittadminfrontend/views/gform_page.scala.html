@@ -20,47 +20,92 @@
 @import play.api.Play.current
 @import views.html.helper.CSRF
 @import uk.gov.hmrc.eeittadminfrontend.models.GformIdAndVersion
+@import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
 
-@(form: Form[GformIdAndVersion])(implicit request : Request[_], appConfig: AppConfig)
+@(form: Form[GformIdAndVersion], templateForm: Form[GformTemplate])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST" class="js-form" novalidate="novalidate">
- <h2>Find a Gform Schema</h2>
- @CSRF.formField
- <p>Form Type ID:</p>
- <fieldset class="form-field-group">
-  <input
-          type="text"
-          name="formTypeId.value"
-          id="value"
-          value=""
-          class="form-control form-control--block"
-  />
-  </label>
- </fieldset>
- <p>Form Version:</p>
- <fieldset class="form-field-group">
-  <input
-          type="text"
-          name="version"
-          id="version"
-          value=""
-          class="form-control form-control--block"
-  />
-  </label>
- </fieldset>
- <input type="submit" class="button" value="search"/>
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST"
+      class="js-form" novalidate="novalidate">
+    <h2>Find a Gform Schema</h2>
+    @CSRF.formField
+    <p>Form Type ID:</p>
+    <fieldset class="form-field-group">
+        <input
+                type="text"
+                name="formTypeId.value"
+                id="value"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <p>Form Version:</p>
+    <fieldset class="form-field-group">
+        <input
+                type="text"
+                name="version"
+                id="version"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <input type="submit" class="button" value="search"/>
+</form>
+
+
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
+      class="js-form" novalidate="novalidate">
+    <h2>Save a template</h2>
+    @CSRF.formField
+
+    <p>Form Type Id:</p>
+    <fieldset class="form-field-group">
+        <input
+                type="text"
+                name="formTypeId.value"
+                id="value2"
+                value=""
+                class="form-control form-control--block"
+        />
+    </fieldset>
+
+    <p>Version:</p>
+    <fieldset class="form-field-group">
+        <input
+                type="text"
+                name="version"
+                id="value3"
+                value=""
+                class="form-control form-control--block"
+        />
+    </fieldset>
+
+
+    <p>Json Template:</p>
+    <fieldset class="form-field-group">
+        <input
+                type="text"
+                name="template"
+                id="value1"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <input type="submit" class="button" value="Save"/>
 </form>
 
 
 <a>Get all Gform Templates</a>
- <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates">
- <input type="submit" value="Get All Templates" />
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates">
+    <input type="submit" value="Get All Templates"/>
 </form>
 
 
 <a>Get all Gform Schema</a>
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllSchema">
- <input type="submit" value="Get All Schema" />
+    <input type="submit" value="Get All Schema"/>
 </form>
 }

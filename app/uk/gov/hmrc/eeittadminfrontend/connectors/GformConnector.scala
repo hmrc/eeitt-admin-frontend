@@ -17,40 +17,42 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 
-
-import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue}
-import uk.gov.hmrc.play.config.ServicesConfig
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
-import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
+import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformTemplate}
+import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait GformConnector {
 
   def httpGet: HttpGet = WSHttp
+
   def httpPost: HttpPost = WSHttp
+
   def gformUrl: String
 
-def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-  httpGet.GET[Option[JsValue]](gformUrl + s"/formtemplates/$formTypeId/$version")
-}
+  def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
+    httpGet.GET[Option[JsValue]](gformUrl + s"/formtemplates/$formTypeId/$version")
+  }
 
-  def getAllGformsTemplates(implicit  hc: HeaderCarrier): Future[Option[JsValue]] = {
+  def getAllGformsTemplates(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
     httpGet.GET[Option[JsValue]](gformUrl + "/formtemplates")
   }
 
-def getAllSchema(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-  httpGet.GET[Option[JsValue]](gformUrl + "/schemas")
+  def getAllSchema(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
+    httpGet.GET[Option[JsValue]](gformUrl + "/schemas")
+  }
+
+  def saveTemplate(gformTemplate: GformTemplate)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
+    httpPost.POST[GformTemplate, Option[JsValue]](gformUrl + "/formtemplates", gformTemplate)
+  }
 }
 
-}
-
-object GformConnector extends  GformConnector with ServicesConfig{
+object GformConnector extends GformConnector with ServicesConfig {
   lazy val HttpGet = WSHttp
   lazy val HttpPost = WSHttp
 
   override def gformUrl = "http://localhost:9196/gform"
-
 }
