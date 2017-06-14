@@ -73,7 +73,6 @@ object ETMPBusiness {
 
   implicit val eitherFormat: Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = EitherResponseValueClassFormat.format
 
-  val url = "business-users-delta"
 }
 
 case class ETMPAgent(arn: String, postcode : String, countryCode: String, customers: Option[List[ETMPBusiness]]) extends Response

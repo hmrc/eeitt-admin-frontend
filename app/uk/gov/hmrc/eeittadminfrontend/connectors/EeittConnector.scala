@@ -38,12 +38,12 @@ trait EeittConnector[A] extends ServicesConfig {
 
 object EeittConnector {
 
-  private def postEEITTConnector[A: Format](url: String) : EeittConnector[A] = new EeittConnector[A] {
+  private def postEEITTConnector[A<:Deltas: Format]() : EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
       if(isLive(request))
-        httpPost.POST[A, DeltaResponse](eeittUrl + "/etmp-data/live/" + url, a).map(List(_))
+        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/live/".lines + a.url, a.value).map(List(_))
       else
-        httpPost.POST[A, DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + url, a).map(List(_))
+        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
     }
   }
 
@@ -52,12 +52,12 @@ object EeittConnector {
     isLive.contains("LIVE")
   }
 
-  implicit def agentConnector : EeittConnector[ETMPAgent] = {
-    postEEITTConnector[ETMPAgent](ETMPAgent.url)
+  implicit def agentConnector : EeittConnector[DeltaAgent] = {
+    postEEITTConnector[DeltaAgent]()
   }
 
-  implicit def businessConnector : EeittConnector[ETMPBusiness] = {
-    postEEITTConnector[ETMPBusiness](ETMPBusiness.url)
+  implicit def businessConnector : EeittConnector[DeltaBusiness] = {
+    postEEITTConnector[DeltaBusiness]()
   }
 
   implicit def arnConnector : EeittConnector[Arn] = {
@@ -79,8 +79,6 @@ object EeittConnector {
     Logger.info("REGIME")
     getEeittConnector[Regime](_.database.regime.get) // Business Only
   }
-
-
 
   private def getEeittConnector[A](getPath : A => String): EeittConnector[A] = {
     new EeittConnector[A] {

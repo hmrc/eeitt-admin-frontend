@@ -14,19 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.services
+package uk.gov.hmrc.eeittadminfrontend.models
 
-import cats.data._
-import cats.syntax.all._
-import play.api.{Configuration, Logger}
-import uk.gov.hmrc.eeittadminfrontend.models.{Email, LoginError}
+import play.api.libs.json.{Json, OFormat}
 
-class AuthService(config: Configuration) {
+trait Deltas {
 
-  val validUserList: Array[String] = config.getString("basicAuth.users").getOrElse("").split(":")
+  val value : String
+  val url: String
+}
+case class DeltaAgent(value: String) extends Deltas {
+  val url = "agents-delta"
+}
 
-  def checkUser(email: Email): Validated[LoginError, Unit] = {
-    Logger.info(email.value + "Tried to Login")
-    if(validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
-  }
+object DeltaAgent {
+
+  implicit val format: OFormat[DeltaAgent] = Json.format[DeltaAgent]
+}
+
+case class DeltaBusiness(value: String) extends Deltas {
+
+  val url = "business-users-delta"
+}
+
+object DeltaBusiness {
+
+  implicit val format: OFormat[DeltaBusiness] = Json.format[DeltaBusiness]
 }

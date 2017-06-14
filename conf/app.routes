@@ -10,6 +10,8 @@ POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.
 
 GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
+POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
+POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
 
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 

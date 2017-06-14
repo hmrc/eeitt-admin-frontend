@@ -18,10 +18,11 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ETMPAgent, ETMPBusiness}
+import uk.gov.hmrc.eeittadminfrontend.models.{DeltaAgent, DeltaBusiness, ETMPAgent, ETMPBusiness}
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -35,11 +36,11 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig : App
   }
 
   def agent() = {
-    delta[ETMPAgent]
+    delta[DeltaAgent]
   }
 
   def business() = {
-    delta[ETMPBusiness]
+    delta[DeltaBusiness]
   }
 
   private def delta[A: Format](implicit eeittConnector: EeittConnector[A]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
