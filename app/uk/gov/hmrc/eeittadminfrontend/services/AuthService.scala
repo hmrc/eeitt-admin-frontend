@@ -22,11 +22,12 @@ import play.api.Configuration
 import pureconfig.loadConfigOrThrow
 import uk.gov.hmrc.eeittadminfrontend.models.{Email, LoginError}
 
+case class AuthorisedUsers(users: String)
 class AuthService {
 
-  lazy val validUserList: Array[String] = loadConfigOrThrow[String]("basicAuth.user").split(":")
+  lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicauth").users.split(":")
 
   def checkUser(email: Email): Validated[LoginError, Unit] = {
-    if(validUserList.contains(email.value)) LoginError("Unauthorised User").invalid else ().valid
+    if(validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
   }
 }

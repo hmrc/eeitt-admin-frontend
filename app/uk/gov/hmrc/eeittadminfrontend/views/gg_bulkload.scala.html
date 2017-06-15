@@ -1,0 +1,98 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import helper._
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@import uk.gov.hmrc.eeittadminfrontend.connectors._
+@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.loadKF" class="js-form" method="POST"
+      novalidate="novalidate">
+ <h4>Load known facts</h4>
+ @CSRF.formField
+ <p>Enrolment Key:</p>
+ <p>Service:</p>
+ <fieldset class="form-field-group">
+  <input
+  type="text"
+  name="enrollmentKey.service"
+  id="service"
+  value=""
+  class="form-control form-control--block"
+  />
+  <p>Identifier:</p>
+  <input
+          type="text"
+          name="enrollmentKey.identifier"
+          id="identifier"
+          value=""
+          class="form-control form-control--block"
+  />
+<p>Value:</p>
+  <input
+          type="text"
+          name="enrollmentKey.value"
+          id="value"
+          value=""
+          class="form-control form-control--block"
+  />
+ </fieldset>
+
+<p>Verifier:</p>
+@helper.repeat(allocateEnrolment("Verifier"), min = 1) { dataField =>
+ @dataField("verifiers.key").value.map { _ =>
+   @dataField("verifiers.value").value.map { _ =>
+ }
+ }
+
+ <script src="@routes.Assets.at("javascript/addInput.js")" language="Javascript" type="text/javascript"></script>
+        <div id="dynamicInput">
+        <div style="float: left;" id="key_0">
+        @helper.inputText(dataField("verifiers.key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+        </div>
+
+        <div style="float: left;" id="value_0">
+        @helper.inputText(dataField("verifiers.value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+        </div>
+        </div>
+                <div id="newField">
+                </div>
+                <br>
+            <br>
+            <br>
+            <br>
+            <br>
+          <div style="float:right">
+              <button type="button" value="Add" onClick="addInput('dynamicInput');">Add</button>
+              <button type="button" value="remove" onClick="removeField('newField');">Delete</button>
+          </div>
+
+
+
+
+ }
+ <input type="submit" class="button" value="Load"/>
+</form>
+
+
+
+
+
+
+}
