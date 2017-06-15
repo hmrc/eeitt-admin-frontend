@@ -28,7 +28,14 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
+case class User(credId: String, userId: String, groupId: String)
 class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+
+  private val switch: Boolean = pureconfig.loadConfigOrThrow[Boolean]("feature.switch.GGLoad.value")
+
+  val listOfCredIds: Map[String, User] = if(switch){
+    Map("USER1" -> pureconfig.loadConfig[User]("feature.GGLoad.users.user1"), "USER2" -> pureconfig.loadConfig[User]("feature.GGLoad.users.user2"), "USER3" -> pureconfig.loadConfig[User]("feature.GGLoad.users.user3"))
+  } else Map.empty[String, User]
 
   val knownFactsForm = Form(
     mapping(
@@ -37,49 +44,49 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         "identifier" -> nonEmptyText,
         "value" -> nonEmptyText
       )(EnrollmentKey.apply)(EnrollmentKey.unapply),
-      "verifiers" -> mapping(
         "verifiers" -> list(mapping(
           "key" -> nonEmptyText,
           "value" -> nonEmptyText
         )(KeyValuePair.apply)(KeyValuePair.unapply))
-      )(Verifiers.apply)(Verifiers.unapply)
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
   val assignEnrollmentForm = Form(
     mapping(
-      "groupId" -> nonEmptyText,
+      "user" -> nonEmptyText,
       "enrolmentKey" -> mapping(
         "service" -> nonEmptyText,
         "identifier" -> nonEmptyText,
         "value" -> nonEmptyText
       )(EnrollmentKey.apply)(EnrollmentKey.unapply),
-      "verfifiers" -> mapping(
         "verifier" -> list(mapping(
           "key" -> nonEmptyText,
           "value" -> nonEmptyText
         )(KeyValuePair.apply)(KeyValuePair.unapply))
-      )(Verifiers.apply)(Verifiers.unapply),
-      "credId" -> nonEmptyText
     )(Enrollment.apply)(Enrollment.unapply)
   )
 
   def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
-    knownFactsForm.bindFromRequest.fold(
-      errors =>
-        Future.successful(BadRequest("Failed")),
-      success =>
-        Future.successful(Ok("Success"))
-    )
+    if(switch) {
+      knownFactsForm.bindFromRequest.fold(
+        errors =>
+          Future.successful(BadRequest("Failed")),
+        success =>
+          Future.successful(Ok("Success"))
+      )
+    } else Future.successful(BadRequest("Feature Invalid"))
   }
 
-  def assignEnrollment(): Action[AnyContent] = Authentication.async { implicit request =>
+  def assignEnrollment() = Authentication.async { implicit request =>
     assignEnrollmentForm.bindFromRequest.fold(
       errors =>
         Future.successful(BadRequest("Failed")),
-      success =>
-        Future.successful(Ok("Ok"))
+      success => {
+        val user = listOfCredIds(success.user)
+        eMACConnector.assignEnrollment(success, user).map { x =>
+          Ok(x)
+        }
+      }
     )
   }
-
 }

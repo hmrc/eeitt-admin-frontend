@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import play.api.libs.json.{JsValue, Json, OFormat}
+import play.api.Logger
+import play.api.libs.json.{JsString, JsValue, Json, OFormat}
 import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
+import uk.gov.hmrc.eeittadminfrontend.controllers.User
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, HttpPut}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class EMACConnector extends EMACConnectorHelper
 
@@ -32,28 +34,29 @@ object KeyValuePair {
 
   implicit val format = Json.format[KeyValuePair]
 }
-case class Verifiers(verifiers : List[KeyValuePair])
-
-object Verifiers {
-  implicit val format: OFormat[Verifiers] = Json.format[Verifiers]
-}
 case class EnrollmentKey(service : String, identifier: String, value: String)
-case class KnownFacts(enrollmentKey: EnrollmentKey, verifiers: Verifiers)
-case class Enrollment(groupId: String, enrollmentKey: EnrollmentKey, verifiers: Verifiers, credId: String)
+case class KnownFacts(enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
+case class Enrollment(user: String, enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
 
 trait EMACConnectorHelper {
 
   val PUT : HttpPut = WSHttp
   val POST : HttpPost = WSHttp
 
-
   //ES6
   def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
-    PUT.PUT[Verifiers, JsValue](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", knownFacts.verifiers)
+    val json = Json.parse(
+      s"""{
+        |"verifiers" : [
+        |${knownFacts.verifiers}
+        |]
+        |}""".stripMargin
+    )
+    PUT.PUT[JsValue, JsValue](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
   //ES8
-  def allocateAnEnrollment(enrollment: Enrollment)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
+  def allocateAnEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]): Future[Option[JsValue]] = {
     val allocateInsertJson: JsValue =
       Json.parse(s"""
          |{
@@ -65,12 +68,20 @@ trait EMACConnectorHelper {
          |}
       """.stripMargin)
 
-    POST.POST[JsValue, JsValue](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/${enrollment.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}?legacy-credentialId=${enrollment.credId}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
+    POST.POST[JsValue, Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
   }
 
   //ES11
-  def assignEnrollment(enrollment: Enrollment)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
-    POST.POSTEmpty(s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${enrollment.credId}/enrolments/${enrollment.enrollmentKey.value}")
+  def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
+    allocateAnEnrollment(enrollment, user).map {
+      case None => {
+        POST.POSTEmpty[Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${user.credId}/enrolments/${enrollment.enrollmentKey.value}")
+      }
+      case Some(x) =>
+        Logger.error("EMAC Connector returned an error.")
+        Future.successful(Some(JsString("Failed with this error" + x)))
+    }
   }
 
+  // Requires the Delete endPoints.
 }
