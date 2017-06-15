@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.Logger
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.Action
@@ -44,7 +45,8 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig : App
   }
 
   private def delta[A: Format](implicit eeittConnector: EeittConnector[A]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
-      Json.toJson(request.body).validate match {
+    Logger.info(Json.prettyPrint(Json.toJson(request.body.map(x => x._1 -> x._2.mkString))))
+    Json.toJson(request.body.map(x => x._1 -> x._2.mkString)).validate match {
         case JsSuccess(x, _) =>
           eeittConnector(x)
           Future.successful(Ok(x.toString))
