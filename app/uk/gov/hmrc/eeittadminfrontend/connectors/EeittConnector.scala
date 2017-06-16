@@ -31,7 +31,7 @@ trait EeittConnector[A] extends ServicesConfig {
   val httpGet : HttpGet = WSHttp
   val httpPost : HttpPost = WSHttp
 
-  val eeittUrl : String = "http://localhost:9191/eeitt"
+  val eeittUrl : String = baseUrl("eeitt")+"/eeitt"
 
   def apply(a : A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) : Future[List[Response]]
 }
@@ -116,6 +116,7 @@ object EeittConnector {
       }
     }
   }
+
 }
 
 
