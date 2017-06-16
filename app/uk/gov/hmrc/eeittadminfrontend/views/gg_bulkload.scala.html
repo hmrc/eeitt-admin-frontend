@@ -55,13 +55,13 @@
  </fieldset>
 
 <p>Verifier:</p>
-@helper.repeat(allocateEnrolment("Verifier"), min = 1) { dataField =>
+@helper.repeat(knownFactsForm("Verifier"), min = 3) { dataField =>
  @dataField("verifiers.key").value.map { _ =>
    @dataField("verifiers.value").value.map { _ =>
  }
  }
 
- <script src="@routes.Assets.at("javascript/addInput.js")" language="Javascript" type="text/javascript"></script>
+
         <div id="dynamicInput">
         <div style="float: left;" id="key_0">
         @helper.inputText(dataField("verifiers.key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
@@ -78,10 +78,7 @@
             <br>
             <br>
             <br>
-          <div style="float:right">
-              <button type="button" value="Add" onClick="addInput('dynamicInput');">Add</button>
-              <button type="button" value="remove" onClick="removeField('newField');">Delete</button>
-          </div>
+
 
 
 
@@ -90,7 +87,80 @@
  <input type="submit" class="button" value="Load"/>
 </form>
 
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.assignEnrollment" class="js-form" method="POST">
+<h4>Assign Enrolment</h4>
+@CSRF.formField
 
+
+  <p>User:</p>
+  <input
+          type="text"
+          name="user"
+          id="user"
+          value=""
+          class="form-control form-control--block"
+  />
+<p>Service:</p>
+  <input
+          type="text"
+          name="enrolmentKey.service"
+          id="enrolmentKey.service"
+          value=""
+          class="form-control form-control--block"
+  />
+  <p>Identifier:</p>
+    <input
+          type="text"
+          name="enrolmentKey.identifier"
+          id="enrolmentKey.identifier"
+          value=""
+          class="form-control form-control--block"
+  />
+
+    <p>Value:</p>
+    <input
+          type="text"
+          name="enrolmentKey.value"
+          id="enrolmentKey.value"
+          value=""
+          class="form-control form-control--block"
+  />
+ </fieldset>
+
+
+
+ <h4>Verifier</h4>
+ @helper.repeat(allocateEnrolment("Verifier"), min = 3) { dataField =>
+ @dataField("verifiers.key").value.map { _ =>
+ @dataField("verifiers.value").value.map { _ =>
+ }
+ }
+
+
+ <div id="Input">
+  <div style="float: left;" id="key_1">
+   @helper.inputText(dataField("verifiers.key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+  </div>
+
+  <div style="float: left;" id="value_1">
+   @helper.inputText(dataField("verifiers.value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+  </div>
+ </div>
+ <div id="Field">
+ </div>
+ <br>
+ <br>
+ <br>
+ <br>
+ <br>
+
+
+
+
+ }
+
+ <input type="submit" class="button" value="Assign"/>
+</form>
 
 
 
