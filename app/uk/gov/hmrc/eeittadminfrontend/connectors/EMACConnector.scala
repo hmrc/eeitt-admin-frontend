@@ -75,7 +75,7 @@ trait EMACConnectorHelper {
   def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
     allocateAnEnrollment(enrollment, user).flatMap {
       case None => {
-        POST.POSTEmpty[Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${user.credId}/enrolments/${enrollment.enrollmentKey.value}")
+        POST.POSTEmpty[Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}")
       }
       case Some(x) =>
         Logger.error("EMAC Connector returned an error.")
