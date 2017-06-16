@@ -44,7 +44,7 @@ trait EMACConnectorHelper {
   val POST : HttpPost = WSHttp
 
   //ES6
-  def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
+  def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
     val json = Json.parse(
       s"""{
         |"verifiers" : [
@@ -52,11 +52,11 @@ trait EMACConnectorHelper {
         |]
         |}""".stripMargin
     )
-    PUT.PUT[JsValue, JsValue](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
+    PUT.PUT[JsValue, Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
   //ES8
-  def allocateAnEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]): Future[Option[JsValue]] = {
+  def allocateAnEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
     val allocateInsertJson: JsValue =
       Json.parse(s"""
          |{
@@ -72,8 +72,8 @@ trait EMACConnectorHelper {
   }
 
   //ES11
-  def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
-    allocateAnEnrollment(enrollment, user).map {
+  def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+    allocateAnEnrollment(enrollment, user).flatMap {
       case None => {
         POST.POSTEmpty[Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${user.credId}/enrolments/${enrollment.enrollmentKey.value}")
       }
