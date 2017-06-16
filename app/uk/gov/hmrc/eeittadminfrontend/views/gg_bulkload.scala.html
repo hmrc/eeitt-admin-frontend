@@ -163,6 +163,48 @@
 </form>
 
 
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.deleteEndPoint" class="js-form" method="POST"
+      novalidate="novalidate">
+    <h4>DELETE </h4>
+    @CSRF.formField
+    <p>User:</p>
+    <input
+            type="text"
+            name="user"
+            id="delete.user"
+            value=""
+            class="form-control form-control--block"
+    />
+    <p>Enrolment Key:</p>
+    <p>Service:</p>
+    <fieldset class="form-field-group">
 
+        <input
+                type="text"
+                name="enrollmentKey.service"
+                id="delete.service"
+                value=""
+                class="form-control form-control--block"
+        />
+        <p>Identifier:</p>
+        <input
+                type="text"
+                name="enrollmentKey.identifier"
+                id="delete.identifier"
+                value=""
+                class="form-control form-control--block"
+        />
+        <p>Value:</p>
+        <input
+                type="text"
+                name="enrollmentKey.value"
+                id="delete.value"
+                value=""
+                class="form-control form-control--block"
+        />
+    </fieldset>
+
+    <input type="submit" class="button" value="DELETE"/>
+</form>
 
 }
