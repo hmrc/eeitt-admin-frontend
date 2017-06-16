@@ -247,18 +247,14 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val metricsController = new MetricsController(metrics)
 
-  val eeittUrl: String = s"${baseUrl("eeittadmin")}/eeitt"
 
-  val clientID: Option[String] = configuration.getString("ClientID")
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
   val googleService = new GoogleVerifier()
-  val emacConnector = new EMACConnector()
   val authController = new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
-  val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
 
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 

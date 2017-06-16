@@ -29,7 +29,7 @@ object Agent extends UserType {
     "Enrollment Agent "
   }
 
-  override val url: String = "/agent-by-gid/"
+  override val url: String = "/agent-gid/"
 }
 object Business extends UserType {
 
@@ -37,7 +37,7 @@ object Business extends UserType {
     "Enrollment Business "
   }
 
-  override val url: String = "/business-by-gid/"
+  override val url: String = "/business-gid/"
 }
 
 object UserType {

@@ -50,6 +50,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
 
 
   private def query[A:  Reads, B: Reads]()(implicit connectorA : EeittConnector[A], connectorB: EeittConnector[B]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
+    Logger.debug(request.body.map(x => x._1 -> x._2.head).toString() + "////////////")
     val json = Json.toJson(request.body.map(x => x._1 -> x._2.head))
     json.validate[A] match {
       case JsSuccess(x, _) =>
