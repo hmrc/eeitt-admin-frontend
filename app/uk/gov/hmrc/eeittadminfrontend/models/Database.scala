@@ -37,9 +37,9 @@ object ETMP extends Database {
 object Enrollments extends Database {
 
   override def toString: String = "Enrollments"
-  override val reg = Some("/business-enrollment-reg/")
-  override val agent = Some("/agent-enrollment-reg/")
-  override val regime = Some("/business-user-regime/")
+  override val reg = Some("/business-enrollment/registration-number/")
+  override val agent = Some("/agent-enrollment/arn/")
+  override val regime = Some("/business-user/regime/")
 
 }
 
