@@ -15,12 +15,16 @@
  *@
 
 @import helper._
+@import uk.gov.hmrc.eeittadminfrontend.controllers._
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 @import uk.gov.hmrc.eeittadminfrontend.connectors._
-@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
+<h3>Users</h3>
+
+@listOfCredIds.map(x => x)
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.loadKF" class="js-form" method="POST"
       novalidate="novalidate">

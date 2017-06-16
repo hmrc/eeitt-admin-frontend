@@ -38,7 +38,7 @@ case class User(credId: String, userId: String, groupId: String)
 class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit val messagesApi: MessagesApi, appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
   def getBulkloadPage = Authentication.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment)))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds)))
 
   }
 

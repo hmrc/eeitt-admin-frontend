@@ -7,8 +7,8 @@ GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /gg-bulk                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
-POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
-POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
+GET       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
+GET       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
 
 POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
 POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment
