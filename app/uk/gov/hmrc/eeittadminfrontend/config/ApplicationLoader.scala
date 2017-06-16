@@ -33,8 +33,9 @@ import play.core.SourceMapper
 import play.filters.csrf.{CSRFComponents, CSRFFilter}
 import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
+import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
-import uk.gov.hmrc.eeittadminfrontend.controllers.{AuthController, EeittAdminController, QueryController}
+import uk.gov.hmrc.eeittadminfrontend.controllers.{AuthController, BulkGGLoad, EeittAdminController, QueryController}
 import uk.gov.hmrc.eeittadminfrontend.services.{AuthService, GoogleVerifier}
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.ErrorAuditingSettings
@@ -246,7 +247,7 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val metricsController = new MetricsController(metrics)
 
-  val clientID = configuration.getString("ClientID")
+
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
@@ -257,7 +258,7 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, eeittAdminController, assets)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, bulkGGController, eeittAdminController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
