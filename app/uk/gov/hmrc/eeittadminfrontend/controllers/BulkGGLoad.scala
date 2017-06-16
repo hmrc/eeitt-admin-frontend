@@ -29,6 +29,7 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
+case class Switch(value: Boolean)
 case class User(credId: String, userId: String, groupId: String)
 
 class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit val messagesApi: MessagesApi, appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
@@ -38,7 +39,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
 
   }
 
-  private val switch: Boolean = pureconfig.loadConfigOrThrow[Boolean]("feature.switch.GGLoad.value")
+  private val switch: Boolean = pureconfig.loadConfigOrThrow[Switch]("feature.GGLoad.switch").value
 
   val listOfCredIds: Map[String, User] = if(switch){
     Map("USER1" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user1"), "USER2" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user2"), "USER3" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user3"))
