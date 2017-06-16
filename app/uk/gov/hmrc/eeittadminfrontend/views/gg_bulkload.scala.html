@@ -22,9 +22,6 @@
 @(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
-<h3>Users</h3>
-
-@listOfCredIds.map(x => x)
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.loadKF" class="js-form" method="POST"
       novalidate="novalidate">
@@ -90,6 +87,27 @@
  }
  <input type="submit" class="button" value="Load"/>
 </form>
+
+
+<h3>Users</h3>
+
+<h4>User1</h4>
+<p>to select this user input USER1 into the user box</p>
+CredId : @listOfCredIds("USER1").credId <br/>
+UserId : @listOfCredIds("USER1").userId <br/>
+GroupId : @listOfCredIds("USER1").groupId <br/>
+
+<h4>User2</h4>
+<p>to select this user input USER2 into the user box</p>
+CredId : @listOfCredIds("USER2").credId <br/>
+UserId : @listOfCredIds("USER2").userId <br/>
+GroupId : @listOfCredIds("USER2").groupId <br/>
+
+<h4>User3</h4>
+<p>to select this user input USER3 into the user box</p>
+CredId : @listOfCredIds("USER3").credId <br/>
+UserId : @listOfCredIds("USER3").userId <br/>
+GroupId : @listOfCredIds("USER3").groupId <br/>
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.assignEnrollment" class="js-form" method="POST">
 <h4>Assign Enrolment</h4>
@@ -166,6 +184,26 @@
  <input type="submit" class="button" value="Assign"/>
 </form>
 
+
+<h3>Users</h3>
+
+<h4>User1</h4>
+<p>to select this user input USER1 into the user box</p>
+CredId : @listOfCredIds("USER1").credId <br/>
+UserId : @listOfCredIds("USER1").userId <br/>
+GroupId : @listOfCredIds("USER1").groupId <br/>
+
+<h4>User2</h4>
+<p>to select this user input USER2 into the user box</p>
+CredId : @listOfCredIds("USER2").credId <br/>
+UserId : @listOfCredIds("USER2").userId <br/>
+GroupId : @listOfCredIds("USER2").groupId <br/>
+
+<h4>User3</h4>
+<p>to select this user input USER3 into the user box</p>
+CredId : @listOfCredIds("USER3").credId <br/>
+UserId : @listOfCredIds("USER3").userId <br/>
+GroupId : @listOfCredIds("USER3").groupId <br/>
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.deleteEndPoint" class="js-form" method="POST"
       novalidate="novalidate">
