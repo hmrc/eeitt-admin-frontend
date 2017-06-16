@@ -22,7 +22,7 @@ import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, HttpPut}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpPost, HttpPut}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,6 +34,7 @@ object KeyValuePair {
 
   implicit val format = Json.format[KeyValuePair]
 }
+case class Delete(user: String, enrollmentKey: EnrollmentKey)
 case class EnrollmentKey(service : String, identifier: String, value: String)
 case class KnownFacts(enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
 case class Enrollment(user: String, enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
@@ -42,6 +43,11 @@ trait EMACConnectorHelper {
 
   val PUT : HttpPut = WSHttp
   val POST : HttpPost = WSHttp
+  val DELETE : HttpDelete = WSHttp
+
+  val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/"
+  val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
+  val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
   //ES6
   def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
@@ -52,7 +58,7 @@ trait EMACConnectorHelper {
         |]
         |}""".stripMargin
     )
-    PUT.PUT[JsValue, Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
+    PUT.PUT[JsValue, Option[JsValue]](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
   //ES8
@@ -68,14 +74,14 @@ trait EMACConnectorHelper {
          |}
       """.stripMargin)
 
-    POST.POST[JsValue, Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
+    POST.POST[JsValue, Option[JsValue]](s"$ES8url${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
   }
 
   //ES11
   def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
     allocateAnEnrollment(enrollment, user).flatMap {
       case None => {
-        POST.POSTEmpty[Option[JsValue]](s"http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/${user.credId}/enrolments/${enrollment.enrollmentKey.value}")
+        POST.POSTEmpty[Option[JsValue]](s"$ES11url${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}")
       }
       case Some(x) =>
         Logger.error("EMAC Connector returned an error.")
@@ -83,5 +89,18 @@ trait EMACConnectorHelper {
     }
   }
 
-  // Requires the Delete endPoints.
+  //ES7
+  def removeUnallocated(enrollment: EnrollmentKey)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+    DELETE.DELETE[Option[JsValue]](s"$ES6url${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+  }
+
+  //ES9
+  def deallocateEnrollment(enrollment: EnrollmentKey, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+    DELETE.DELETE[Option[JsValue]](s"$ES8url${user.groupId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+  }
+
+  //ES12
+  def deassignEnrollment(enrollment: EnrollmentKey, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+    DELETE.DELETE[Option[JsValue]](s"$ES11url${user.credId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+  }
 }

@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
@@ -26,6 +28,7 @@ import uk.gov.hmrc.eeittadminfrontend.connectors._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -74,6 +77,17 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
     )(Enrollment.apply)(Enrollment.unapply)
   )
 
+  val deleteForm = Form(
+    mapping(
+      "user" -> nonEmptyText,
+      "enrollmentKey" -> mapping(
+        "service" -> nonEmptyText,
+        "identifier" -> nonEmptyText,
+        "value" -> nonEmptyText
+      )(EnrollmentKey.apply)(EnrollmentKey.unapply)
+    )(Delete.apply)(Delete.unapply)
+  )
+
   def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
     if(switch) {
       knownFactsForm.bindFromRequest.fold(
@@ -105,5 +119,52 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         }
       }
     )
+  }
+
+  def deleteEndPoint(): Action[AnyContent] = Authentication.async { implicit request =>
+    deleteForm.bindFromRequest.fold(
+      errors =>
+        Future.successful(BadRequest("Ok")),
+      success => {
+        val user = listOfCredIds(success.user)
+        for{
+          result <- startDelete(success.enrollmentKey, user)
+        } yield {
+          if(result) {
+            Ok("DELETED")
+          } else BadRequest("Failed Check logs")
+        }
+      }
+    )
+  }
+
+  def startDelete(enrollmentKey: EnrollmentKey, user: User)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    eMACConnector.deassignEnrollment(enrollmentKey, user).flatMap {
+      case None =>
+        deallocate(enrollmentKey, user)
+      case Some(x) =>
+        Logger.error(Json.prettyPrint(x))
+        Future.successful(false)
+    }
+  }
+
+  def deallocate(enrollmentKey: EnrollmentKey, user: User)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  eMACConnector.deallocateEnrollment(enrollmentKey, user).flatMap{
+    case None =>
+      removeKf(enrollmentKey)
+    case Some(x) =>
+      Logger.error(Json.prettyPrint(x))
+      Future.successful(false)
+  }
+  }
+
+  def removeKf(enrollmentKey: EnrollmentKey)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    eMACConnector.removeUnallocated(enrollmentKey).map{
+      case None =>
+        true
+      case Some(x) =>
+        Logger.error(Json.prettyPrint(x))
+        false
+    }
   }
 }
