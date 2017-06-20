@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
+import play.api.libs.json.Format
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -37,6 +38,48 @@ trait EeittConnector[A] extends ServicesConfig {
 
 object EeittConnector {
 
+  private def postEEITTConnector[A<:Deltas: Format]() : EeittConnector[A] = new EeittConnector[A] {
+    override def apply(a: A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
+      if(isLive(request))
+        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/live/".lines + a.url, a.value).map(List(_))
+      else
+        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
+    }
+  }
+
+  private def isLive(implicit request: Request[Map[String, Seq[String]]]) : Boolean = {
+    val isLive = request.body.getOrElse("ISLIVE", Seq("DRY-RUN"))
+    isLive.contains("LIVE")
+  }
+
+  implicit def agentConnector : EeittConnector[DeltaAgent] = {
+    postEEITTConnector[DeltaAgent]()
+  }
+
+  implicit def businessConnector : EeittConnector[DeltaBusiness] = {
+    postEEITTConnector[DeltaBusiness]()
+  }
+
+  implicit def arnConnector : EeittConnector[Arn] = {
+    Logger.info("ARN")
+    getEeittConnector[Arn](_.database.agent.get)
+  }
+
+  implicit def regConnector: EeittConnector[RegistrationNumber] = {
+    Logger.info("REG SEARCH")
+    getEeittConnector[RegistrationNumber](_.database.reg.get)
+  }
+
+  implicit def groupIdConnector: EeittConnector[GroupId] = {
+    Logger.info("GROUP")
+    getEeittConnector[GroupId](_.userType.url)
+  }
+
+  implicit def regimeConnector: EeittConnector[Regime] = {
+    Logger.info("REGIME")
+    getEeittConnector[Regime](_.database.regime.get) // Business Only
+  }
+
   private def getEeittConnector[A](getPath : A => String): EeittConnector[A] = {
     new EeittConnector[A] {
 
@@ -44,7 +87,7 @@ object EeittConnector {
         def call[B](a : String, b : B): Future[List[Response]] = {
           b match {
             case ETMP =>
-              httpGet.GET[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]](eeittUrl + getPath(value) + a).map{
+              httpGet.GET[Either[List[ETMPBusiness], List[ETMPAgent]]](eeittUrl + getPath(value) + a).map{
                 case Left(x) => x
                 case Right(y) => y
               }
@@ -74,25 +117,6 @@ object EeittConnector {
     }
   }
 
-  implicit def arnConnector : EeittConnector[Arn] = {
-    Logger.info("ARN")
-    getEeittConnector[Arn](_.database.agent.get)
-  }
-
-  implicit def regConnector: EeittConnector[RegistrationNumber] = {
-    Logger.info("REG SEARCH")
-    getEeittConnector[RegistrationNumber](_.database.reg.get)
-  }
-
-  implicit def groupIdConnector: EeittConnector[GroupId] = {
-    Logger.info("GROUP")
-    getEeittConnector[GroupId](_.userType.url)
-  }
-
-  implicit def regimeConnector: EeittConnector[Regime] = {
-    Logger.info("REGIME")
-    getEeittConnector[Regime](_.database.regime.get) // Business Only
-  }
 }
 
 
