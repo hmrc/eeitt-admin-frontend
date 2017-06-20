@@ -70,7 +70,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         "identifier" -> nonEmptyText,
         "value" -> nonEmptyText
       )(EnrollmentKey.apply)(EnrollmentKey.unapply),
-        "verifier" -> list(mapping(
+        "verifiers" -> list(mapping(
           "key" -> nonEmptyText,
           "value" -> nonEmptyText
         )(KeyValuePair.apply)(KeyValuePair.unapply))
@@ -89,11 +89,13 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
   )
 
   def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
+    Logger.debug("ERROR ::: " + request.body.toString)
     if(switch) {
       knownFactsForm.bindFromRequest.fold(
         errors =>
           Future.successful(BadRequest("Failed")),
         success => {
+          Logger.debug(success.verifiers.toString+ "///////////////////////////")
           eMACConnector.loadKF(success).map {
             case None =>
               Ok("Success")

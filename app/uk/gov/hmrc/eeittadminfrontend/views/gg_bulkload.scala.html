@@ -55,23 +55,14 @@
   />
  </fieldset>
 
+
 <p>Verifier:</p>
-@helper.repeat(knownFactsForm("Verifier"), min = 3) { dataField =>
- @dataField("verifiers.key").value.map { _ =>
-   @dataField("verifiers.value").value.map { _ =>
- }
- }
+@helper.repeat(knownFactsForm("verifiers"), min = 3) { dataField =>
 
 
-        <div id="dynamicInput">
-        <div style="float: left;" id="key_0">
-        @helper.inputText(dataField("verifiers.key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-        </div>
+        @helper.inputText(dataField("key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
 
-        <div style="float: left;" id="value_0">
-        @helper.inputText(dataField("verifiers.value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-        </div>
-        </div>
+        @helper.inputText(dataField("value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
                 <div id="newField">
                 </div>
                 <br>
@@ -152,22 +143,12 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
 
 
  <h4>Verifier</h4>
- @helper.repeat(allocateEnrolment("Verifier"), min = 3) { dataField =>
- @dataField("verifiers.key").value.map { _ =>
- @dataField("verifiers.value").value.map { _ =>
- }
- }
+ @helper.repeat(allocateEnrolment("verifiers"), min = 3) { dataField =>
 
 
- <div id="Input">
-  <div style="float: left;" id="key_1">
-   @helper.inputText(dataField("verifiers.key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-  </div>
+   @helper.inputText(dataField("key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
 
-  <div style="float: left;" id="value_1">
-   @helper.inputText(dataField("verifiers.value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-  </div>
- </div>
+   @helper.inputText(dataField("value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
  <div id="Field">
  </div>
  <br>

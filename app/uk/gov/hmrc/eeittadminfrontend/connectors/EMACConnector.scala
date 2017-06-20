@@ -49,15 +49,41 @@ trait EMACConnectorHelper {
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
   val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
+  def getJson(list: List[KeyValuePair]): JsValue = {
+    if (list.size == 3) {
+      Json.parse(
+        s"""{
+         |"verifiers" : [
+         |{"${list.head.key}" : "${list.head.value}"},
+         |{"${list(1).key}" : "${list(1).value}"},
+         |{"${list(2).key}" : "${list(2).value}"}
+         |]
+         |}""".stripMargin
+    )
+  } else if(list.size == 2){
+      Json.parse(
+        s"""{
+           |"verifiers" : [
+           |{"${list.head.key}" : "${list.head.value}"},
+           |{"${list(1).key}" : "${list(1).value}"}
+           |]
+           |}""".stripMargin
+      )
+    } else {
+      Json.parse(
+        s"""{
+           |"verifiers" : [
+           |{"${list.head.key}" : "${list.head.value}"}
+           |]
+           |}""".stripMargin
+      )
+    }
+    }
+
   //ES6
   def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
-    val json = Json.parse(
-      s"""{
-        |"verifiers" : [
-        |${knownFacts.verifiers}
-        |]
-        |}""".stripMargin
-    )
+    val json = getJson(knownFacts.verifiers)
+
     PUT.PUT[JsValue, Option[JsValue]](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
@@ -68,9 +94,7 @@ trait EMACConnectorHelper {
          |{
          |    "friendlyName": "friendly name",
          |    "type": "principal",
-         |    "verifiers": [
-         |       ${enrollment.verifiers}
-         |    ]
+         |    ${getJson(enrollment.verifiers).toString.drop(1).dropRight(1)}
          |}
       """.stripMargin)
 
