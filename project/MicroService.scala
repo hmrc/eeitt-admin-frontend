@@ -27,7 +27,7 @@ trait MicroService {
   lazy val deltaAutomation = ProjectRef(uri("git://github.com/hmrc/delta-automation#master"), "delta-automation")
 
   lazy val microservice = Project(appName, file("."))
-    .dependsOn(eeittLogReporting, deltaAutomation)
+    .aggregate(eeittLogReporting, deltaAutomation)
     .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)

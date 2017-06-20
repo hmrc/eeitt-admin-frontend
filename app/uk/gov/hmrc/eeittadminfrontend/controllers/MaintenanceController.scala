@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Action
+import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -26,10 +29,29 @@ import scala.concurrent.Future
 
 class MaintenanceController(val authConnector: AuthConnector)(implicit val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  val args : Array[String] = Array.empty[String]
+  val accessTokenForm = Form(
+    "accessToken" -> nonEmptyText
+  )
 
   def doGoogleSheets = Action.async { implicit request =>
-    //GoogleApi.main(args)
-    Future.successful(Ok("Triggered"))
+    accessTokenForm.bindFromRequest.fold(
+      errors => Future.successful(BadRequest("Failed")),
+      success => {
+        val args: Array[String] = Array(success)
+        uk.gov.hmrc.eeittdashboard.main.GoogleApi.main(args) //TODO have to validate Locally.
+        Future.successful(Ok("Triggered"))
+      }
+    )
+  }
+
+  def doDeltaAutomation = Authentication.async {
+    accessTokenForm.bindFromRequest.fold(
+      errors => Future.successful(BadRequest("Failed")),
+      success => {
+        val args: Array[String] = Array(success)
+        //uk.gov.hmrc.eeitt.deltaAutomation.FileTransformationAutomated.main(args) //TODO requires rewrite
+        Future.successful(Ok("Passed"))
+      }
+    )
   }
 }
