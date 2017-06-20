@@ -100,7 +100,7 @@ trait EMACConnectorHelper {
 
     val json = getJson(knownFacts.verifiers)
 
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
+    PUT.PUT[JsValue, Option[JsValue]](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
   //ES8
