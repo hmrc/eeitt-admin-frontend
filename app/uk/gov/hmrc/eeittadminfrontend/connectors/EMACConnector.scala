@@ -22,7 +22,7 @@ import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpPost, HttpPut}
+import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,9 +54,17 @@ trait EMACConnectorHelper {
       Json.parse(
         s"""{
          |"verifiers" : [
-         |{"${list.head.key}" : "${list.head.value}"},
-         |{"${list(1).key}" : "${list(1).value}"},
-         |{"${list(2).key}" : "${list(2).value}"}
+         |{
+         |"key" : ${list.head.key}",
+         | "value" : "${list.head.value}"
+         | },
+         |{
+         |"key" : "${list(1).key}",
+         |"value" : "${list(1).value}"
+         |},
+         |{"key" : "${list(2).key}",
+         | "value": "${list(2).value}"
+         | }
          |]
          |}""".stripMargin
     )
@@ -64,8 +72,12 @@ trait EMACConnectorHelper {
       Json.parse(
         s"""{
            |"verifiers" : [
-           |{"${list.head.key}" : "${list.head.value}"},
-           |{"${list(1).key}" : "${list(1).value}"}
+           |{"key" : "${list.head.key}",
+           | "value" : "${list.head.value}"},
+           |{
+           |"key" : "${list(1).key}",
+           | "value" : "${list(1).value}"
+           | }
            |]
            |}""".stripMargin
       )
@@ -73,7 +85,10 @@ trait EMACConnectorHelper {
       Json.parse(
         s"""{
            |"verifiers" : [
-           |{"${list.head.key}" : "${list.head.value}"}
+           |{
+           |"key" : "${list.head.key}",
+           | "value" : "${list.head.value}"
+           | }
            |]
            |}""".stripMargin
       )
@@ -82,9 +97,10 @@ trait EMACConnectorHelper {
 
   //ES6
   def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+
     val json = getJson(knownFacts.verifiers)
 
-    PUT.PUT[JsValue, Option[JsValue]](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json)
   }
 
   //ES8
