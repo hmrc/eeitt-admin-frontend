@@ -33,9 +33,10 @@
 
             @CSRF.formField
 
-            <select id="database_arn" class="drop-down" name="UserDB" onchange="return changeId(); ">
+            <select id="database_arn" class="drop-down" name="UserDB" onclick="return changeId(); ">
                 <option value="ARN"> ARN</option>
                 <option value="Business Users"> Business Registration</option>
+
             </select>
 
             <select id="database" class="drop-down" name="database">
@@ -73,7 +74,7 @@
                 <option value="Business"> Business</option>
             </select>
 
-            <select id="criteria" class="drop-down" name="selectsomething" onchange="return changeName();">
+            <select id="criteria" class="drop-down" name="selectsomething" onclick="return changeName();">
                 <option value="groupid"> Group ID</option>
                 <option value="regime"> Regime</option>
             </select>
