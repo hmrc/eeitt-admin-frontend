@@ -55,7 +55,7 @@ trait EMACConnectorHelper {
         s"""{
          |"verifiers" : [
          |{
-         |"key" : "${list.head.key}",
+         |"key" : ${list.head.key}",
          | "value" : "${list.head.value}"
          | },
          |{
