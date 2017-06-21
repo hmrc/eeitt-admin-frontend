@@ -48,8 +48,9 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig : App
     Logger.info(Json.prettyPrint(Json.toJson(request.body.map(x => x._1 -> x._2.mkString))))
     Json.toJson(request.body.map(x => x._1 -> x._2.mkString)).validate match {
         case JsSuccess(x, _) =>
-          eeittConnector(x)
-          Future.successful(Ok(x.toString))
+          eeittConnector(x).map{ y =>
+            Ok(y.toString)
+          }
         case JsError(err) =>
           Future.successful(BadRequest(err.toString))
       }
