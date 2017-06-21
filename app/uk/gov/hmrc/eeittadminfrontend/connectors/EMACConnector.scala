@@ -55,7 +55,7 @@ trait EMACConnectorHelper {
         s"""{
          |"verifiers" : [
          |{
-         |"key" : ${list.head.key}",
+         |"key" : "${list.head.key}",
          | "value" : "${list.head.value}"
          | },
          |{
@@ -141,6 +141,8 @@ trait EMACConnectorHelper {
 
   def result(response: HttpResponse): Option[JsValue] = {
     response.status match {
+      case 204 =>
+        None
       case 201 =>
         None
       case _ =>
