@@ -119,14 +119,14 @@ trait EMACConnectorHelper {
          |}
       """.stripMargin)
 
-    POST.POST[JsValue, HttpResponse](s"$ES8url${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
+    POST.POST[JsValue, HttpResponse](s"$ES8url${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}?legacy-credentialId=${user.credId}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
   }
 
   //ES11
   def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
     allocateAnEnrollment(enrollment, user).map(result).flatMap {
       case None => {
-        POST.POSTEmpty[HttpResponse](s"$ES11url${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}?legacy-credentialId=${user.credId}").map(result).map{
+        POST.POSTEmpty[HttpResponse](s"$ES11url${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}").map(result).map{
           case None => None
           case x =>
             Logger.error("Emac Connector returned an error for assign Enrollment")
