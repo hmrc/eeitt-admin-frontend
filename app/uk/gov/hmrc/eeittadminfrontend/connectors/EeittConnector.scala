@@ -41,11 +41,9 @@ object EeittConnector {
   private def postEEITTConnector[A<:Deltas: Format]() : EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
       if(isLive(request)) {
-        Logger.debug("//////////" + a.value +" LIVE ")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
       } else
       {
-        Logger.debug("//////////" + a.value)
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
 
       }
