@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.frontend.auth.TaxRegime
 
 trait Response
 
-case class DeltaResponse(message: String, added: Int, changed: Int, deleted: Int) extends Response
+case class DeltaResponse(message: String, Added: Int, changed: Int, deleted: Option[Int]) extends Response
 
 object DeltaResponse {
 
