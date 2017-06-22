@@ -18,11 +18,12 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 
-@()(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@(clientID: String)(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
+<meta name="google-signin-client_id" content=@clientID >
 
 <title>Maintenance Scripts</title>
 <div class="text-center">
@@ -30,15 +31,47 @@
     <br>
     <div class="col-md-4 col-md-offset-2">
         <h3>Google Spreadsheet</h3>
-        <button class="glyphicon glyphicon-play btn" action="#" ></button>
+        <button class="glyphicon glyphicon-play btn" action="#" onclick="getAccessToken();"></button>
     </div>
     <div class="col-md-4">
         <h3>Process Delta</h3>
         <button class="glyphicon glyphicon-upload btn" action=""></button>
     </div>
 </div>
+<script src="https://apis.google.com/js/platform.js?onload=onLoad" async defer></script>
+
+<script async defer src="https://apis.google.com/js/api.js"></script>
 
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+<script>
 
+    function onLoad() {
+      gapi.load('auth2', function() {
+        gapi.auth2.init();
+      });
+    }
+
+    function morePermissions() {
+    var options = new gapi.auth2.SigninOptionsBuilder(
+        {'scope' : 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'});
+
+        googleUser = gapi.auth2.getAuthInstance().currentUser.get();
+        googleUser.grant(options).then(
+        function(success){
+        console.log("success");
+        },
+        function(fail){
+        alert("failed");
+        }
+        );
+    }
+
+    function getAccessToken() {
+    morePermissions()
+    var accessToken = gapi.auth2.getAuthInstance().currentUser.get();
+    var bob = accessToken.getAuthResponse(true).access_token;
+    console.log(bob);
+    }
+</script>
 }
