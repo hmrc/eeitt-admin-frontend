@@ -24,6 +24,7 @@ import play.api.mvc.{Action, BodyParser, Request, RequestHeader}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.ClientID
 import uk.gov.hmrc.eeittadminfrontend.models.{Arn, GroupId, Regime, RegistrationNumber}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -32,12 +33,18 @@ import scala.concurrent.Future
 
 class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig : AppConfig) extends FrontendController {
 
+  val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
+
   def goToQuery = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))//uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }
 
   def goToDelta = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+  }
+
+  def goToMaintenance = Authentication.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.maintenance(clientID.id)))
   }
 
   def UidQuery = {
