@@ -40,15 +40,21 @@ object EeittConnector {
 
   private def postEEITTConnector[A<:Deltas: Format]() : EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
-      if(isLive(request))
-        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
-      else
-        httpPost.POST[String, DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
+      if(isLive(request)) {
+        Logger.debug("//////////" + a.value +" LIVE ")
+        httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
+      } else
+      {
+        Logger.debug("//////////" + a.value)
+        httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
+
+      }
     }
   }
 
   private def isLive(implicit request: Request[Map[String, Seq[String]]]) : Boolean = {
-    val isLive = request.body.getOrElse("ISLIVE", Seq("DRY-RUN"))
+    val isLive = request.body.getOrElse("isLive", Seq("DRY-RUN"))
+    Logger.debug(isLive.toString)
     isLive.contains("LIVE")
   }
 
