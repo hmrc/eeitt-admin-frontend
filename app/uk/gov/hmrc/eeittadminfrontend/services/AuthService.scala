@@ -18,6 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.services
 
 import cats.data._
 import cats.syntax.all._
+import play.api.{Configuration, Logger}
 import play.api.Configuration
 import pureconfig.loadConfigOrThrow
 import uk.gov.hmrc.eeittadminfrontend.models.{Email, LoginError}

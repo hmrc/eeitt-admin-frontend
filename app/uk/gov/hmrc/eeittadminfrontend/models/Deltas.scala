@@ -16,9 +16,28 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-case class Delta(value : String) {
+import play.api.libs.json.{Json, OFormat}
 
-  override def toString: String = {
-    "BOB"
-  }
+trait Deltas {
+
+  val value : String
+  val url: String
+}
+case class DeltaAgent(value: String) extends Deltas {
+  val url = "agents-delta"
+}
+
+object DeltaAgent {
+
+  implicit val format: OFormat[DeltaAgent] = Json.format[DeltaAgent]
+}
+
+case class DeltaBusiness(value: String) extends Deltas {
+
+  val url = "business-users-delta"
+}
+
+object DeltaBusiness {
+
+  implicit val format: OFormat[DeltaBusiness] = Json.format[DeltaBusiness]
 }

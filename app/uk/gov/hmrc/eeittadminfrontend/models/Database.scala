@@ -30,16 +30,16 @@ trait Database {
 object ETMP extends Database {
 
   override def toString: String = "ETMP"
-  override val reg = Some("/get-business-users/")
-  override val agent = Some("/get-agents/")
+  override val reg = Some("/business-users/")
+  override val agent = Some("/agents/")
 }
 
 object Enrollments extends Database {
 
   override def toString: String = "Enrollments"
-  override val reg = Some("/business-enrollment-by-reg/")
-  override val agent = Some("/agent-enrollment-by-reg/")
-  override val regime = Some("/business-user-by-regime/")
+  override val reg = Some("/business-enrollment/registration-number/")
+  override val agent = Some("/agent-enrollment/arn/")
+  override val regime = Some("/business-user/regime/")
 
 }
 

@@ -30,7 +30,7 @@
 <div class="g-signin2" data-onsuccess="onSignIn" ></div>
 
 
-<a href="#" onclick="signOut();">Sign out</a>
+<a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.signOut" onclick="signOut();">Sign out</a>
 
 @form(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.checkCredentials, 'name -> "LoginForm"){
     @loginForm.globalError.map { error =>
