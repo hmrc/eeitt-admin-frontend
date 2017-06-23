@@ -22,18 +22,26 @@ import uk.gov.hmrc.play.frontend.auth.TaxRegime
 
 trait Response
 
+case class DeltaResponse(message: String, Added: Int, changed: Int, deleted: Option[Int]) extends Response
+
+object DeltaResponse {
+
+  implicit val format: OFormat[DeltaResponse] = Json.format[DeltaResponse]
+
+}
+
 case class FailureResponse(reason:String) extends Response
 
 object EitherResponseValueClassFormat {
 
-  def format : Format[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]] = new Format[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]]{
+  def format : Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = new Format[Either[List[ETMPBusiness], List[ETMPAgent]]]{
     override def reads(json: JsValue) = {
      println(Json.prettyPrint(json))
-      json.validate[List[ETMPResponseBusiness]] match {
+      json.validate[List[ETMPBusiness]] match {
         case JsSuccess(x, _) =>
           JsSuccess(Left(x))
         case JsError(error) =>
-          json.validate[List[ETMPResponseAgent]] match {
+          json.validate[List[ETMPAgent]] match {
             case JsSuccess(y, _) =>
               JsSuccess(Right(y))
             case JsError(err) =>
@@ -43,7 +51,7 @@ object EitherResponseValueClassFormat {
       }
     }
 
-    override def writes(o: Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]) = {
+    override def writes(o: Either[List[ETMPBusiness], List[ETMPAgent]]) = {
       o match {
         case Left(x) => Json.toJson(x)
         case Right(y) => Json.toJson(y)
@@ -57,21 +65,23 @@ object FailureResponse {
   implicit val format : Format[FailureResponse] = Json.format[FailureResponse]
 }
 
-case class ETMPResponseBusiness(registrationNumber: String, postcode: Option[String], countryCode: Option[String]) extends Response
+case class ETMPBusiness(registrationNumber: String, postcode: Option[String], countryCode: Option[String]) extends Response
 
-object ETMPResponseBusiness {
+object ETMPBusiness {
 
-  implicit val format : Format[ETMPResponseBusiness] = Json.format[ETMPResponseBusiness]
+  implicit val format : Format[ETMPBusiness] = Json.format[ETMPBusiness]
 
-  implicit val eitherFormat: Format[Either[List[ETMPResponseBusiness], List[ETMPResponseAgent]]] = EitherResponseValueClassFormat.format
+  implicit val eitherFormat: Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = EitherResponseValueClassFormat.format
 
 }
 
-case class ETMPResponseAgent(arn: String, postcode : String, countryCode: String, customers: Option[List[ETMPResponseBusiness]]) extends Response
+case class ETMPAgent(arn: String, postcode : String, countryCode: String, customers: Option[List[ETMPBusiness]]) extends Response
 
-object ETMPResponseAgent {
+object ETMPAgent {
 
-  implicit val format : Format[ETMPResponseAgent] = Json.format[ETMPResponseAgent]
+  implicit val format : Format[ETMPAgent] = Json.format[ETMPAgent]
+
+  val url = "agents-delta"
 
 }
 

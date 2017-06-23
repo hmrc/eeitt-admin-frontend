@@ -1,0 +1,241 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import helper._
+@import uk.gov.hmrc.eeittadminfrontend.controllers._
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@import uk.gov.hmrc.eeittadminfrontend.connectors._
+@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.loadKF" class="js-form" method="POST"
+      novalidate="novalidate">
+ <h4>Load known facts</h4>
+ @CSRF.formField
+ <p>Enrolment Key:</p>
+ <p>Service:</p>
+ <fieldset class="form-field-group">
+  <input
+  type="text"
+  name="enrollmentKey.service"
+  id="service"
+  value=""
+  class="form-control form-control--block"
+  />
+  <p>Identifier:</p>
+  <input
+          type="text"
+          name="enrollmentKey.identifier"
+          id="identifier"
+          value=""
+          class="form-control form-control--block"
+  />
+<p>Value:</p>
+  <input
+          type="text"
+          name="enrollmentKey.value"
+          id="value"
+          value=""
+          class="form-control form-control--block"
+  />
+ </fieldset>
+
+
+<p>Verifier:</p>
+@helper.repeat(knownFactsForm("verifiers"), min = 3) { dataField =>
+
+
+        @helper.inputText(dataField("key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+
+        @helper.inputText(dataField("value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+                <div id="newField">
+                </div>
+                <br>
+            <br>
+            <br>
+            <br>
+            <br>
+
+
+
+
+
+ }
+ <input type="submit" class="button" value="Load"/>
+</form>
+
+
+<h3>Users</h3>
+
+<h4>User1</h4>
+<p>to select this user input USER1 into the user box</p>
+CredId : @listOfCredIds("USER1").credId <br/>
+UserId : @listOfCredIds("USER1").userId <br/>
+GroupId : @listOfCredIds("USER1").groupId <br/>
+
+<h4>User2</h4>
+<p>to select this user input USER2 into the user box</p>
+CredId : @listOfCredIds("USER2").credId <br/>
+UserId : @listOfCredIds("USER2").userId <br/>
+GroupId : @listOfCredIds("USER2").groupId <br/>
+
+<h4>User3</h4>
+<p>to select this user input USER3 into the user box</p>
+CredId : @listOfCredIds("USER3").credId <br/>
+UserId : @listOfCredIds("USER3").userId <br/>
+GroupId : @listOfCredIds("USER3").groupId <br/>
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.assignEnrollment" class="js-form" method="POST">
+<h4>Assign Enrolment</h4>
+@CSRF.formField
+
+
+  <p>User:</p>
+  <input
+          type="text"
+          name="user"
+          id="user"
+          value=""
+          class="form-control form-control--block"
+  />
+    <p>Friendly Name:</p>
+    <input
+            type="text"
+            name="friendlyName"
+            id="friendlyName"
+            value=""
+            class="form-control form-control--block"
+    />
+<p>Service:</p>
+  <input
+          type="text"
+          name="enrolmentKey.service"
+          id="enrolmentKey.service"
+          value=""
+          class="form-control form-control--block"
+  />
+  <p>Identifier:</p>
+    <input
+          type="text"
+          name="enrolmentKey.identifier"
+          id="enrolmentKey.identifier"
+          value=""
+          class="form-control form-control--block"
+  />
+
+    <p>Value:</p>
+    <input
+          type="text"
+          name="enrolmentKey.value"
+          id="enrolmentKey.value"
+          value=""
+          class="form-control form-control--block"
+  />
+ </fieldset>
+
+
+
+ <h4>Verifier</h4>
+ @helper.repeat(allocateEnrolment("verifiers"), min = 3) { dataField =>
+
+
+   @helper.inputText(dataField("key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+
+   @helper.inputText(dataField("value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
+ <div id="Field">
+ </div>
+ <br>
+ <br>
+ <br>
+ <br>
+ <br>
+
+
+
+
+ }
+
+ <input type="submit" class="button" value="Assign"/>
+</form>
+
+
+<h3>Users</h3>
+
+<h4>User1</h4>
+<p>to select this user input USER1 into the user box</p>
+CredId : @listOfCredIds("USER1").credId <br/>
+UserId : @listOfCredIds("USER1").userId <br/>
+GroupId : @listOfCredIds("USER1").groupId <br/>
+
+<h4>User2</h4>
+<p>to select this user input USER2 into the user box</p>
+CredId : @listOfCredIds("USER2").credId <br/>
+UserId : @listOfCredIds("USER2").userId <br/>
+GroupId : @listOfCredIds("USER2").groupId <br/>
+
+<h4>User3</h4>
+<p>to select this user input USER3 into the user box</p>
+CredId : @listOfCredIds("USER3").credId <br/>
+UserId : @listOfCredIds("USER3").userId <br/>
+GroupId : @listOfCredIds("USER3").groupId <br/>
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.deleteEndPoint" class="js-form" method="POST"
+      novalidate="novalidate">
+    <h4>DELETE </h4>
+    @CSRF.formField
+    <p>User:</p>
+    <input
+            type="text"
+            name="user"
+            id="delete.user"
+            value=""
+            class="form-control form-control--block"
+    />
+    <p>Enrolment Key:</p>
+    <p>Service:</p>
+    <fieldset class="form-field-group">
+
+        <input
+                type="text"
+                name="enrollmentKey.service"
+                id="delete.service"
+                value=""
+                class="form-control form-control--block"
+        />
+        <p>Identifier:</p>
+        <input
+                type="text"
+                name="enrollmentKey.identifier"
+                id="delete.identifier"
+                value=""
+                class="form-control form-control--block"
+        />
+        <p>Value:</p>
+        <input
+                type="text"
+                name="enrollmentKey.value"
+                id="delete.value"
+                value=""
+                class="form-control form-control--block"
+        />
+    </fieldset>
+
+    <input type="submit" class="button" value="DELETE"/>
+</form>
+
+}
