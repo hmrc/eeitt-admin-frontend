@@ -37,7 +37,7 @@ object KeyValuePair {
 case class Delete(user: String, enrollmentKey: EnrollmentKey)
 case class EnrollmentKey(service : String, identifier: String, value: String)
 case class KnownFacts(enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
-case class Enrollment(user: String, enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
+case class Enrollment(user: String, enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair], friendlyName: String)
 
 trait EMACConnectorHelper {
 
@@ -113,7 +113,7 @@ trait EMACConnectorHelper {
     val allocateInsertJson: JsValue =
       Json.parse(s"""
          |{
-         |    "friendlyName": "friendly name",
+         |    "friendlyName": "${enrollment.friendlyName}",
          |    "type": "principal",
          |    ${getJson(enrollment.verifiers).toString.drop(1).dropRight(1)}
          |}
