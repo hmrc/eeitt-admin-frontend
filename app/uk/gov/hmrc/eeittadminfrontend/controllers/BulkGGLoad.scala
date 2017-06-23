@@ -73,7 +73,8 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         "verifiers" -> list(mapping(
           "key" -> nonEmptyText,
           "value" -> nonEmptyText
-        )(KeyValuePair.apply)(KeyValuePair.unapply))
+        )(KeyValuePair.apply)(KeyValuePair.unapply)),
+      "friendlyName" -> nonEmptyText
     )(Enrollment.apply)(Enrollment.unapply)
   )
 
