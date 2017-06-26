@@ -41,10 +41,10 @@ object EeittConnector {
   private def postEEITTConnector[A<:Deltas: Format]() : EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc : HeaderCarrier, ec: ExecutionContext, request : Request[Map[String, Seq[String]]]) = {
       if(isLive(request)) {
-        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s to Live")
+        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Live")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
       } else {
-        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s to Dry-run")
+        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Dry-run")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
 
       }
@@ -103,16 +103,16 @@ object EeittConnector {
 
         value match {
           case RegistrationNumber(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
             call(x, y)
           case Arn(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for Arn in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x Arn in $y Database")
             call(x, y)
           case GroupId(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for GroupId in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x GroupId in $y Database")
             call(x, y)
           case Regime(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
             call(x, y)
           case _ =>
             Logger.error("No Database nor User detected")
