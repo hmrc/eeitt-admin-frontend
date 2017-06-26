@@ -264,7 +264,7 @@ trait ApplicationModule extends BuiltInComponents
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, queryController, bulkGGController, deltaController, eeittAdminController, assets)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, deltaController, queryController, bulkGGController, eeittAdminController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
