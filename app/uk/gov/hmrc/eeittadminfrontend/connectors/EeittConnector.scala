@@ -46,7 +46,6 @@ object EeittConnector {
       } else {
         Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Dry-run")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
-
       }
     }
   }
