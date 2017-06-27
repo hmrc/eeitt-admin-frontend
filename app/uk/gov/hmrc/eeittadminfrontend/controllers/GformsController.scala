@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -47,20 +48,24 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     )
   }
 
-  def saveGformSchema = Authentication.async { implicit request =>
+  def saveGformSchema = Authentication.async(parse.urlFormEncoded) { implicit request =>
     gFormSchema.bindFromRequest().fold(
       formWithErrors => {
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm, formWithErrors)))
       },
-      gformTemplate =>
-        GformConnector.saveTemplate(gformTemplate).map { x =>
-          x match {
-            case Some(x) => Ok(Json.prettyPrint(x))
-            case _ => Ok("oops")
-          }
+      gformTemplate => {
+
+        //val template = (Json.toJson(request.body)\"template").get
+        GformConnector.saveTemplate(gformTemplate).map {
+          case Some(x) => Ok(Json.prettyPrint(x))
+          case _ => Ok("oops")
         }
+
+  }
     )
   }
+
+
 
   def getAllTemplates = Authentication.async { implicit request =>
     GformConnector.getAllGformsTemplates.map { x =>

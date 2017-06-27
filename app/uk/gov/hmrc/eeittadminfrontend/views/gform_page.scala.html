@@ -84,16 +84,7 @@
 
 
     <p>Json Template:</p>
-    <fieldset class="form-field-group">
-        <input
-                type="text"
-                name="template"
-                id="value1"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
+@textarea(field = form("template"), args = 'rows ->3, 'cols -> 50)
     <input type="submit" class="button" value="Save"/>
 </form>
 

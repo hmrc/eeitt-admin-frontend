@@ -37,4 +37,3 @@ case class GformTemplate(formTypeId: FormTypeId, version: String, template: Stri
 object GformTemplate {
   implicit val format: Format[GformTemplate] = Json.format[GformTemplate]
 }
-
