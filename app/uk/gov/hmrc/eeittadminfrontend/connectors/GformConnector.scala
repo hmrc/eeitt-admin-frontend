@@ -23,16 +23,12 @@ import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformTemplate}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
-
 import scala.concurrent.Future
 
-trait GformConnector {
-
-  def httpGet: HttpGet = WSHttp
-
-  def httpPost: HttpPost = WSHttp
-
-  def gformUrl: String
+object GformConnector extends ServicesConfig {
+  val httpGet = WSHttp
+  val httpPost = WSHttp
+  val gformUrl = "http://localhost:9196/gform"
 
   def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
     httpGet.GET[Option[JsValue]](gformUrl + s"/formtemplates/$formTypeId/$version")
@@ -49,11 +45,5 @@ trait GformConnector {
   def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     httpPost.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
   }
-}
 
-object GformConnector extends GformConnector with ServicesConfig {
-  lazy val HttpGet = WSHttp
-  lazy val HttpPost = WSHttp
-
-  override def gformUrl = "http://localhost:9196/gform"
 }

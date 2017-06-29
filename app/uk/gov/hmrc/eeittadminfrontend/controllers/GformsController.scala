@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformIdAndVersion, GformTemplate}
+import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformIdAndVersion}
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -36,7 +35,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   def getGformByFormType = Authentication.async { implicit request =>
     gFormForm.bindFromRequest().fold(
       formWithErrors => {
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormSchema)))
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
       },
       gformIdAndVersion =>
         GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x =>
@@ -49,21 +48,14 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   def saveGformSchema = Authentication.async(parse.urlFormEncoded) { implicit request =>
-    gFormSchema.bindFromRequest().fold(
-      formWithErrors => {
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(formWithErrors)))
-      },
-      gformTemplate => {
-        val template = Json.parse(request.body.apply("template").mkString)
-        GformConnector.saveTemplate(template).map {
-          x =>
-            x.status match {
-              case 200 => Ok("Success")
-              case _ => Ok("Failed")
-            }
+    val template = Json.parse(request.body.apply("template").mkString)
+    GformConnector.saveTemplate(template).map {
+      x =>
+        x.status match {
+          case 200 => Ok("Success")
+          case _ => Ok("Failed")
         }
-      }
-    )
+    }
   }
 
 
@@ -87,18 +79,9 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
 
 
   def gformPage = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormSchema)))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
   }
 
-
-  val gFormSchema: Form[GformIdAndVersion] = Form(
-    mapping(
-      "formTypeId" -> mapping(
-        "value" -> text
-      )(FormTypeId.apply)(FormTypeId.unapply),
-      "version" -> text
-    )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
-  )
 
   val gFormForm: Form[GformIdAndVersion] = Form(
     mapping(
