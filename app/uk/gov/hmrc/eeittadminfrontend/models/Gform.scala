@@ -18,10 +18,6 @@ package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.json._
 
-
-/**
-  * Created by harrison on 06/06/17.
-  */
 case class FormTypeId(value: String) extends AnyVal {
   override def toString = value
 }
@@ -32,7 +28,7 @@ object FormTypeId {
 
 case class GformIdAndVersion(formTypeId: FormTypeId, version: String)
 
-case class GformTemplate(formTypeId: FormTypeId, version: String, template: String)
+case class GformTemplate(template: JsValue)
 
 object GformTemplate {
   implicit val format: Format[GformTemplate] = Json.format[GformTemplate]

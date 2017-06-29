@@ -22,7 +22,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.GformIdAndVersion
 @import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
 
-@(form: Form[GformIdAndVersion], templateForm: Form[GformTemplate])(implicit request : Request[_], appConfig: AppConfig)
+@(form: Form[GformIdAndVersion])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST"
@@ -59,32 +59,14 @@
       class="js-form" novalidate="novalidate">
     <h2>Save a template</h2>
     @CSRF.formField
-
-    <p>Form Type Id:</p>
-    <fieldset class="form-field-group">
-        <input
-                type="text"
-                name="formTypeId.value"
-                id="value2"
-                value=""
-                class="form-control form-control--block"
-        />
-    </fieldset>
-
-    <p>Version:</p>
-    <fieldset class="form-field-group">
-        <input
-                type="text"
-                name="version"
-                id="value3"
-                value=""
-                class="form-control form-control--block"
-        />
-    </fieldset>
-
-
     <p>Json Template:</p>
-@textarea(field = form("template"), args = 'rows ->3, 'cols -> 50)
+    <textarea
+            type="text"
+            name="template"
+            id="template"
+            value=""
+            class="form-control form-control--block"
+    ></textarea>
     <input type="submit" class="button" value="Save"/>
 </form>
 

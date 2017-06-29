@@ -36,7 +36,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   def getGformByFormType = Authentication.async { implicit request =>
     gFormForm.bindFromRequest().fold(
       formWithErrors => {
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(formWithErrors, gFormSchema)))
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormSchema)))
       },
       gformIdAndVersion =>
         GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x =>
@@ -51,20 +51,20 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   def saveGformSchema = Authentication.async(parse.urlFormEncoded) { implicit request =>
     gFormSchema.bindFromRequest().fold(
       formWithErrors => {
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm, formWithErrors)))
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(formWithErrors)))
       },
       gformTemplate => {
-
-        //val template = (Json.toJson(request.body)\"template").get
-        GformConnector.saveTemplate(gformTemplate).map {
-          case Some(x) => Ok(Json.prettyPrint(x))
-          case _ => Ok("oops")
+        val template = Json.parse(request.body.apply("template").mkString)
+        GformConnector.saveTemplate(template).map {
+          x =>
+            x.status match {
+              case 200 => Ok("Success")
+              case _ => Ok("Failed")
+            }
         }
-
-  }
+      }
     )
   }
-
 
 
   def getAllTemplates = Authentication.async { implicit request =>
@@ -87,18 +87,17 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
 
 
   def gformPage = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm, gFormSchema)))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormSchema)))
   }
 
 
-  val gFormSchema: Form[GformTemplate] = Form(
+  val gFormSchema: Form[GformIdAndVersion] = Form(
     mapping(
       "formTypeId" -> mapping(
         "value" -> text
       )(FormTypeId.apply)(FormTypeId.unapply),
-      "version" -> text,
-      "template" -> text
-    )(GformTemplate.apply)(GformTemplate.unapply)
+      "version" -> text
+    )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
   )
 
   val gFormForm: Form[GformIdAndVersion] = Form(

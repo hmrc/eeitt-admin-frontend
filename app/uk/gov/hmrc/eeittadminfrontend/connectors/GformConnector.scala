@@ -22,7 +22,7 @@ import play.libs.Json
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.{FormTypeId, GformTemplate}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost, HttpResponse}
 
 import scala.concurrent.Future
 
@@ -46,8 +46,8 @@ trait GformConnector {
     httpGet.GET[Option[JsValue]](gformUrl + "/schemas")
   }
 
-  def saveTemplate(gformTemplate: GformTemplate)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-    httpPost.POST[GformTemplate, Option[JsValue]](gformUrl + "/formtemplates", gformTemplate)
+  def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    httpPost.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
   }
 }
 
