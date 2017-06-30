@@ -19,8 +19,8 @@ package uk.gov.hmrc.eeittadminfrontend
 import java.io.File
 
 import org.scalatest.TestSuite
-import org.scalatestplus.play.{BaseOneAppPerSuite, FakeApplicationFactory}
-import play.api.{Configuration, Environment, Mode}
+import org.scalatestplus.play.{ BaseOneAppPerSuite, FakeApplicationFactory }
+import play.api.{ Configuration, Environment, Mode }
 
 trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory {
   this: TestSuite =>

@@ -127,14 +127,14 @@ trait EMACConnectorHelper {
     allocateAnEnrollment(enrollment, user).map(result).flatMap {
       case None => {
         Future.successful(None)
-//        deassignEnrollment(enrollment.enrollmentKey, user).flatMap { y =>
-//          POST.POSTEmpty[HttpResponse](s"$ES11url${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}").map(result).map {
-//            case None => None
-//            case x =>
-//              Logger.error("Emac Connector returned an error for assign Enrollment")
-//              x
-//          }
-//        }
+        //        deassignEnrollment(enrollment.enrollmentKey, user).flatMap { y =>
+        //          POST.POSTEmpty[HttpResponse](s"$ES11url${user.credId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}").map(result).map {
+        //            case None => None
+        //            case x =>
+        //              Logger.error("Emac Connector returned an error for assign Enrollment")
+        //              x
+        //          }
+        //        }
       }
       case err =>
         Logger.error("EMAC Connector returned an error.")
