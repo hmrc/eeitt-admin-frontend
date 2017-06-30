@@ -19,9 +19,9 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{ Action, AnyContent }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors._
@@ -37,14 +37,14 @@ case class User(credId: String, userId: String, groupId: String)
 
 class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit val messagesApi: MessagesApi, appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
-  def getBulkloadPage = Authentication.async{ implicit request =>
+  def getBulkloadPage = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds)))
 
   }
 
   private val switch: Boolean = pureconfig.loadConfigOrThrow[Switch]("feature.GGLoad.switch").value
 
-  val listOfCredIds: Map[String, User] = if(switch){
+  val listOfCredIds: Map[String, User] = if (switch) {
     Map("USER1" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user1"), "USER2" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user2"), "USER3" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user3"))
   } else Map.empty[String, User]
 
@@ -55,10 +55,10 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         "identifier" -> nonEmptyText,
         "value" -> nonEmptyText
       )(EnrollmentKey.apply)(EnrollmentKey.unapply),
-        "verifiers" -> list(mapping(
-          "key" -> nonEmptyText,
-          "value" -> nonEmptyText
-        )(KeyValuePair.apply)(KeyValuePair.unapply))
+      "verifiers" -> list(mapping(
+        "key" -> nonEmptyText,
+        "value" -> nonEmptyText
+      )(KeyValuePair.apply)(KeyValuePair.unapply))
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
@@ -70,10 +70,10 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         "identifier" -> nonEmptyText,
         "value" -> nonEmptyText
       )(EnrollmentKey.apply)(EnrollmentKey.unapply),
-        "verifiers" -> list(mapping(
-          "key" -> nonEmptyText,
-          "value" -> nonEmptyText
-        )(KeyValuePair.apply)(KeyValuePair.unapply)),
+      "verifiers" -> list(mapping(
+        "key" -> nonEmptyText,
+        "value" -> nonEmptyText
+      )(KeyValuePair.apply)(KeyValuePair.unapply)),
       "friendlyName" -> nonEmptyText
     )(Enrollment.apply)(Enrollment.unapply)
   )
@@ -91,12 +91,12 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
 
   def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
     Logger.debug("ERROR ::: " + request.body.toString)
-    if(switch) {
+    if (switch) {
       knownFactsForm.bindFromRequest.fold(
         errors =>
           Future.successful(BadRequest("Failed")),
         success => {
-          Logger.debug(success.verifiers.toString+ "///////////////////////////")
+          Logger.debug(success.verifiers.toString + "///////////////////////////")
           eMACConnector.loadKF(success).map {
             case None =>
               Ok("Success")
@@ -114,7 +114,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         Future.successful(BadRequest("Failed")),
       success => {
         val user = listOfCredIds(success.user)
-        eMACConnector.assignEnrollment(success, user).map{
+        eMACConnector.assignEnrollment(success, user).map {
           case None =>
             Ok("Successful!!!")
           case Some(x) =>
@@ -130,10 +130,10 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         Future.successful(BadRequest("Ok")),
       success => {
         val user = listOfCredIds(success.user)
-        for{
+        for {
           result <- startDelete(success.enrollmentKey, user)
         } yield {
-          if(result) {
+          if (result) {
             Ok("DELETED")
           } else BadRequest("Failed Check logs")
         }
@@ -152,17 +152,17 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
   }
 
   def deallocate(enrollmentKey: EnrollmentKey, user: User)(implicit hc: HeaderCarrier): Future[Boolean] = {
-  eMACConnector.deallocateEnrollment(enrollmentKey, user).flatMap{
-    case None =>
-      removeKf(enrollmentKey)
-    case Some(x) =>
-      Logger.error(Json.prettyPrint(x))
-      Future.successful(false)
-  }
+    eMACConnector.deallocateEnrollment(enrollmentKey, user).flatMap {
+      case None =>
+        removeKf(enrollmentKey)
+      case Some(x) =>
+        Logger.error(Json.prettyPrint(x))
+        Future.successful(false)
+    }
   }
 
   def removeKf(enrollmentKey: EnrollmentKey)(implicit hc: HeaderCarrier): Future[Boolean] = {
-    eMACConnector.removeUnallocated(enrollmentKey).map{
+    eMACConnector.removeUnallocated(enrollmentKey).map {
       case None =>
         true
       case Some(x) =>

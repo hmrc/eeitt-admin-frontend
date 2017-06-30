@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
-case class Token(value : String)
+case class Token(value: String)
 
 object Token {
 

@@ -30,13 +30,13 @@ object DeltaResponse {
 
 }
 
-case class FailureResponse(reason:String) extends Response
+case class FailureResponse(reason: String) extends Response
 
 object EitherResponseValueClassFormat {
 
-  def format : Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = new Format[Either[List[ETMPBusiness], List[ETMPAgent]]]{
+  def format: Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = new Format[Either[List[ETMPBusiness], List[ETMPAgent]]] {
     override def reads(json: JsValue) = {
-     println(Json.prettyPrint(json))
+      println(Json.prettyPrint(json))
       json.validate[List[ETMPBusiness]] match {
         case JsSuccess(x, _) =>
           JsSuccess(Left(x))
@@ -62,34 +62,34 @@ object EitherResponseValueClassFormat {
 
 object FailureResponse {
 
-  implicit val format : Format[FailureResponse] = Json.format[FailureResponse]
+  implicit val format: Format[FailureResponse] = Json.format[FailureResponse]
 }
 
 case class ETMPBusiness(registrationNumber: String, postcode: Option[String], countryCode: Option[String]) extends Response
 
 object ETMPBusiness {
 
-  implicit val format : Format[ETMPBusiness] = Json.format[ETMPBusiness]
+  implicit val format: Format[ETMPBusiness] = Json.format[ETMPBusiness]
 
   implicit val eitherFormat: Format[Either[List[ETMPBusiness], List[ETMPAgent]]] = EitherResponseValueClassFormat.format
 
 }
 
-case class ETMPAgent(arn: String, postcode : String, countryCode: String, customers: Option[List[ETMPBusiness]]) extends Response
+case class ETMPAgent(arn: String, postcode: String, countryCode: String, customers: Option[List[ETMPBusiness]]) extends Response
 
 object ETMPAgent {
 
-  implicit val format : Format[ETMPAgent] = Json.format[ETMPAgent]
+  implicit val format: Format[ETMPAgent] = Json.format[ETMPAgent]
 
   val url = "agents-delta"
 
 }
 
-case class EnrollmentResponse(groupId:String, uid: UID , regimeId : Option[String]) extends Response
+case class EnrollmentResponse(groupId: String, uid: UID, regimeId: Option[String]) extends Response
 
 object EnrollmentResponse {
 
-  implicit val rds : Reads[EnrollmentResponse] = new Reads[EnrollmentResponse] {
+  implicit val rds: Reads[EnrollmentResponse] = new Reads[EnrollmentResponse] {
     override def reads(json: JsValue) = {
       json.validate[UID] match {
         case JsSuccess(x, _) =>
@@ -115,8 +115,8 @@ case class UID(value: String)
 
 object UID {
 
-  implicit val format : Format[UID] = new Format[UID] {
-    override def reads(json: JsValue) ={
+  implicit val format: Format[UID] = new Format[UID] {
+    override def reads(json: JsValue) = {
       (json \ "arn").getOrElse(JsString("ARN Failure")) match {
         case JsString("ARN Failure") =>
           (json \ "registrationNumber").getOrElse(JsString("REG Failure")) match {

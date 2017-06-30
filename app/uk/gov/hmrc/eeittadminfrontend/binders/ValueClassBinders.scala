@@ -16,16 +16,12 @@
 
 package uk.gov.hmrc.eeittadminfrontend.binders
 
-import play.api.libs.json.{JsError, JsString, JsSuccess, Reads}
+import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 
-/**
-  * Created by harrison on 07/06/17.
-  */
 object ValueClassBinders {
-implicit val formTypeIdBinder: PathBindable[FormTypeId] = valueClassBinder(_.value)
-
+  implicit val formTypeIdBinder: PathBindable[FormTypeId] = valueClassBinder(_.value)
 
   def valueClassBinder[A: Reads](fromAtoString: A => String)(implicit stringBinder: PathBindable[String]) = {
 

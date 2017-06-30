@@ -23,20 +23,20 @@ case class RegistrationNumber(registration: String, database: Database)
 
 object ValueClassFormat {
 
-  def format[A, B: Format](path: String, func : (String, B) => A, revFuncAToB : A => B, revFuncAToString: A => String): Format[A] = new Format[A] {
-  override def reads(json : JsValue) = {
-    json.validate match {
-      case JsSuccess(x, _) =>
-        (json \ path).getOrElse(JsString("ERROR")) match {
-          case JsString("ERROR") =>
-            JsError("Some Error")
-          case JsString(y) =>
-            JsSuccess(func(y, x))
-        }
-      case JsError(err) =>
-        JsError("Some Error")
+  def format[A, B: Format](path: String, func: (String, B) => A, revFuncAToB: A => B, revFuncAToString: A => String): Format[A] = new Format[A] {
+    override def reads(json: JsValue) = {
+      json.validate match {
+        case JsSuccess(x, _) =>
+          (json \ path).getOrElse(JsString("ERROR")) match {
+            case JsString("ERROR") =>
+              JsError("Some Error")
+            case JsString(y) =>
+              JsSuccess(func(y, x))
+          }
+        case JsError(err) =>
+          JsError("Some Error")
+      }
     }
-  }
 
     override def writes(o: A) = {
       Json.obj(path -> JsString(revFuncAToString(o)))
@@ -45,11 +45,10 @@ object ValueClassFormat {
   }
 }
 
-
-object RegistrationNumber  { //BusinessUser both ETMP and Enrollments
+object RegistrationNumber { //BusinessUser both ETMP and Enrollments
 
   implicit val registrationNumberFormat: Format[RegistrationNumber] =
-    ValueClassFormat.format[RegistrationNumber, Database]("registration", RegistrationNumber(_ , _), _.database, _.registration)
+    ValueClassFormat.format[RegistrationNumber, Database]("registration", RegistrationNumber(_, _), _.database, _.registration)
 
   implicit val eitherFormat = EitherValueClassFormat.format
 
@@ -69,10 +68,9 @@ object Regime { //Business Users only ETMP and Enrollments
   implicit val regimeFormat: Format[Regime] = ValueClassFormat.format[Regime, Database]("regime", Regime(_, _), _.database, _.regime)
 }
 
-
 case class Arn(arn: String, database: Database)
 
-object Arn {  //Agent Only ETMP and Enrollments
+object Arn { //Agent Only ETMP and Enrollments
 
   implicit val format: Format[Arn] = ValueClassFormat.format[Arn, Database]("arn", Arn(_, _), _.database, _.arn)
 
@@ -80,7 +78,7 @@ object Arn {  //Agent Only ETMP and Enrollments
 
 object EitherValueClassFormat {
 
-  def format : Format[Either[Arn, RegistrationNumber]] = new Format[Either[Arn, RegistrationNumber]]{
+  def format: Format[Either[Arn, RegistrationNumber]] = new Format[Either[Arn, RegistrationNumber]] {
     override def reads(json: JsValue) = {
       json.validate[Arn] match {
         case JsSuccess(x, _) =>
@@ -107,7 +105,7 @@ object EitherValueClassFormat {
 object ValueClassFormatter {
   def format[A: Format](fromStringToA: String => A)(fromAToString: A => String) = {
     Format[A](
-      Reads[A]{
+      Reads[A] {
         case JsString(str) => JsSuccess(fromStringToA(str))
         case unknown => JsError(s"JsString value expected, got: $unknown")
       },
