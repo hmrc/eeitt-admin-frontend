@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
 trait Deltas {
 
-  val value : String
+  val value: String
   val url: String
 }
 case class DeltaAgent(value: String) extends Deltas {

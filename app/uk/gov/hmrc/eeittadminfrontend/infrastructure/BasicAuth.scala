@@ -21,7 +21,7 @@ import com.google.common.io.BaseEncoding
 import play.api.Logger
 import play.api.http.HeaderNames
 import play.api.mvc.Results.Status
-import play.api.mvc.{RequestHeader, Result}
+import play.api.mvc.{ RequestHeader, Result }
 
 import scala.concurrent.Future
 

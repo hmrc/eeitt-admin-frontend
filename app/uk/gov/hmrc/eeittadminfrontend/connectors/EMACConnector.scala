@@ -17,14 +17,14 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.libs.json.{JsString, JsValue, Json, OFormat}
+import play.api.libs.json.{ JsString, JsValue, Json, OFormat }
 import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
 import uk.gov.hmrc.play.http._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class EMACConnector extends EMACConnectorHelper
 
@@ -35,15 +35,15 @@ object KeyValuePair {
   implicit val format = Json.format[KeyValuePair]
 }
 case class Delete(user: String, enrollmentKey: EnrollmentKey)
-case class EnrollmentKey(service : String, identifier: String, value: String)
+case class EnrollmentKey(service: String, identifier: String, value: String)
 case class KnownFacts(enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair])
 case class Enrollment(user: String, enrollmentKey: EnrollmentKey, verifiers: List[KeyValuePair], friendlyName: String)
 
 trait EMACConnectorHelper {
 
-  val PUT : HttpPut = WSHttp
-  val POST : HttpPost = WSHttp
-  val DELETE : HttpDelete = WSHttp
+  val PUT: HttpPut = WSHttp
+  val POST: HttpPost = WSHttp
+  val DELETE: HttpDelete = WSHttp
 
   val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/"
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
@@ -67,8 +67,8 @@ trait EMACConnectorHelper {
          | }
          |]
          |}""".stripMargin
-    )
-  } else if(list.size == 2){
+      )
+    } else if (list.size == 2) {
       Json.parse(
         s"""{
            |"verifiers" : [
@@ -93,14 +93,14 @@ trait EMACConnectorHelper {
            |}""".stripMargin
       )
     }
-    }
+  }
 
   //ES6
   def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
 
     val json = getJson(knownFacts.verifiers)
 
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json).map(result).flatMap{
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json).map(result).flatMap {
       case None => Future.successful(None)
       case x =>
         Logger.error("Loading of known facts has failed")

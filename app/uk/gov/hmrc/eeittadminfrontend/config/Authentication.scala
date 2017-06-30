@@ -21,17 +21,16 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-object Authentication extends ActionBuilder[Request]{
+object Authentication extends ActionBuilder[Request] {
 
   def username(request: RequestHeader): Option[String] = request.session.get("token")
 
   def onUnauthorised(request: RequestHeader) = Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage())
 
   override def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
-      username(request).map { login =>
-        block(request)
-      }.getOrElse(Future.successful(onUnauthorised(request)))
+    username(request).map { login =>
+      block(request)
+    }.getOrElse(Future.successful(onUnauthorised(request)))
   }
 }
-
 

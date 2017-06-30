@@ -16,23 +16,23 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import cats.data.Validated.{Invalid, Valid}
+import cats.data.Validated.{ Invalid, Valid }
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
+import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.mvc.{ Action, AnyContent }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ClientID, SecuredActions}
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ ClientID, SecuredActions }
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.{AuthService, GoogleVerifier}
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector, sa : SecuredActions, authService: AuthService, googleService : GoogleVerifier)(implicit appConfig : AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport{
+class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authService: AuthService, googleService: GoogleVerifier)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
