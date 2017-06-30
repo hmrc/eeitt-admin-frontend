@@ -22,9 +22,9 @@ import play.api.libs.json._
 trait Database {
 
   override def toString: String
-  val reg : Option[String] = None
-  val agent : Option[String] = None
-  val regime : Option[String] = None
+  val reg: Option[String] = None
+  val agent: Option[String] = None
+  val regime: Option[String] = None
 }
 
 object ETMP extends Database {

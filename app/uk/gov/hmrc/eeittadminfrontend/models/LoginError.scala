@@ -19,13 +19,13 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import cats.data.Validated
 import play.api.libs.json._
 
-case class LoginError(error : String)
+case class LoginError(error: String)
 
 object LoginError {
 
   implicit val format: OFormat[LoginError] = Json.format[LoginError]
 
-  implicit val readsLoginErrorUser : Reads[Validated[LoginError, User]] = new Reads[Validated[LoginError, User]] {
+  implicit val readsLoginErrorUser: Reads[Validated[LoginError, User]] = new Reads[Validated[LoginError, User]] {
     override def reads(json: JsValue): JsResult[Validated[LoginError, User]] = {
       json.validateOpt[User] match {
         case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))
