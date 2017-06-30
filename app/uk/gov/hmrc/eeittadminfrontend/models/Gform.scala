@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.services
+package uk.gov.hmrc.eeittadminfrontend.models
 
-import cats.data._
-import cats.syntax.all._
-import play.api.{ Configuration, Logger }
-import play.api.Configuration
-import pureconfig.loadConfigOrThrow
-import uk.gov.hmrc.eeittadminfrontend.models.{ Email, LoginError }
+import play.api.libs.json._
 
-case class AuthorisedUsers(users: String)
-class AuthService {
+case class FormTypeId(value: String) extends AnyVal {
+  override def toString = value
+}
 
-  lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicauth").users.split(":")
+object FormTypeId {
+  implicit val format: Format[FormTypeId] = ValueClassFormatter.format(FormTypeId.apply)(_.value)
+}
 
-  def checkUser(email: Email): Validated[LoginError, Unit] = {
-    if (validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
-  }
+case class GformIdAndVersion(formTypeId: FormTypeId, version: String)
+
+case class GformTemplate(template: JsValue)
+
+object GformTemplate {
+  implicit val format: Format[GformTemplate] = Json.format[GformTemplate]
 }

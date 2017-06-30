@@ -19,13 +19,13 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import cats.data.Validated
 import play.api.libs.json._
 
-case class RegisterError(error : List[String])
+case class RegisterError(error: List[String])
 
 object RegisterError {
 
   implicit val format: OFormat[RegisterError] = Json.format[RegisterError]
 
-  implicit val readsRegisterErrorString : Reads[Validated[RegisterError, String]] = new Reads[Validated[RegisterError, String]] {
+  implicit val readsRegisterErrorString: Reads[Validated[RegisterError, String]] = new Reads[Validated[RegisterError, String]] {
     override def reads(json: JsValue): JsResult[Validated[RegisterError, String]] = {
       json.validateOpt[String] match {
         case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))

@@ -16,10 +16,71 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.http.Writeable
+import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.libs.json.{ JsValue, Json }
+import play.api.mvc.Result
+import uk.gov.hmrc.eeittadminfrontend.AppConfig
+import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformIdAndVersion }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
-class GformsController(val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport
+import scala.concurrent.Future
+
+class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+
+  def getGformByFormType = Authentication.async { implicit request =>
+    gFormForm.bindFromRequest().fold(
+      formWithErrors => {
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
+      },
+      gformIdAndVersion =>
+        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map {
+          case Some(x) => Ok(Json.prettyPrint(x))
+          case _ => Ok("Error or does not exist")
+        }
+    )
+  }
+
+  def saveGformSchema = Authentication.async(parse.urlFormEncoded) { implicit request =>
+    val template = Json.parse(request.body.apply("template").mkString)
+    GformConnector.saveTemplate(template).map {
+      x =>
+        x.status match {
+          case 200 => Ok("Saved")
+          case _ => Ok("Something went wrong")
+        }
+    }
+  }
+
+  def getAllTemplates = Authentication.async { implicit request =>
+    GformConnector.getAllGformsTemplates.map(
+      _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
+    )
+  }
+
+  def getAllSchema = Authentication.async { implicit request =>
+    GformConnector.getAllSchema.map(
+      _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
+    )
+  }
+
+  def gformPage = Authentication.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
+  }
+
+  val gFormForm: Form[GformIdAndVersion] = Form(
+    mapping(
+      "formTypeId" -> mapping(
+        "value" -> text
+      )(FormTypeId.apply)(FormTypeId.unapply),
+      "version" -> text
+    )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
+  )
+}
 

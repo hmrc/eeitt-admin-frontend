@@ -16,9 +16,8 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers.auth
 
-
 import play.api.mvc.Result
-import play.api.{Configuration, Logger}
+import play.api.{ Configuration, Logger }
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.eeittadminfrontend.infrastructure._
 import uk.gov.hmrc.play.frontend.auth.Actions
@@ -29,13 +28,13 @@ import scala.util.Try
 
 trait SecuredActions extends Actions {
 
-  def whiteListing(r: => Future[Result])(implicit request : RequestHeader): Future[Result]
+  def whiteListing(r: => Future[Result])(implicit request: RequestHeader): Future[Result]
 
 }
 
 class SecuredActionsImpl(config: Configuration, val authConnector: AuthConnector) extends SecuredActions {
 
-  override def whiteListing(r: => Future[Result])(implicit request : RequestHeader) = BasicAuth(WhiteListingConf(config))(r)
+  override def whiteListing(r: => Future[Result])(implicit request: RequestHeader) = BasicAuth(WhiteListingConf(config))(r)
 
 }
 
@@ -60,13 +59,13 @@ object WhiteListingConf {
 
     config.getString("feature.basicAuthEnabled")
       .flatMap(flag => Try(flag.toBoolean).toOption) match {
-      case Some(true) => WhiteListingEnabled(getWhitelist(config))
-      case Some(false) => WhiteListingIsDisabled
-      case _ => {
-        Logger.warn("A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
-        WhiteListingIsDisabled
+        case Some(true) => WhiteListingEnabled(getWhitelist(config))
+        case Some(false) => WhiteListingIsDisabled
+        case _ => {
+          Logger.warn("A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
+          WhiteListingIsDisabled
+        }
       }
-    }
   }
 }
 
