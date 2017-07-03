@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.http.Writeable
@@ -39,11 +40,13 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
       formWithErrors => {
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
       },
-      gformIdAndVersion =>
+      gformIdAndVersion => {
+        Logger.info(s" ${request.session.get("token").get} Queried for ${gformIdAndVersion.formTypeId} ${gformIdAndVersion.version}")
         GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map {
           case Some(x) => Ok(Json.prettyPrint(x))
           case _ => Ok("Error or does not exist")
         }
+      }
     )
   }
 
@@ -51,20 +54,25 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     val template = Json.parse(request.body.apply("template").mkString)
     GformConnector.saveTemplate(template).map {
       x =>
-        x.status match {
-          case 200 => Ok("Saved")
-          case _ => Ok("Something went wrong")
+        {
+          Logger.info(s" ${request.session.get("token").get} saved ID: ${template \ "formTypeId"} version: ${template \ "version"}")
+          x.status match {
+            case 200 => Ok("Saved")
+            case _ => Ok("Something went wrong")
+          }
         }
     }
   }
 
   def getAllTemplates = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} Queried for all form templates")
     GformConnector.getAllGformsTemplates.map(
       _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
     )
   }
 
   def getAllSchema = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} Queried for all form Schema")
     GformConnector.getAllSchema.map(
       _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
     )
