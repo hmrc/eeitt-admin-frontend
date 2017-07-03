@@ -19,10 +19,8 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.http.Writeable
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.libs.json.{ JsValue, Json }
-import play.api.mvc.Result
+import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -42,9 +40,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
       },
       gformIdAndVersion => {
         Logger.info(s" ${request.session.get("token").get} Queried for ${gformIdAndVersion.formTypeId} ${gformIdAndVersion.version}")
-        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map {
-          case Some(x) => Ok(Json.prettyPrint(x))
-          case _ => Ok("Error or does not exist")
+        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x => Ok(Json.prettyPrint(x))
         }
       }
     )
@@ -56,26 +52,19 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
       x =>
         {
           Logger.info(s" ${request.session.get("token").get} saved ID: ${template \ "formTypeId"} version: ${template \ "version"}")
-          x.status match {
-            case 200 => Ok("Saved")
-            case _ => Ok("Something went wrong")
-          }
+          Ok("Saved")
         }
     }
   }
 
   def getAllTemplates = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token").get} Queried for all form templates")
-    GformConnector.getAllGformsTemplates.map(
-      _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
-    )
+    GformConnector.getAllGformsTemplates.map(x => Ok(x))
   }
 
   def getAllSchema = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token").get} Queried for all form Schema")
-    GformConnector.getAllSchema.map(
-      _.fold(NotFound(Json.parse("{}")))(x => Ok(x))
-    )
+    GformConnector.getAllSchema.map(x => Ok(x))
   }
 
   def gformPage = Authentication.async { implicit request =>

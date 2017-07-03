@@ -17,11 +17,11 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.libs.json.JsValue
-import play.libs.Json
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformTemplate }
+import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpGet, HttpPost, HttpResponse }
+import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpResponse }
+
 import scala.concurrent.Future
 
 object GformConnector {
@@ -29,16 +29,16 @@ object GformConnector {
   private val sc = new ServicesConfig {}
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
-  def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-    WSHttp.GET[Option[JsValue]](gformUrl + s"/formtemplates/$formTypeId/$version")
+  def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](gformUrl + s"/formtemplates/$formTypeId/$version")
   }
 
-  def getAllGformsTemplates(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-    WSHttp.GET[Option[JsValue]](gformUrl + "/formtemplates")
+  def getAllGformsTemplates(implicit hc: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](gformUrl + "/formtemplates")
   }
 
-  def getAllSchema(implicit hc: HeaderCarrier): Future[Option[JsValue]] = {
-    WSHttp.GET[Option[JsValue]](gformUrl + "/schemas")
+  def getAllSchema(implicit hc: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](gformUrl + "/schemas")
   }
 
   def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
