@@ -13,7 +13,7 @@ GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.
 
 GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
+GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /gg-bulk                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
 POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
