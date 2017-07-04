@@ -19,26 +19,24 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import play.api.Logger
 import play.api.libs.json._
 
-case class User(email : Email, permission : Seq[Permission] = Seq(QueryPermission)) {
-  def this(email:Email) = this(email, Seq(QueryPermission))
+case class User(email: Email, permission: Seq[Permission] = Seq(QueryPermission)) {
+  def this(email: Email) = this(email, Seq(QueryPermission))
 }
 
 object User {
   implicit val format: OFormat[User] = Json.format[User]
 }
 
-case class Email(value : String)
+case class Email(value: String)
 
 object Email {
   implicit val format: OFormat[Email] = Json.format[Email]
 }
 
-case class Permission(value : String)
+case class Permission(value: String)
 object QueryPermission extends Permission("Query")
 object DeltasPermission extends Permission("Deltas")
 object GFormsPermission extends Permission("Gforms")
-object MaintenancePermission extends Permission("Maintenance")
-
 
 object Permission {
 
@@ -49,7 +47,6 @@ object Permission {
         case JsString("Query") => JsSuccess(QueryPermission)
         case JsString("Deltas") => JsSuccess(DeltasPermission)
         case JsString("Gforms") => JsSuccess(GFormsPermission)
-        case JsString("Maintenance") => JsSuccess(MaintenancePermission)
         case _ =>
           Logger.error("Some error")
           JsError("Some error")
@@ -61,7 +58,6 @@ object Permission {
         case QueryPermission => Json.obj("value" -> "Query")
         case DeltasPermission => Json.obj("value" -> "Deltas")
         case GFormsPermission => Json.obj("value" -> "Gforms")
-        case MaintenancePermission => Json.obj("value" -> "Maintenance")
         case _ =>
           Logger.error("Some writes Error")
           JsString("Error")

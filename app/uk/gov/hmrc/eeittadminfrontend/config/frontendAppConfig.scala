@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend
 
 import play.api.Configuration
-import play.api.Play.{configuration, current}
+import play.api.Play.{ configuration, current }
 import uk.gov.hmrc.play.config.ServicesConfig
 
 trait AppConfig {

@@ -2,6 +2,14 @@
 
 GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
+GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
+GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
+POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
+
+GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
+GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
+
 GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta

@@ -20,7 +20,7 @@ import play.api.Logger
 import play.api.libs.json._
 
 trait UserType {
-  val url : String
+  val url: String
 }
 
 object Agent extends UserType {
