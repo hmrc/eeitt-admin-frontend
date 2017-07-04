@@ -33,11 +33,8 @@ import scala.concurrent.Future
 class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController {
 
   def goToQuery = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())) //uk.gov.hmrc.eeittadminfrontend.views.html.()))
-  }
-
-  def goToDelta = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+    Logger.info(s"${request.session.get("token")} went to Query Page")
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))//uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }
 
   def UidQuery = {
