@@ -62,6 +62,7 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
         val email = Email(googleService(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
+            Logger.info(s"${email.value} Logged in")
             Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", email.value)))
           case Invalid(err) =>
             Future.successful(Unauthorized(s"Failed ${err.error}"))
