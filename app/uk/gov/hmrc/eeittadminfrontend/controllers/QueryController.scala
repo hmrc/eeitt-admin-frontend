@@ -32,6 +32,16 @@ import scala.concurrent.Future
 
 class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController {
 
+  def getAllBusinessUsers() = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} got all etmp business users")
+    EeittConnector.getAllBusinessUsers.map(x => Ok(x))
+  }
+
+  def getAllAgents() = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} got all etmp agents")
+    EeittConnector.getAllAgents.map(x => Ok(x))
+  }
+
   def goToQuery = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token")} went to Query Page")
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())) //uk.gov.hmrc.eeittadminfrontend.views.html.()))
@@ -69,4 +79,5 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
         }
     }
   }
+
 }

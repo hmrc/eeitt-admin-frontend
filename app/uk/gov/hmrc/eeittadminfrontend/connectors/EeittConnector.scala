@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.libs.json.Format
+import play.api.libs.json.{ Format, JsObject, JsValue }
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -37,6 +37,17 @@ trait EeittConnector[A] extends ServicesConfig {
 }
 
 object EeittConnector {
+
+  private val sc = new ServicesConfig {}
+  val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
+
+  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](eeittUrl + "/business-users-all")
+  }
+
+  def getAllAgents(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](eeittUrl + "/agents-all")
+  }
 
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) = {
@@ -118,9 +129,9 @@ object EeittConnector {
             Future.successful(List(FailureResponse("No Database nor User detected")))
         }
       }
+
     }
   }
-
 }
 
 
