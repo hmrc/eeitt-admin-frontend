@@ -20,21 +20,21 @@ import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import play.api.libs.streams.Accumulator
-import play.api.mvc.{Action, BodyParser, Request, RequestHeader}
+import play.api.mvc.{ Action, BodyParser, Request, RequestHeader }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{Arn, GroupId, Regime, RegistrationNumber}
+import uk.gov.hmrc.eeittadminfrontend.models.{ Arn, GroupId, Regime, RegistrationNumber }
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig : AppConfig) extends FrontendController {
+class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig: AppConfig) extends FrontendController {
 
   def goToQuery = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token")} went to Query Page")
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))//uk.gov.hmrc.eeittadminfrontend.views.html.()))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())) //uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }
 
   def goToDelta = Authentication.async { implicit request =>
@@ -49,8 +49,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     query[GroupId, Regime]
   }
 
-
-  private def query[A:  Reads, B: Reads]()(implicit connectorA : EeittConnector[A], connectorB: EeittConnector[B]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
+  private def query[A: Reads, B: Reads]()(implicit connectorA: EeittConnector[A], connectorB: EeittConnector[B]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
     val json = Json.toJson(request.body.map(x => x._1 -> x._2.head))
     json.validate[A] match {
       case JsSuccess(x, _) =>
@@ -60,7 +59,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
         }
       case JsError(err) =>
         json.validate[B] match {
-          case JsSuccess(y , _ ) =>
+          case JsSuccess(y, _) =>
             Logger.debug("y " + y.toString)
             connectorB(y).map { b =>
               Ok(b.toString)
