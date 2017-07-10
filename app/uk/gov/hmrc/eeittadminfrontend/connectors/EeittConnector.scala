@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.libs.json.Format
+import play.api.libs.json.{ Format, JsObject, JsValue }
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -38,13 +38,25 @@ trait EeittConnector[A] extends ServicesConfig {
 
 object EeittConnector {
 
+  private val sc = new ServicesConfig {}
+  val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
+
+  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](eeittUrl + "/business-users-all")
+  }
+
+  def getAllAgents(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](eeittUrl + "/agents-all")
+  }
+
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
     override def apply(a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) = {
       if (isLive(request)) {
+        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Live")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
       } else {
+        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Dry-run")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
-
       }
     }
   }
@@ -101,24 +113,25 @@ object EeittConnector {
 
         value match {
           case RegistrationNumber(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
             call(x, y)
           case Arn(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for Arn in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x Arn in $y Database")
             call(x, y)
           case GroupId(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for GroupId in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x GroupId in $y Database")
             call(x, y)
           case Regime(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for RegNumber in $y Database")
+            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
             call(x, y)
           case _ =>
             Logger.error("No Database nor User detected")
             Future.successful(List(FailureResponse("No Database nor User detected")))
         }
       }
+
     }
   }
-
 }
+
 

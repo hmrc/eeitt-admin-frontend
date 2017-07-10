@@ -7,6 +7,7 @@ GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
 POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
+GET        /gform-author             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAuthor
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
@@ -14,11 +15,13 @@ GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.
 
 GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
+GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /gg-bulk                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
 POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
 POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
+GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
+GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
 
 POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
 POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment

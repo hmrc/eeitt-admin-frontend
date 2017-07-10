@@ -35,7 +35,7 @@ import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
-import uk.gov.hmrc.eeittadminfrontend.controllers.{ AuthController, EeittAdminController, GformsController, QueryController }
+import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.ErrorAuditingSettings
@@ -51,8 +51,6 @@ import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
-import uk.gov.hmrc.eeittadminfrontend.controllers.{ AuthController, BulkGGLoad, EeittAdminController, QueryController }
-import uk.gov.hmrc.eeittadminfrontend.controllers.{ AuthController, DeltaController, EeittAdminController, QueryController }
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
@@ -263,7 +261,7 @@ trait ApplicationModule extends BuiltInComponents
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, gformController, queryController, bulkGGController, deltaController, eeittAdminController, assets)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, gformController, queryController, deltaController, bulkGGController, eeittAdminController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
