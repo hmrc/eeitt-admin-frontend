@@ -8,6 +8,7 @@ GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-author             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAuthor
+POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
