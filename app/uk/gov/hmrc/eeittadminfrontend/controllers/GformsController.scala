@@ -71,6 +71,10 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
   }
 
+  def gformAuthor = Authentication.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.author_tool()))
+  }
+
   val gFormForm: Form[GformIdAndVersion] = Form(
     mapping(
       "formTypeId" -> mapping(
