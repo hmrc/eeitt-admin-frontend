@@ -26,13 +26,12 @@
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST"
-      class="js-form" novalidate="novalidate">
-    <h2>Find a Gform Schema</h2>
+      class="js-form">
+    <h2>Find a Gform Template</h2>
     @CSRF.formField
     <p>Form Type ID:</p>
     <fieldset class="form-field-group">
         <input
-                type="text"
                 name="formTypeId.value"
                 id="value"
                 value=""
@@ -43,7 +42,6 @@
     <p>Form Version:</p>
     <fieldset class="form-field-group">
         <input
-                type="text"
                 name="version"
                 id="version"
                 value=""
@@ -54,9 +52,36 @@
     <input type="submit" class="button" value="search"/>
 </form>
 
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate" method="POST"
+      class="js-form">
+    <h2>Delete A template</h2>
+    @CSRF.formField
+    <p>Form Type ID:</p>
+    <fieldset class="form-field-group">
+        <input
+                name="formTypeId.value"
+                id="templateValue"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <p>Form Version:</p>
+    <fieldset class="form-field-group">
+        <input
+                name="version"
+                id="templateVersion"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <input type="submit" class="button" value="Delete"/>
+</form>
+
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
-      class="js-form" novalidate="novalidate">
+      class="js-form">
     <h2>Save a template</h2>
     @CSRF.formField
     <p>Json Template:</p>

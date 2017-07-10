@@ -45,4 +45,7 @@ object GformConnector {
     WSHttp.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
   }
 
+  def deleteTemplate(formTypeId: FormTypeId, version: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId/$version")
+  }
 }
