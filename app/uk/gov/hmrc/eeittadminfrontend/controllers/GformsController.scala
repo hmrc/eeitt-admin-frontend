@@ -67,6 +67,18 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     GformConnector.getAllSchema.map(x => Ok(x))
   }
 
+  def deleteGformTemplate = Authentication.async { implicit request =>
+    gFormForm.bindFromRequest().fold(
+      formWithErrors => {
+        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
+      },
+      gformIdAndVersion => {
+        Logger.info(s" ${request.session.get("token").get} deleted ${gformIdAndVersion.formTypeId} ${gformIdAndVersion.version}")
+        GformConnector.deleteTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map(res => Ok)
+      }
+    )
+  }
+
   def gformPage = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
   }
