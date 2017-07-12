@@ -238,4 +238,17 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
     <input type="submit" class="button" value="DELETE"/>
 </form>
 
+<h2>Bulk Load</h2>
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGController.load" class="js-form" method="POST">
+    @CSRF.formField
+    <textarea
+            type="text"
+            name="bulk-load"
+            id="bulk-load"
+            value=""
+            class="form-control form-control--block"
+    ></textarea>
+    <input type="submit" class="button" value="Bulk Load"/>
+</form>
+
 }
