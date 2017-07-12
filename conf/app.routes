@@ -25,6 +25,7 @@ GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.
 
 POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
 POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment
+POST       /bulkload/knownfacts      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.load
 
 POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
 POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
