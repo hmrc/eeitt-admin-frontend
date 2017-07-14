@@ -89,7 +89,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
     )(Delete.apply)(Delete.unapply)
   )
 
-  def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
+  /*  def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
     Logger.debug("ERROR ::: " + request.body.toString)
     if (switch) {
       knownFactsForm.bindFromRequest.fold(
@@ -106,7 +106,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
         }
       )
     } else Future.successful(BadRequest("Feature Invalid"))
-  }
+  }*/
 
   def assignEnrollment(): Action[AnyContent] = Authentication.async { implicit request =>
     allocateEnrolment.bindFromRequest.fold(

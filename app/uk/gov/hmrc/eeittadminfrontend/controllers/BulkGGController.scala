@@ -22,10 +22,12 @@ import akka.stream._
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RunnableGraph, Sink, Source }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.models.KnownFacts
+import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
+import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -35,15 +37,46 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
 
-class BulkGGController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+  implicit val as = ActorSystem("GG")
+  implicit val mat = ActorMaterializer.create(as)
+  def toLoad = Action.async { implicit request =>
+    load(request.body.asText)
+    Future.successful(Ok("Finished"))
+  }
 
-  def load = Action.async { implicit request =>
-    implicit val as = ActorSystem("GG")
-    implicit val mat = ActorMaterializer.create(as)
+  def load(arg: Option[String]): Unit = {
 
-    val knownFactsLines: Iterator[String] = request.body.asText.toIterator
+    val knownFactsLines = Source.fromIterator(() => arg.toIterator)
 
-    val g = RunnableGraph.fromGraph(GraphDSL.create() {
+    val csvToKnownFact = Flow[String]
+      .map(_.split(",").map(_.trim))
+      .map(stringToKnownFacts)
+      .throttle(1, 1.second, 1, ThrottleMode.shaping)
+
+    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(cols(0).toString, Utr(Option(cols(1))), Nino(Option(cols(2))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
+
+    def sink = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
+      for {
+        f1 <- averageSink(b)
+        fseq <- a
+      } yield f1 :: fseq
+    }
+
+    def averageSink(a: BulkKnownFacts): Future[JsValue] = {
+      a match {
+        case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
+          Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
+          eMACConnector.loadKF(a).map(x => x.get)
+        }
+      }
+    }
+
+    val runnable = knownFactsLines.via(csvToKnownFact).toMat(sink)(Keep.right)
+
+    val res = runnable.run()
+
+    /*    val g = RunnableGraph.fromGraph(GraphDSL.create() {
       implicit builder =>
         import GraphDSL.Implicits._
 
@@ -51,34 +84,22 @@ class BulkGGController(val authConnector: AuthConnector)(implicit appConfig: App
         val A: Outlet[String] = builder.add(Source.fromIterator(() => knownFactsLines)).out
 
         //flow
-        val B: FlowShape[String, KnownFacts] = builder.add(csvToKnownFact)
+        val B: FlowShape[String, BulkKnownFacts] = builder.add(csvToKnownFact)
 
         //sink
-        val C: Inlet[Any] = builder.add(Sink.foreach(averageSink)).in
+        //        val C: Inlet[BulkKnownFacts] = builder.add(Sink.foreach(averageSink)).in
+        //        val C: Inlet[BulkKnownFacts] = builder.add(sink).in
+        val C = builder.add(sink)
+        // val C: Inlet[BulkKnownFacts] = builder.add(averageSink).in
+
         //graph
         A ~> B ~> C
 
         ClosedShape
 
     })
-
-    g.run()
-
-    Future.successful(Ok("finished"))
+    val done = g.run()*/
 
   }
 
-  val csvToKnownFact = Flow[String]
-    .map(_.split(",").map(_.trim))
-    .map(stringToKnownFacts)
-    .throttle(1, 1.second, 1, ThrottleMode.shaping)
-
-  def stringToKnownFacts(cols: Array[String]) = KnownFacts(cols(0), cols(1), cols(2))
-
-  def averageSink[A](a: A)(implicit hc: HeaderCarrier) {
-    a match {
-      case KnownFacts(postCode, countryCode, utr) => Logger.info(s"Known fact ${postCode} ${countryCode} ${utr}")
-      case x => println("no idea what " + x + "is!")
-    }
-  }
 }

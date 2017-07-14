@@ -23,9 +23,9 @@ POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
 GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
 
-POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
+#POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
 POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment
-POST       /bulkload/knownfacts      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.load
+POST       /bulkload/knownfacts      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.toLoad
 
 POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
 POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
