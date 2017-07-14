@@ -23,7 +23,7 @@ import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RunnableGraph, Sink, Source 
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.JsValue
-import play.api.mvc.Action
+import play.api.mvc.{ Action, Result }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
@@ -33,6 +33,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
@@ -40,16 +41,12 @@ import scala.util.Try
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
   implicit val as = ActorSystem("GG")
   implicit val mat = ActorMaterializer.create(as)
-  def toLoad = Action.async { implicit request =>
-    load(request.body.asText)
-    Future.successful(Ok("Finished"))
-  }
 
-  def load(arg: Option[String]): Unit = {
+  def load = Action.async { implicit request =>
 
-    val knownFactsLines = Source.fromIterator(() => arg.toIterator)
+    val knownFactsLines = Source.fromIterator(() => request.body.asText.toIterator)
 
-    val csvToKnownFact = Flow[String]
+    lazy val csvToKnownFact = Flow[String]
       .map(_.split(",").map(_.trim))
       .map(stringToKnownFacts)
       .throttle(1, 1.second, 1, ThrottleMode.shaping)
@@ -66,6 +63,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     def averageSink(a: BulkKnownFacts): Future[JsValue] = {
       a match {
         case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
+          println("run/////////////////////")
           Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
           eMACConnector.loadKF(a).map(x => x.get)
         }
@@ -75,6 +73,12 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val runnable = knownFactsLines.via(csvToKnownFact).toMat(sink)(Keep.right)
 
     val res = runnable.run()
+
+    for {
+      a <- res
+      b <- a
+      c = b.head
+    } yield Ok(c)
 
     /*    val g = RunnableGraph.fromGraph(GraphDSL.create() {
       implicit builder =>
