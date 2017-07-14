@@ -257,7 +257,7 @@ trait ApplicationModule extends BuiltInComponents
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
   val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
-  val bulkLoad = new BulkGGController(authConnector)(appConfig, messagesApi)
+  val bulkLoad = new BulkGGController(authConnector, emacConnector)(appConfig, messagesApi)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)

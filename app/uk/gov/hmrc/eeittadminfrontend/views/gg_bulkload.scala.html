@@ -23,61 +23,7 @@
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.loadKF" class="js-form" method="POST"
-      novalidate="novalidate">
- <h4>Load known facts</h4>
- @CSRF.formField
- <p>Enrolment Key:</p>
- <p>Service:</p>
- <fieldset class="form-field-group">
-  <input
-  type="text"
-  name="enrollmentKey.service"
-  id="service"
-  value=""
-  class="form-control form-control--block"
-  />
-  <p>Identifier:</p>
-  <input
-          type="text"
-          name="enrollmentKey.identifier"
-          id="identifier"
-          value=""
-          class="form-control form-control--block"
-  />
-<p>Value:</p>
-  <input
-          type="text"
-          name="enrollmentKey.value"
-          id="value"
-          value=""
-          class="form-control form-control--block"
-  />
- </fieldset>
 
-
-<p>Verifier:</p>
-@helper.repeat(knownFactsForm("verifiers"), min = 3) { dataField =>
-
-
-        @helper.inputText(dataField("key"), '_label -> "Key", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-
-        @helper.inputText(dataField("value"), '_label -> "Value", 'inputDivClass -> "col-sm-8", 'placeholder -> "", 'class -> "form-field-group")
-                <div id="newField">
-                </div>
-                <br>
-            <br>
-            <br>
-            <br>
-            <br>
-
-
-
-
-
- }
- <input type="submit" class="button" value="Load"/>
-</form>
 
 
 <h3>Users</h3>
@@ -239,7 +185,7 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
 </form>
 
 <h2>Bulk Load</h2>
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGController.toLoad" class="js-form" method="POST">
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGController.load" class="js-form" method="POST">
     @CSRF.formField
     <textarea
             type="text"
