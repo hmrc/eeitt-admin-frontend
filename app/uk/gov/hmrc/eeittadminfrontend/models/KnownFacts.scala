@@ -16,8 +16,51 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-case class KnownFacts(
-  postCode: String,
-  countryCode: String,
-  utr: String
+import play.api.libs.iteratee.Input.Empty
+
+case class BulkKnownFacts(
+  ref: String,
+  utr: Utr,
+  nino: Nino,
+  postCode: PostCode,
+  countryCode: CountryCode
 )
+
+case class Utr(utr: Option[String]) {
+  utr match {
+    case Some(utr) => s"""{
+    "key" : "UTR",
+    "value" : "${utr}"
+  }"""
+    case None => ""
+  }
+}
+
+case class Nino(nino: Option[String]) {
+  nino match {
+    case Some(nino) => s"""{
+    "key" : "NINO",
+    "value" : "${nino}"
+  }"""
+    case None => ""
+  }
+}
+
+case class PostCode(postCode: Option[String]) {
+  postCode match {
+    case Some(postCode) => s"""{
+    "key" : "PostCode",
+    "value" : "${postCode}"
+  }"""
+    case None => ""
+  }
+}
+case class CountryCode(countryCode: Option[String]) {
+  countryCode match {
+    case Some(countryCode) => s"""{
+    "key" : "PostCode",
+    "value" : "${countryCode}"
+  }"""
+    case None => ""
+  }
+}

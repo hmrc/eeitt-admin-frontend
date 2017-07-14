@@ -22,6 +22,7 @@ import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
+import uk.gov.hmrc.eeittadminfrontend.models.BulkKnownFacts
 import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -96,11 +97,11 @@ trait EMACConnectorHelper {
   }
 
   //ES6
-  def loadKF(knownFacts: KnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
 
-    val json = getJson(knownFacts.verifiers)
+    val json = Json.parse(bulkFacts.toString)
 
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url${knownFacts.enrollmentKey.service}~${knownFacts.enrollmentKey.identifier}~${knownFacts.enrollmentKey.value}", json).map(result).flatMap {
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url", json).map(result).flatMap {
       case None => Future.successful(None)
       case x =>
         Logger.error("Loading of known facts has failed")
