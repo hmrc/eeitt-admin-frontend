@@ -43,7 +43,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head
-    Logger.info(s"$requestBuilder")
+    Logger.info(s"Request content: $requestBuilder")
     stream(requestBuilder).map(x => Ok(x))
   }
   def stream(request: String): Future[JsValue] = {
@@ -66,7 +66,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     def averageSink(a: BulkKnownFacts): Future[JsValue] = {
       a match {
         case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
-          println("run/////////////////////")
           Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
           eMACConnector.loadKF(a).map(x => x.get)
         }
