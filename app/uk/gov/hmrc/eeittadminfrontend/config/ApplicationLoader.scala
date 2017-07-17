@@ -248,10 +248,6 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val metricsController = new MetricsController(metrics)
 
-  lazy val mat = ActorMaterializer.create(actorSystem)
-
-  lazy val hc = new HeaderCarrier
-
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
@@ -262,7 +258,7 @@ trait ApplicationModule extends BuiltInComponents
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
   val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
-  val bulkLoad = new BulkGGController(authConnector, emacConnector)(appConfig, messagesApi, actorSystem, mat, hc)
+  val bulkLoad = new BulkGGController(authConnector, emacConnector, messagesApi, application.actorSystem, materializer)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
