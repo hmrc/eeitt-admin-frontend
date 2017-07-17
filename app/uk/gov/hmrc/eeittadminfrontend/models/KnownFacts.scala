@@ -36,13 +36,9 @@ case class BulkKnownFacts(
   }
 }
 
-case class Ref(ref: Option[String]) {
+case class Ref(ref: String) {
   override def toString = {
-    ref match {
-      case Some(ref) =>
-        s"""{"key" : "REF","value" : "${ref}"}"""
-      case None => ""
-    }
+    ref
   }
 
 }

@@ -46,7 +46,7 @@ trait EMACConnectorHelper {
   val POST: HttpPost = WSHttp
   val DELETE: HttpDelete = WSHttp
 
-  val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments/"
+  val ES6url = "http://localhost:7775/enrolment-store-proxy/enrolment-store/enrolments"
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
   val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
@@ -101,7 +101,7 @@ trait EMACConnectorHelper {
     println(bulkFacts.toString + "////////")
     val json = Json.parse(bulkFacts.toString)
 
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url", json).map(result).flatMap {
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~Etmpregistrationnumber~${bulkFacts.ref}", json).map(result).flatMap {
       case None => Future.successful(None)
       case x =>
         Logger.error("Loading of known facts has failed")
