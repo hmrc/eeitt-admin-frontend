@@ -39,9 +39,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
 
-class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
-  implicit val as = ActorSystem("GG")
-  implicit val mat = ActorMaterializer.create(as)
+class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi, as: ActorSystem, mat: ActorMaterializer) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head
