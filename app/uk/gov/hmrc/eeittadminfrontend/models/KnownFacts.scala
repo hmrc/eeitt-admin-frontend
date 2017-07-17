@@ -19,21 +19,38 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import play.api.libs.iteratee.Input.Empty
 
 case class BulkKnownFacts(
-  ref: String,
-  utr: Utr,
-  nino: Nino,
-  countryCode: CountryCode,
-  postCode: PostCode
+    ref: Ref,
+    utr: Utr,
+    nino: Nino,
+    countryCode: CountryCode,
+    postCode: PostCode
 
-)
+) {
+  override def toString = {
+    s"""
+    {"verifiers" : [${utr.toString},
+    ${nino.toString},
+    ${countryCode.toString},
+    ${postCode.toString}]}
+    """
+  }
+}
+
+case class Ref(ref: Option[String]) {
+  override def toString = {
+    ref match {
+      case Some(ref) =>
+        s"""{"key" : "REF","value" : "${ref}"}"""
+      case None => ""
+    }
+  }
+
+}
 
 case class Utr(utr: Option[String]) {
   override def toString = {
     utr match {
-      case Some(utr) => s"""{
-    "key" : "UTR",
-    "value" : "${utr}"
-  }"""
+      case Some(utr) => s"""{"key" : "UTR","value" : "${utr}"}"""
       case None => ""
     }
   }
@@ -42,10 +59,7 @@ case class Utr(utr: Option[String]) {
 case class Nino(nino: Option[String]) {
   override def toString = {
     nino match {
-      case Some(nino) => s"""{
-    "key" : "NINO",
-    "value" : "${nino}"
-  }"""
+      case Some(nino) => s"""{"key" : "NINO","value" : "${nino}"}"""
       case None => ""
     }
   }
@@ -54,10 +68,7 @@ case class Nino(nino: Option[String]) {
 case class PostCode(postCode: Option[String]) {
   override def toString = {
     postCode match {
-      case Some(postCode) => s"""{
-    "key" : "PostCode",
-    "value" : "${postCode}"
-  }"""
+      case Some(postCode) => s"""{"key" : "PostCode","value" : "${postCode}"}"""
       case None => ""
     }
   }
@@ -65,10 +76,7 @@ case class PostCode(postCode: Option[String]) {
 case class CountryCode(countryCode: Option[String]) {
   override def toString = {
     countryCode match {
-      case Some(countryCode) => s"""{
-    "key" : "CountryCode",
-    "value" : "${countryCode}"
-  }"""
+      case Some(countryCode) => s"""{"key" : "CountryCode","value" : "${countryCode}"}"""
       case None => ""
     }
   }

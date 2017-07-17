@@ -98,7 +98,7 @@ trait EMACConnectorHelper {
 
   //ES6
   def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
-
+    println(bulkFacts.toString + "////////")
     val json = Json.parse(bulkFacts.toString)
 
     PUT.PUT[JsValue, HttpResponse](s"$ES6url", json).map(result).flatMap {

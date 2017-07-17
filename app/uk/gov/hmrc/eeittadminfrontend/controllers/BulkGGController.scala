@@ -22,7 +22,7 @@ import akka.stream._
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RunnableGraph, Sink, Source }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.libs.json.JsValue
+import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Action, Result }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
@@ -43,9 +43,9 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   implicit val as = ActorSystem("GG")
   implicit val mat = ActorMaterializer.create(as)
 
-  def load = Action.async { implicit request =>
-    val requestBuilder = request.body.toString
-    Logger.info(s"${requestBuilder} ///////////////")
+  def load = Action.async(parse.urlFormEncoded) { implicit request =>
+    val requestBuilder = request.body.apply("bulk-load").head
+    Logger.info(s"$requestBuilder + //////////////")
     val knownFactsLines = Source.single(requestBuilder)
 
     lazy val csvToKnownFact = Flow[String]
@@ -53,7 +53,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       .map(stringToKnownFacts)
       .throttle(1, 1.second, 1, ThrottleMode.shaping)
 
-    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(cols(0).toString, Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
+    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(Option(cols(0))), Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
 
     def sink = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
       for {
