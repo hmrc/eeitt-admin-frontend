@@ -39,12 +39,15 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
 
-class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi, as: ActorSystem, mat: ActorMaterializer) extends FrontendController with Actions with I18nSupport {
+class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi, as: ActorSystem, mat: ActorMaterializer, hc: HeaderCarrier) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head
-    Logger.info(s"$requestBuilder + //////////////")
-    val knownFactsLines = Source.single(requestBuilder)
+    Logger.info(s"$requestBuilder")
+    stream(requestBuilder).map(x => Ok(x))
+  }
+  def stream(request: String): Future[JsValue] = {
+    val knownFactsLines = Source.single(request)
 
     lazy val csvToKnownFact = Flow[String]
       .map(_.split(",").map(_.trim))
@@ -78,31 +81,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       a <- res
       b <- a
       c = b.head
-    } yield Ok(c)
-
-    /*    val g = RunnableGraph.fromGraph(GraphDSL.create() {
-      implicit builder =>
-        import GraphDSL.Implicits._
-
-        //source
-        val A: Outlet[String] = builder.add(Source.fromIterator(() => knownFactsLines)).out
-
-        //flow
-        val B: FlowShape[String, BulkKnownFacts] = builder.add(csvToKnownFact)
-
-        //sink
-        //        val C: Inlet[BulkKnownFacts] = builder.add(Sink.foreach(averageSink)).in
-        //        val C: Inlet[BulkKnownFacts] = builder.add(sink).in
-        val C = builder.add(sink)
-        // val C: Inlet[BulkKnownFacts] = builder.add(averageSink).in
-
-        //graph
-        A ~> B ~> C
-
-        ClosedShape
-
-    })
-    val done = g.run()*/
+    } yield c
 
   }
 }

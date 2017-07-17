@@ -51,6 +51,7 @@ import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
@@ -249,6 +250,8 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val mat = ActorMaterializer.create(actorSystem)
 
+  lazy val hc = new HeaderCarrier
+
   val authConnector = new FrontendAuthConnector(configuration, environment.mode)
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
@@ -259,7 +262,7 @@ trait ApplicationModule extends BuiltInComponents
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
   val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
-  val bulkLoad = new BulkGGController(authConnector, emacConnector)(appConfig, messagesApi, actorSystem, mat)
+  val bulkLoad = new BulkGGController(authConnector, emacConnector)(appConfig, messagesApi, actorSystem, mat, hc)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
