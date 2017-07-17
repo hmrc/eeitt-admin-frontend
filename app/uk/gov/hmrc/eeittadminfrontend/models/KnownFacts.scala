@@ -22,45 +22,54 @@ case class BulkKnownFacts(
   ref: String,
   utr: Utr,
   nino: Nino,
-  postCode: PostCode,
-  countryCode: CountryCode
+  countryCode: CountryCode,
+  postCode: PostCode
+
 )
 
 case class Utr(utr: Option[String]) {
-  utr match {
-    case Some(utr) => s"""{
+  override def toString = {
+    utr match {
+      case Some(utr) => s"""{
     "key" : "UTR",
     "value" : "${utr}"
   }"""
-    case None => ""
+      case None => ""
+    }
   }
 }
 
 case class Nino(nino: Option[String]) {
-  nino match {
-    case Some(nino) => s"""{
+  override def toString = {
+    nino match {
+      case Some(nino) => s"""{
     "key" : "NINO",
     "value" : "${nino}"
   }"""
-    case None => ""
+      case None => ""
+    }
   }
 }
 
 case class PostCode(postCode: Option[String]) {
-  postCode match {
-    case Some(postCode) => s"""{
+  override def toString = {
+    postCode match {
+      case Some(postCode) => s"""{
     "key" : "PostCode",
     "value" : "${postCode}"
   }"""
-    case None => ""
+      case None => ""
+    }
   }
 }
 case class CountryCode(countryCode: Option[String]) {
-  countryCode match {
-    case Some(countryCode) => s"""{
-    "key" : "PostCode",
+  override def toString = {
+    countryCode match {
+      case Some(countryCode) => s"""{
+    "key" : "CountryCode",
     "value" : "${countryCode}"
   }"""
-    case None => ""
+      case None => ""
+    }
   }
 }
