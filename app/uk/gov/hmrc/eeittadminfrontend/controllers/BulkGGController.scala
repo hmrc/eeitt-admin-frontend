@@ -16,16 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import akka.{ Done, NotUsed }
 import akka.actor.ActorSystem
 import akka.stream._
-import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RunnableGraph, Sink, Source }
+import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.libs.json.{ JsValue, Json }
-import play.api.mvc.{ Action, Result }
-import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import play.api.libs.json.JsValue
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
@@ -33,20 +30,19 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Try
 
-class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi, as: ActorSystem, mat: ActorMaterializer, hc: HeaderCarrier) extends FrontendController with Actions with I18nSupport {
+class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head
     Logger.info(s"Request content: $requestBuilder")
     stream(requestBuilder).map(x => Ok(x))
   }
-  def stream(request: String): Future[JsValue] = {
+
+  def stream(request: String)(implicit hc: HeaderCarrier): Future[JsValue] = {
     val knownFactsLines = Source.single(request)
 
     lazy val csvToKnownFact = Flow[String]
@@ -56,14 +52,14 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
 
-    def sink = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
+    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
       for {
         f1 <- averageSink(b)
         fseq <- a
       } yield f1 :: fseq
     }
 
-    def averageSink(a: BulkKnownFacts): Future[JsValue] = {
+    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[JsValue] = {
       a match {
         case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
           Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
@@ -83,4 +79,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     } yield c
 
   }
+
+  private implicit lazy val mat = materializer
+  private implicit lazy val sys = actorSystem
+
 }
