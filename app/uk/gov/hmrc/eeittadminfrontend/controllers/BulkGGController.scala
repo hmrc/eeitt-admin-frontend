@@ -33,6 +33,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -43,15 +44,16 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   implicit val mat = ActorMaterializer.create(as)
 
   def load = Action.async { implicit request =>
-
-    val knownFactsLines = Source.fromIterator(() => request.body.asText.toIterator)
+    val requestBuilder = request.body.toString
+    Logger.info(s"${requestBuilder} ///////////////")
+    val knownFactsLines = Source.single(requestBuilder)
 
     lazy val csvToKnownFact = Flow[String]
       .map(_.split(",").map(_.trim))
       .map(stringToKnownFacts)
       .throttle(1, 1.second, 1, ThrottleMode.shaping)
 
-    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(cols(0).toString, Utr(Option(cols(1))), Nino(Option(cols(2))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
+    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(cols(0).toString, Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
 
     def sink = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
       for {
@@ -105,5 +107,4 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val done = g.run()*/
 
   }
-
 }
