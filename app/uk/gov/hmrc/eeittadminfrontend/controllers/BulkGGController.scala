@@ -51,9 +51,9 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     lazy val csvToKnownFact = Flow[String]
       .map(_.split(",").map(_.trim))
       .map(stringToKnownFacts)
-      .throttle(1, 1.second, 1, ThrottleMode.shaping)
+      .throttle(1, 3.second, 1, ThrottleMode.shaping)
 
-    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(Option(cols(0))), Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
+    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), Nino(Option(cols(2))), CountryCode(Option(cols(3))), PostCode(Option(cols(4))))
 
     def sink = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
       for {
