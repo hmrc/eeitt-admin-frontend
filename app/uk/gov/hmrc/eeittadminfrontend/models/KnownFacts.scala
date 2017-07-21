@@ -22,16 +22,17 @@ case class BulkKnownFacts(
     ref: Ref,
     utr: Utr,
     nino: Nino,
-    countryCode: CountryCode,
-    postCode: PostCode
+    postCode: PostCode,
+    countryCode: CountryCode
 
 ) {
   override def toString = {
     s"""
     {"verifiers" : [${utr.toString},
     ${nino.toString},
-    ${countryCode.toString},
-    ${postCode.toString}]}
+      ${postCode.toString},
+    ${countryCode.toString}
+    ]}
     """
   }
 }
