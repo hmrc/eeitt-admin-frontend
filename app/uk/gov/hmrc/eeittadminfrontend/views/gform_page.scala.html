@@ -19,10 +19,10 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 @import views.html.helper.CSRF
-@import uk.gov.hmrc.eeittadminfrontend.models.GformIdAndVersion
+@import uk.gov.hmrc.eeittadminfrontend.models.GformId
 @import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
 
-@(form: Form[GformIdAndVersion])(implicit request : Request[_], appConfig: AppConfig)
+@(form: Form[GformId])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST"
@@ -39,17 +39,7 @@
         />
         </label>
     </fieldset>
-    <p>Form Version:</p>
-    <fieldset class="form-field-group">
-        <input
-                name="version"
-                id="version"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
-    <input type="submit" class="button" value="search"/>
+       <input type="submit" class="button" value="search"/>
 </form>
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate" method="POST"
@@ -61,16 +51,6 @@
         <input
                 name="formTypeId.value"
                 id="templateValue"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
-    <p>Form Version:</p>
-    <fieldset class="form-field-group">
-        <input
-                name="version"
-                id="templateVersion"
                 value=""
                 class="form-control form-control--block"
         />

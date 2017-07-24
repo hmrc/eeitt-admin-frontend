@@ -29,8 +29,8 @@ object GformConnector {
   private val sc = new ServicesConfig {}
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
-  def getGformsTemplate(formTypeId: FormTypeId, version: String)(implicit hc: HeaderCarrier): Future[JsValue] = {
-    WSHttp.GET[JsValue](gformUrl + s"/formtemplates/$formTypeId/$version")
+  def getGformsTemplate(formTypeId: FormTypeId)(implicit hc: HeaderCarrier): Future[JsValue] = {
+    WSHttp.GET[JsValue](gformUrl + s"/formtemplates/$formTypeId")
   }
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier): Future[JsValue] = {
@@ -45,7 +45,7 @@ object GformConnector {
     WSHttp.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
   }
 
-  def deleteTemplate(formTypeId: FormTypeId, version: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
-    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId/$version")
+  def deleteTemplate(formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId")
   }
 }
