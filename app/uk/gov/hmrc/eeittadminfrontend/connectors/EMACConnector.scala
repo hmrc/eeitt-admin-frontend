@@ -97,16 +97,11 @@ trait EMACConnectorHelper {
   }
 
   //ES6
-  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
-    println(bulkFacts.toString + "////////")
+  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+    Logger.info("Sending known fact:" + bulkFacts.toString)
     val json = Json.parse(bulkFacts.toString)
 
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~Etmpregistrationnumber~${bulkFacts.ref}", json).map(result).flatMap {
-      case None => Future.successful(None)
-      case x =>
-        Logger.error("Loading of known facts has failed")
-        Future.successful(x)
-    }
+    PUT.PUT[JsValue, JsValue](s"$ES6url/HMRC-OBTDS-ORG~Etmpregistrationnumber~${bulkFacts.ref}", json)
   }
 
   //ES8

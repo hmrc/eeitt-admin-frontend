@@ -63,7 +63,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       a match {
         case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
           Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
-          eMACConnector.loadKF(a).map(x => x.get)
+          eMACConnector.loadKF(a).map(x => x)
         }
       }
     }
