@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformIdAndVersion }
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformId }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -39,8 +39,8 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
       },
       gformIdAndVersion => {
-        Logger.info(s" ${request.session.get("token").get} Queried for ${gformIdAndVersion.formTypeId} ${gformIdAndVersion.version}")
-        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map { x => Ok(Json.prettyPrint(x))
+        Logger.info(s" ${request.session.get("token").get} Queried for ${gformIdAndVersion.formTypeId}")
+        GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId).map { x => Ok(Json.prettyPrint(x))
         }
       }
     )
@@ -72,9 +72,9 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
       formWithErrors => {
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
       },
-      gformIdAndVersion => {
-        Logger.info(s" ${request.session.get("token").get} deleted ${gformIdAndVersion.formTypeId} ${gformIdAndVersion.version}")
-        GformConnector.deleteTemplate(gformIdAndVersion.formTypeId, gformIdAndVersion.version).map(res => Ok)
+      gformId => {
+        Logger.info(s" ${request.session.get("token").get} deleted ${gformId.formTypeId} ")
+        GformConnector.deleteTemplate(gformId.formTypeId).map(res => Ok)
       }
     )
   }
@@ -87,13 +87,12 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.author_tool()))
   }
 
-  val gFormForm: Form[GformIdAndVersion] = Form(
+  val gFormForm: Form[GformId] = Form(
     mapping(
       "formTypeId" -> mapping(
         "value" -> text
-      )(FormTypeId.apply)(FormTypeId.unapply),
-      "version" -> text
-    )(GformIdAndVersion.apply)(GformIdAndVersion.unapply)
+      )(FormTypeId.apply)(FormTypeId.unapply)
+    )(GformId.apply)(GformId.unapply)
   )
 }
 
