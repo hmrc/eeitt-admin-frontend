@@ -51,7 +51,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       .map(stringToKnownFacts)
       .throttle(1, 3.second, 1, ThrottleMode.shaping)
 
-    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), Nino(Option(cols(2))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
+    def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
 
     def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[HttpResponse]], BulkKnownFacts](Future.successful(List.empty[HttpResponse])) { (a, b) =>
       for {
@@ -62,8 +62,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
       a match {
-        case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
-          Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
+        case BulkKnownFacts(ref, utr, postCode, countryCode) => {
+          Logger.info(s"Known fact $ref $utr $postCode $countryCode")
           eMACConnector.loadKF(a)
         }
       }
