@@ -20,6 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import play.api.Logger
+import play.api.http.Status
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.JsValue
 import play.api.mvc.Action
@@ -28,7 +29,7 @@ import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -39,10 +40,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head
     Logger.info(s"Request content: $requestBuilder")
-    stream(requestBuilder).map(x => Ok(x))
+    stream(requestBuilder).map(x => Ok("Loaded"))
   }
 
-  def stream(request: String)(implicit hc: HeaderCarrier): Future[JsValue] = {
+  def stream(request: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val knownFactsLines = Source.single(request)
 
     lazy val csvToKnownFact = Flow[String]
@@ -52,18 +53,18 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), Nino(Option(cols(2))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
 
-    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[JsValue]], BulkKnownFacts](Future.successful(List.empty[JsValue])) { (a, b) =>
+    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[HttpResponse]], BulkKnownFacts](Future.successful(List.empty[HttpResponse])) { (a, b) =>
       for {
         f1 <- averageSink(b)
         fseq <- a
       } yield f1 :: fseq
     }
 
-    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[JsValue] = {
+    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
       a match {
         case BulkKnownFacts(ref, utr, nino, postCode, countryCode) => {
           Logger.info(s"Known fact $ref $utr $nino $postCode $countryCode")
-          eMACConnector.loadKF(a).map(x => x)
+          eMACConnector.loadKF(a)
         }
       }
     }
