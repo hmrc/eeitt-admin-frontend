@@ -46,7 +46,7 @@ trait EMACConnectorHelper {
   val POST: HttpPost = WSHttp
   val DELETE: HttpDelete = WSHttp
 
-  val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/enrolments"
+  val ES6url = "http://localhost:7775/enrolment-store-proxy/enrolment-store/enrolments"
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
   val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
@@ -97,11 +97,12 @@ trait EMACConnectorHelper {
   }
 
   //ES6
-  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HttpResponse]] = {
     Logger.info("Sending known fact:" + bulkFacts.toString)
     val json = Json.parse(bulkFacts.toString)
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json)
-
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => Some(x)).recover {
+      case e: BadRequestException => Option.empty[HttpResponse]
+    }
   }
 
   //ES8
