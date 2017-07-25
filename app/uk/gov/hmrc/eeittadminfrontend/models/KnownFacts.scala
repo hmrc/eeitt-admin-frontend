@@ -25,6 +25,7 @@ case class BulkKnownFacts(
     countryCode: CountryCode
 
 ) {
+
   override def toString = {
     s"""
     {"verifiers" : [${utr.toString},
