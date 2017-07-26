@@ -74,7 +74,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       }
     }
 
-    val runnable = knownFactsLines.toMat(sink)(Keep.right)
+    val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).toMat(sink)(Keep.right)
 
     val res = runnable.run()
 
@@ -83,7 +83,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       b <- a
     } yield b
     returnedStatus.map(x => x.foreach(x => Logger.info("response status" + x.toString())))
-    returnedStatus.map(x => x.forall(x => x == 201))
+    returnedStatus.map(x => x.forall(x => x == 204))
 
   }
   def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
