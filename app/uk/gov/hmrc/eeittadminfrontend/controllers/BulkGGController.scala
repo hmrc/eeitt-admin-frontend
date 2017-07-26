@@ -40,31 +40,36 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val requestBuilder = request.body.apply("bulk-load").head.split(",")
     Logger.info(requestBuilder.toList.toString())
     val somethingElse: Iterator[Array[String]] = requestBuilder.sliding(5, 5)
-    somethingElse.foreach(x => Logger.info(x.toList.toString() + "Something Else"))
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
-    stream(kf).map(x => Ok("Loaded"))
+    stream(kf).map { x =>
+      x match {
+        case false => Ok("Something went wrong")
+        case true => Ok("It all worked fine")
+      }
+    }
 
   }
 
-  def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
-    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[HttpResponse]], BulkKnownFacts](Future.successful(List.empty[HttpResponse])) { (a, b) =>
+    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, b) =>
       for {
         f1 <- averageSink(b)
         fseq <- a
       } yield f1 :: fseq
     }
 
-    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
       a match {
+
         case BulkKnownFacts(ref, utr, postCode, countryCode) => {
           Logger.info(s"Known fact $ref $utr $postCode $countryCode")
-          eMACConnector.loadKF(a).map {
-            case Some(x) => x
-            case _ => HttpResponse(10000)
-          }
-
+          eMACConnector.loadKF(a)
+        }
+        case _ => {
+          Logger.info("Not a known fact")
+          Future(2)
         }
       }
     }
@@ -73,14 +78,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     val res = runnable.run()
 
-    val reply = for {
+    for {
       a <- res
       b <- a
-    } yield {
-      b.foreach(y => Logger.info(y.status.toString + "bbbbb"))
-      b
-    }
-    reply.map(x => x.last)
+    } yield b.forall(x => x == 200)
 
   }
   def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
