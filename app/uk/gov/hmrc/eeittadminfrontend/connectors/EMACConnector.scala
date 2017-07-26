@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
+import play.api.http.Status
 import play.api.libs.json.{ JsString, JsValue, Json, OFormat }
 import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
@@ -97,12 +98,10 @@ trait EMACConnectorHelper {
   }
 
   //ES6
-  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HttpResponse]] = {
+  def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     Logger.info("Sending known fact:" + bulkFacts.toString)
     val json = Json.parse(bulkFacts.toString)
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => Some(x)).recover {
-      case e: BadRequestException => Option.empty[HttpResponse]
-    }
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => x.status)
   }
 
   //ES8
