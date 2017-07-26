@@ -78,10 +78,12 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     val res = runnable.run()
 
-    for {
+    val returnedStatus = for {
       a <- res
       b <- a
-    } yield b.forall(x => x == 201)
+    } yield b
+    returnedStatus.map(x => x.foreach(x => Logger.info("response status" + x.toString())))
+    returnedStatus.map(x => x.forall(x => x == 201))
 
   }
   def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
