@@ -38,7 +38,7 @@ case class BulkKnownFacts(
 
 case class Ref(ref: String) {
   override def toString = {
-    ref
+    ref.replaceAll("\\r\\n", "")
   }
 
 }
