@@ -47,7 +47,7 @@ trait EMACConnectorHelper {
   val POST: HttpPost = WSHttp
   val DELETE: HttpDelete = WSHttp
 
-  val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store/enrolments"
+  val ES6url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolments"
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
   val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
