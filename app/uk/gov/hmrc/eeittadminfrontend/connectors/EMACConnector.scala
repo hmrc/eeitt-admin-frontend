@@ -21,6 +21,7 @@ import play.api.http.Status
 import play.api.libs.json.{ JsString, JsValue, Json, OFormat }
 import play.api.libs.ws.WSRequest
 import play.api.mvc.Request
+import play.utils.UriEncoding
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
 import uk.gov.hmrc.eeittadminfrontend.models.BulkKnownFacts
@@ -101,6 +102,7 @@ trait EMACConnectorHelper {
   def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     Logger.info("Sending known fact:" + bulkFacts.toString)
     val json = Json.parse(bulkFacts.toString)
+    Logger.info(UriEncoding.encodePathSegment(s"Sending to: $ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", "utf-8"))
     PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => x.status)
   }
 

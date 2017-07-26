@@ -43,8 +43,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
     stream(kf).map { x =>
       x match {
-        case false => Ok("Something went wrong")
         case true => Ok("It all worked fine")
+        case false => Ok("Something went wrong")
       }
     }
 
@@ -81,12 +81,11 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     for {
       a <- res
       b <- a
-    } yield b.forall(x => x == 200)
+    } yield b.forall(x => x == 201)
 
   }
   def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
 
   private implicit lazy val mat = materializer
   private implicit lazy val sys = actorSystem
-
 }
