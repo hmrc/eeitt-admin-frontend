@@ -74,7 +74,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       }
     }
 
-    val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).toMat(sink)(Keep.right)
+    val runnable = knownFactsLines.toMat(sink)(Keep.right)
 
     val res = runnable.run()
 
