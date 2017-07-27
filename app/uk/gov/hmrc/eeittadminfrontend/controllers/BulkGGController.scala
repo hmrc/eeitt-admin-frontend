@@ -37,15 +37,16 @@ import scala.concurrent.duration._
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
-    val requestBuilder = request.body.apply("bulk-load").head.split(",")
-    Logger.info(requestBuilder.toList.toString())
-    val somethingElse: Iterator[Array[String]] = requestBuilder.sliding(5, 5)
+    val requestBuilder = request.body.apply("bulk-load").head.split(",").map {
+      case " " => None
+      case x => Some(x)
+    }
+    Logger.info(s"Size of args: ${requestBuilder.toList.toString().size}")
+    val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(4, 4)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
-    stream(kf).map { x =>
-      x match {
-        case true => Ok("It all worked fine")
-        case false => Ok("Something went wrong")
-      }
+    stream(kf).map {
+      case true => Ok("It all worked fine")
+      case false => Ok("Something went wrong")
     }
 
   }
@@ -81,13 +82,16 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val returnedStatus = for {
       a <- res
       b <- a
+      _ = Logger.info(s" Size of futures${b.size}")
     } yield b
     returnedStatus.map(x => x.foreach(x => Logger.info("response status" + x.toString())))
     returnedStatus.map(x => x.forall(x => x == 204))
 
   }
-  def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
-
+  def stringToKnownFacts(cols: Array[Option[String]]) = {
+    Logger.info(s"Cols size : ${cols.size}")
+    BulkKnownFacts(Ref(cols(0).getOrElse("")), Utr(cols(1)), PostCode(Some(cols(2).getOrElse[String](""))), CountryCode(Some(cols(3).getOrElse[String](""))))
+  }
   private implicit lazy val mat = materializer
   private implicit lazy val sys = actorSystem
 }

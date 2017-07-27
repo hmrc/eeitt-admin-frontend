@@ -17,6 +17,8 @@
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.iteratee.Input.Empty
+import play.api.libs.json.{ JsValue, Json }
+import uk.gov.hmrc.eeittadminfrontend.connectors.KeyValuePair
 
 case class BulkKnownFacts(
     ref: Ref,
@@ -27,12 +29,20 @@ case class BulkKnownFacts(
 ) {
 
   override def toString = {
-    s"""
-    {"verifiers" : [${utr.toString},
-      ${postCode.toString},
-    ${countryCode.toString}
-    ]}
-    """
+
+    val filteredList = List(utr.toString, postCode.toString, countryCode.toString).filter(_.nonEmpty)
+
+    def getJson(list: List[String]): String = {
+
+      if (list.size == 3) {
+        s"""{"verifiers" : [${list.head},${list(1)},${list(2)}]}""".stripMargin
+      } else if (list.size == 2) {
+        s"""{"verifiers" : [${list.head},${list(1)}]}""".stripMargin
+      } else
+        s"""{"verifiers" : [${list.head}]}""".stripMargin
+    }
+
+    getJson(filteredList)
   }
 }
 
@@ -55,16 +65,17 @@ case class Utr(utr: Option[String]) {
 case class PostCode(postCode: Option[String]) {
   override def toString = {
     postCode match {
-      case Some(postCode) => s"""{"key" : "BusinessPostcode","value" : "${postCode}"}"""
-      case None => ""
+      case Some(y) if y.nonEmpty => s"""{"key" : "BusinessPostcode","value" : "${y}"}"""
+      case _ => ""
     }
   }
 }
+
 case class CountryCode(countryCode: Option[String]) {
   override def toString = {
     countryCode match {
-      case Some(countryCode) => s"""{"key" : "NonUKCountryCode","value" : "${countryCode}"}"""
-      case None => ""
+      case Some(x) if x.nonEmpty => s"""{"key" : "NonUKCountryCode","value" : "${x}"}"""
+      case _ => ""
     }
   }
 }
