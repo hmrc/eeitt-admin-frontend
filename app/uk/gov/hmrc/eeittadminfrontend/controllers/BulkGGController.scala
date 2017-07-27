@@ -39,7 +39,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head.split(",")
     Logger.info(requestBuilder.toList.toString())
-    val somethingElse: Iterator[Array[String]] = requestBuilder.sliding(5, 5)
+    val somethingElse: Iterator[Array[String]] = requestBuilder.sliding(12, 13)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
     stream(kf).map { x =>
       x match {
@@ -63,12 +63,12 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
       a match {
 
-        case BulkKnownFacts(ref, utr, postCode, countryCode) => {
-          Logger.info(s"Known fact $ref $utr $postCode $countryCode")
+        case BulkKnownFacts(ref, /*utr,*/ postCode, countryCode) => {
+          Logger.info(s"Known fact $ref $postCode $countryCode")
           eMACConnector.loadKF(a)
         }
         case _ => {
-          Logger.info("Not a known fact")
+          Logger.info("Not a known fact: ref")
           Future(2)
         }
       }
@@ -86,7 +86,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     returnedStatus.map(x => x.forall(x => x == 201))
 
   }
-  def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(0)), Utr(Option(cols(1))), PostCode(Option(cols(3))), CountryCode(Option(cols(4))))
+  def stringToKnownFacts(cols: Array[String]) = BulkKnownFacts(Ref(cols(1)), /*Utr(Option(cols(1))),*/ PostCode(Option(cols(10))), CountryCode(Option(cols(11))))
 
   private implicit lazy val mat = materializer
   private implicit lazy val sys = actorSystem

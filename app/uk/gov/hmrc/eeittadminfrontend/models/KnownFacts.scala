@@ -20,7 +20,7 @@ import play.api.libs.iteratee.Input.Empty
 
 case class BulkKnownFacts(
     ref: Ref,
-    utr: Utr,
+    /*utr: Utr,*/
     postCode: PostCode,
     countryCode: CountryCode
 
@@ -28,7 +28,7 @@ case class BulkKnownFacts(
 
   override def toString = {
     s"""
-    {"verifiers" : [${utr.toString},
+    {"verifiers" : [
       ${postCode.toString},
     ${countryCode.toString}
     ]}
@@ -43,14 +43,14 @@ case class Ref(ref: String) {
 
 }
 
-case class Utr(utr: Option[String]) {
+/*case class Utr(utr: Option[String]) {
   override def toString = {
     utr match {
       case Some(utr) => s"""{"key" : "UTR","value" : "${utr}"}"""
       case None => ""
     }
   }
-}
+}*/
 
 case class PostCode(postCode: Option[String]) {
   override def toString = {
