@@ -100,10 +100,8 @@ trait EMACConnectorHelper {
 
   //ES6
   def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
-    Logger.info("Sending known fact:" + bulkFacts.toString)
     val json = Json.parse(bulkFacts.toString)
-    Logger.info(UriEncoding.encodePathSegment(s"Sending to: $ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", "utf-8"))
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => x.status)
+    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => x.status).recover { case _: BadRequestException => 400 }
   }
 
   //ES8
