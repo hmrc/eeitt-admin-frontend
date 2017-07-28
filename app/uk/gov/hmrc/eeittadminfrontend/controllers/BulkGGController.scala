@@ -41,7 +41,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       case " " => None
       case x => Some(x)
     }
-    Logger.info(request.body.apply("bulk-load").toString())
     val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
     stream(kf).map {
