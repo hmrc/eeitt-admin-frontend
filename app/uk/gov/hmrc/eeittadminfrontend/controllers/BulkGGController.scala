@@ -41,7 +41,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       case " " => None
       case x => Some(x)
     }
-    Logger.info(s"Size of args: ${requestBuilder.toList.toString().size}")
     val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(4, 4)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
     stream(kf).map {
@@ -75,7 +74,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       }
     }
 
-    val runnable = knownFactsLines.toMat(sink)(Keep.right)
+    val runnable = knownFactsLines.throttle(50, 1.second, 1, ThrottleMode.shaping).toMat(sink)(Keep.right)
 
     val res = runnable.run()
 
@@ -84,12 +83,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       b <- a
       _ = Logger.info(s" Size of futures${b.size}")
     } yield b
-    returnedStatus.map(x => x.foreach(x => Logger.info("response status" + x.toString())))
     returnedStatus.map(x => x.forall(x => x == 204))
 
   }
   def stringToKnownFacts(cols: Array[Option[String]]) = {
-    Logger.info(s"Cols size : ${cols.size}")
     BulkKnownFacts(Ref(cols(0).getOrElse("")), Utr(cols(1)), PostCode(Some(cols(2).getOrElse[String](""))), CountryCode(Some(cols(3).getOrElse[String](""))))
   }
   private implicit lazy val mat = materializer
