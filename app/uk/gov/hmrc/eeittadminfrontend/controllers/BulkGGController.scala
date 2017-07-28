@@ -37,11 +37,12 @@ import scala.concurrent.duration._
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
-    val requestBuilder = request.body.apply("bulk-load").head.split(",").map {
+    val requestBuilder = request.body.apply("bulk-load").head.replace("select", " ").split(",").map {
       case " " => None
       case x => Some(x)
     }
-    val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(4, 4)
+    Logger.info(request.body.apply("bulk-load").toString())
+    val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
     stream(kf).map {
       case true => Ok("It all worked fine")
@@ -63,8 +64,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
       a match {
 
-        case BulkKnownFacts(ref, utr, postCode, countryCode) => {
-          Logger.info(s"Known fact $ref $utr $postCode $countryCode")
+        case BulkKnownFacts(ref, /* utr, */ postCode, countryCode) => {
+          Logger.info(s"Known fact $ref $postCode $countryCode")
           eMACConnector.loadKF(a)
         }
         case _ => {
@@ -87,7 +88,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
   }
   def stringToKnownFacts(cols: Array[Option[String]]) = {
-    BulkKnownFacts(Ref(cols(0).getOrElse("")), Utr(cols(1)), PostCode(Some(cols(2).getOrElse[String](""))), CountryCode(Some(cols(3).getOrElse[String](""))))
+    BulkKnownFacts(Ref(cols(1).getOrElse("")), PostCode(Some(cols(10).getOrElse[String](""))), CountryCode(Some(cols(11).getOrElse[String](""))))
   }
   private implicit lazy val mat = materializer
   private implicit lazy val sys = actorSystem
