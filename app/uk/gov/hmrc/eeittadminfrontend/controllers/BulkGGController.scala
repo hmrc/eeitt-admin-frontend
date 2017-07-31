@@ -63,7 +63,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
       a match {
 
-        case BulkKnownFacts(ref, /* utr, */ postCode, countryCode) => {
+        case BulkKnownFacts(ref, postCode, countryCode) => {
           Logger.info(s"Known fact $ref $postCode $countryCode")
           eMACConnector.loadKF(a)
         }

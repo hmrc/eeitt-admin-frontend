@@ -22,7 +22,6 @@ import uk.gov.hmrc.eeittadminfrontend.connectors.KeyValuePair
 
 case class BulkKnownFacts(
     ref: Ref,
-    /*utr: Utr,*/
     postCode: PostCode,
     countryCode: CountryCode
 
@@ -30,7 +29,7 @@ case class BulkKnownFacts(
 
   override def toString = {
 
-    val filteredList = List( /*utr.toString,*/ postCode.toString, countryCode.toString).filter(_.nonEmpty)
+    val filteredList = List(postCode.toString, countryCode.toString).filter(_.nonEmpty)
 
     def getJson(list: List[String]): String = {
 
