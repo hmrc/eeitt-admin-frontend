@@ -47,9 +47,8 @@ case class BulkKnownFacts(
 
 case class Ref(ref: String) {
   override def toString = {
-    ref.replaceAll("\\r\\n", "")
+    ref.replaceAll("[\\r\\n ]", "")
   }
-
 }
 
 case class Utr(utr: Option[String]) {
