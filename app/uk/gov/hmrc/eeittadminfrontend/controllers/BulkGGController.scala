@@ -78,12 +78,12 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     val res = runnable.run()
 
-    val returnedStatus = for {
+    val returnedStatus: Future[List[Int]] = for {
       a <- res
       b <- a
-      _ = Logger.info(s" Size of futures${b.size}")
     } yield b
-    returnedStatus.map(x => x.forall(x => x == 204))
+    returnedStatus.map(x => x.foreach(x => Logger.info("response status" + x.toString())))
+    val c: Future[Boolean] = returnedStatus.map(x => x.forall(x => x == 204))
 
   }
   def stringToKnownFacts(cols: Array[Option[String]]) = {
