@@ -24,7 +24,9 @@ import play.api.libs.json.Json
 import play.api.mvc.{ Action, AnyContent }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector.sc
 import uk.gov.hmrc.eeittadminfrontend.connectors._
+import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -38,12 +40,14 @@ case class User(credId: String, userId: String, groupId: String)
 class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)(implicit val messagesApi: MessagesApi, appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
   def getBulkloadPage = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds)))
+
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds, adminFrontend)))
 
   }
 
   private val switch: Boolean = pureconfig.loadConfigOrThrow[Switch]("feature.GGLoad.switch").value
-
+  private lazy val sc = new ServicesConfig {}
+  lazy val adminFrontend: String = s"${sc.baseUrl("eeitt-admin-frontend")}/eeitt-admin-frontend/echo"
   val listOfCredIds: Map[String, User] = if (switch) {
     Map("USER1" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user1"), "USER2" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user2"), "USER3" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user3"))
   } else Map.empty[String, User]
