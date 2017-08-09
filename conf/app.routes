@@ -34,3 +34,5 @@ POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)
+
+GET        /Echo                    uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.socket

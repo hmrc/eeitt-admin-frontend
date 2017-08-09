@@ -24,7 +24,6 @@ case class BulkKnownFacts(
     ref: Ref,
     postCode: PostCode,
     countryCode: CountryCode
-
 ) {
 
   override def toString = {
