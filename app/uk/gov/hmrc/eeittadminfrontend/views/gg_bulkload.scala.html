@@ -19,7 +19,7 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 @import uk.gov.hmrc.eeittadminfrontend.connectors._
-@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User])(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User], sc: String)(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "GG Bulk Load"){
 
@@ -202,7 +202,8 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
 
 
 <script>
-    var echoSocket = new WebSocket("ws://@appConfig.baseUrllocalhost:9000/eeitt-admin-frontend/Echo");
+var conf = "@sc"
+    var echoSocket = new WebSocket(conf.replace("http", "ws"));
     echoSocket.onopen = function(){
     console.log("I should say hello")
 echoSocket.send("hello");
