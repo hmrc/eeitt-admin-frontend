@@ -17,18 +17,21 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ Actor, ActorRef, ActorSystem, Props }
 import akka.stream._
-import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import akka.stream.scaladsl.{ Keep, Sink, Source }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.mvc.Action
+import play.api.libs.concurrent.Promise
+import play.api.libs.iteratee.{ Concurrent, Enumeratee, Enumerator, Iteratee }
+import play.api.libs.streams.ActorFlow
+import play.api.mvc.{ Action, WebSocket }
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -43,11 +46,18 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     }
     val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
     val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
+
     stream(kf).map {
       case true => Ok("It all worked fine")
       case false => Ok("Something went wrong")
     }
 
+  }
+  def socket = WebSocket.using[String] { request =>
+    val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(s"${new java.util.Date()}", 1000))
+    val in: Iteratee[String, Unit] = Iteratee.ignore[String]
+
+    (in, out)
   }
 
   def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
@@ -76,7 +86,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).completionTimeout(8.hours).toMat(sink)(Keep.right)
 
-    val res = runnable.run()
+    val res: Future[Future[List[Int]]] = runnable.run()
 
     val returnedStatus = for {
       a <- res

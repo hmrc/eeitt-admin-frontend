@@ -197,4 +197,21 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
     <input type="submit" class="button" value="Bulk Load"/>
 </form>
 
+
+<body></body>
+
+
+<script>
+    var echoSocket = new WebSocket("ws://@appConfig.baseUrllocalhost:9000/eeitt-admin-frontend/Echo");
+    echoSocket.onopen = function(){
+    console.log("I should say hello")
+echoSocket.send("hello");
+    console.log("Connection is open");
+    }
+    function f (event) {
+    console.log("got data: " + event.data)}
+
+    echoSocket.addEventListener("message", f)
+
+</script>
 }
