@@ -204,7 +204,7 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
 <script>
 
 var conf = "@sc"
-    var echoSocket = new WebSocket(conf.replace("https", "ws"));
+    var echoSocket = new WebSocket(conf.replace("http", "ws"));
     echoSocket.onopen = function(){
     console.log("I should say hello")
 echoSocket.send("hello");
