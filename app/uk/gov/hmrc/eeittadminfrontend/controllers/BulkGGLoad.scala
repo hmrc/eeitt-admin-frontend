@@ -41,13 +41,13 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
 
   def getBulkloadPage = Authentication.async { implicit request =>
 
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds, adminFrontend)))
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gg_bulkload(knownFactsForm, allocateEnrolment, listOfCredIds, "")))
 
   }
 
   private val switch: Boolean = pureconfig.loadConfigOrThrow[Switch]("feature.GGLoad.switch").value
-  private lazy val sc = new ServicesConfig {}
-  lazy val adminFrontend: String = s"${sc.baseUrl("eeitt-admin-frontend")}/eeitt-admin-frontend/echo"
+  //  private lazy val sc = new ServicesConfig {}
+  //  lazy val adminFrontend: String = s"${sc.baseUrl("eeitt-admin-frontend")}/eeitt-admin-frontend/echo"
   val listOfCredIds: Map[String, User] = if (switch) {
     Map("USER1" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user1"), "USER2" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user2"), "USER3" -> pureconfig.loadConfigOrThrow[User]("feature.GGLoad.users.user3"))
   } else Map.empty[String, User]

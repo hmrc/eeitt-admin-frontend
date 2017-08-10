@@ -26,6 +26,7 @@ import play.api.libs.concurrent.Promise
 import play.api.libs.iteratee.{ Concurrent, Enumeratee, Enumerator, Iteratee }
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{ Action, WebSocket }
+import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
@@ -37,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer) extends FrontendController with Actions with I18nSupport {
+class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer)(implicit appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head.replace("select", " ").split(",").map {
@@ -47,20 +48,38 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val knownFactAsString: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
     val kf: List[BulkKnownFacts] = knownFactAsString.map(x => stringToKnownFacts(x)).toList
 
-    stream(kf).map {
-      case true => Ok("It all worked fine")
-      case false => Ok("Something went wrong")
-    }
+    stream(kf)
+
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.test()))
+    //      .map {
+    //      case true => Ok("It all worked fine")
+    //      case false => Ok("Something went wrong")
+    //    }
+
+  }
+
+  var thing: String = ""
+  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 250))
+  def socket = WebSocket.using[String] { request =>
+
+    val in: Iteratee[String, Unit] = Iteratee.ignore[String]
+
+    (in, out)
+
   }
 
   def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
     def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, b) =>
+      thing = s"record ${b.ref} is being processed"
       for {
         f1 <- averageSink(b)
         fseq <- a
-      } yield f1 :: fseq
+      } yield {
+        thing = s"${b.ref} finished with $f1"
+        f1 :: fseq
+      }
     }
 
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
@@ -84,7 +103,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       a <- res
       b <- a
       _ = Logger.info(s" Size of futures${b.size}")
-    } yield b
+    } yield {
+      thing = "finished"
+      b
+    }
     returnedStatus.map(x => x.forall(x => x == 204))
 
   }
