@@ -102,7 +102,7 @@ trait EMACConnectorHelper {
   def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     val json = Json.parse(bulkFacts.toString)
     PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => {
-      Logger.info(s"${bulkFacts.ref} responded with a  ${x.status}")
+      Logger.info(s"${bulkFacts.ref} was successful")
       x.status
     }).recover {
       case _: BadRequestException => {
