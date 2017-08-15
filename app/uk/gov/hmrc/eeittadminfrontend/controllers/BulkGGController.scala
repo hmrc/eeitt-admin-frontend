@@ -47,11 +47,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val knownFactAsString: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
     val kf: List[BulkKnownFacts] = knownFactAsString.map(x => stringToKnownFacts(x)).toList
 
-    val summarisedResponse = for {
-      a <- stream(kf)
-    } yield a
-
-    summarisedResponse.map {
+    stream(kf).map {
       case true => Ok("It all worked fine")
       case false => Ok("Something went wrong")
     }
