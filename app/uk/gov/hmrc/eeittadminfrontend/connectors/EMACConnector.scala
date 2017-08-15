@@ -105,8 +105,8 @@ trait EMACConnectorHelper {
       Logger.info(s"${bulkFacts.ref} was successful")
       x.status
     }).recover {
-      case _: BadRequestException => {
-        Logger.info(s"${bulkFacts.ref} experienced a bad requested exception")
+      case err: BadRequestException => {
+        Logger.info(s"${bulkFacts.ref} experienced a bad requested exception: ${err.message}")
         400
       }
     }
