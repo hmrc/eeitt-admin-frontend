@@ -35,5 +35,3 @@ GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)
 
-GET        /echo                    uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.socket
-

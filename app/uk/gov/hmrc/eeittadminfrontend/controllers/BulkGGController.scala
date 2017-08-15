@@ -44,20 +44,17 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       case " " => None
       case x => Some(x)
     }
-    val somethingElse: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
-    val kf: List[BulkKnownFacts] = somethingElse.map(x => stringToKnownFacts(x)).toList
+    val knownFactAsString: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
+    val kf: List[BulkKnownFacts] = knownFactAsString.map(x => stringToKnownFacts(x)).toList
 
-    stream(kf).map {
+    val summarisedResponse = for {
+      a <- stream(kf)
+    } yield a
+
+    summarisedResponse.map {
       case true => Ok("It all worked fine")
       case false => Ok("Something went wrong")
     }
-
-  }
-  def socket = WebSocket.using[String] { request =>
-    val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(s"${new java.util.Date()}", 1000))
-    val in: Iteratee[String, Unit] = Iteratee.ignore[String]
-
-    (in, out)
   }
 
   def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
@@ -74,7 +71,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       a match {
 
         case BulkKnownFacts(ref, postCode, countryCode) => {
-          Logger.info(s"Known fact $ref $postCode $countryCode")
           eMACConnector.loadKF(a)
         }
         case _ => {
@@ -84,7 +80,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       }
     }
 
-    val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).completionTimeout(8.hours).toMat(sink)(Keep.right)
+    val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).toMat(sink)(Keep.right)
 
     val res: Future[Future[List[Int]]] = runnable.run()
 
