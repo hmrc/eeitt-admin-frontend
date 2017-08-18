@@ -26,16 +26,27 @@
 
 <script>
     var echoSocket = new WebSocket("ws://localhost:9000/eeitt-admin-frontend/echo");
+
     echoSocket.onopen = function(){
+    output = document.getElementById("output");
 echoSocket.send("hello");
     }
 
     function f (event) {
     if(event.data != "finished"){
-    console.log("got data: " + event.data)
+    writeToScreen("got data: " + event.data)
     }}
 
     echoSocket.addEventListener("message", f)
 
+    function writeToScreen(message)
+  {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    output.appendChild(pre);
+  }
+
 </script>
+<div id="output"></div>
 }
