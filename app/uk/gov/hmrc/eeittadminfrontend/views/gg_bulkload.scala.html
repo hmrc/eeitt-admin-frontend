@@ -204,16 +204,25 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
 <script>
 
 var conf = "@sc"
-    var echoSocket = new WebSocket(conf.replace("http", "wss"));
+var output = document.getElementById("output");
+    var echoSocket = new WebSocket(conf.replace("http", "ws"));
     echoSocket.onopen = function(){
-    console.log("I should say hello")
 echoSocket.send("hello");
     console.log("Connection is open");
     }
     function f (event) {
-    console.log("got data: " + event.data)}
+    writeToScreen("got data: " + event.data)}
 
     echoSocket.addEventListener("message", f)
 
+function writeToScreen(message)
+  {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    output.appendChild(pre);
+  }
 </script>
+
+<div id="output"></div>
 }

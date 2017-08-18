@@ -59,8 +59,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   }
 
   var thing: String = ""
-  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 250))
-  def socket = WebSocket.using[String] { request =>
+  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 3000))
+  def socket = WebSocket.using[String] { _ =>
 
     val in: Iteratee[String, Unit] = Iteratee.ignore[String]
 
@@ -72,7 +72,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
     def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, b) =>
-      thing = s"record ${b.ref} is being processed"
       for {
         f1 <- averageSink(b)
         fseq <- a
@@ -83,19 +82,13 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     }
 
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
-      a match {
-
-        case BulkKnownFacts(ref, postCode, countryCode) => {
           eMACConnector.loadKF(a)
-        }
-        case _ => {
-          Logger.info("Not a known fact")
-          Future(2)
-        }
-      }
     }
 
-    val runnable = knownFactsLines.throttle(1, 3.second, 1, ThrottleMode.shaping).toMat(sink)(Keep.right)
+
+    val runnable = knownFactsLines
+      .throttle(1, 3.second, 1, ThrottleMode.shaping)
+      .toMat(sink)(Keep.right)
 
     val res: Future[Future[List[Int]]] = runnable.run()
 
