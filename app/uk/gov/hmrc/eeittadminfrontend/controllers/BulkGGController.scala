@@ -17,15 +17,14 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import akka.NotUsed
-import akka.actor.{ Actor, ActorRef, ActorSystem, Props }
+import akka.actor.ActorSystem
 import akka.stream._
-import akka.stream.scaladsl.{ Keep, Sink, Source }
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import play.api.Logger
-import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Promise
-import play.api.libs.iteratee.{ Concurrent, Enumeratee, Enumerator, Iteratee }
-import play.api.libs.streams.ActorFlow
-import play.api.mvc.{ Action, WebSocket }
+import play.api.libs.iteratee.{Enumerator, Iteratee}
+import play.api.mvc.{Action, WebSocket}
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -38,6 +37,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+object BulkLoadHelper{
+  def stringToKnownFacts(cols: Array[Option[String]]) = {
+    BulkKnownFacts(Ref(cols(1).getOrElse("")), PostCode(Some(cols(10).getOrElse[String](""))), CountryCode(Some(cols(11).getOrElse[String](""))))
+  }
+}
+
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer)(implicit appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
@@ -45,21 +50,17 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
       case " " => None
       case x => Some(x)
     }
+
     val knownFactAsString: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
-    val kf: List[BulkKnownFacts] = knownFactAsString.map(x => stringToKnownFacts(x)).toList
+    val kf: List[BulkKnownFacts] = knownFactAsString.map(x => BulkLoadHelper.stringToKnownFacts(x)).toList
 
     stream(kf)
 
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.test()))
-    //      .map {
-    //      case true => Ok("It all worked fine")
-    //      case false => Ok("Something went wrong")
-    //    }
-
   }
 
   var thing: String = ""
-  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 3000))
+  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 3009))
   def socket = WebSocket.using[String] { _ =>
 
     val in: Iteratee[String, Unit] = Iteratee.ignore[String]
@@ -71,13 +72,13 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
-    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, b) =>
+    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, bulkKnownFact) =>
       for {
-        f1 <- averageSink(b)
+        responseStatus <- averageSink(bulkKnownFact)
         fseq <- a
       } yield {
-        thing = s"${b.ref} finished with $f1"
-        f1 :: fseq
+        thing = s"${bulkKnownFact.ref} finished with $responseStatus"
+        responseStatus :: fseq
       }
     }
 
@@ -103,9 +104,7 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     returnedStatus.map(x => x.forall(x => x == 204))
 
   }
-  def stringToKnownFacts(cols: Array[Option[String]]) = {
-    BulkKnownFacts(Ref(cols(1).getOrElse("")), PostCode(Some(cols(10).getOrElse[String](""))), CountryCode(Some(cols(11).getOrElse[String](""))))
-  }
+
   private implicit lazy val mat = materializer
   private implicit lazy val sys = actorSystem
 }
