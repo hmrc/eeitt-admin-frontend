@@ -37,7 +37,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-object BulkLoadHelper{
+
+object BulkLoadHelper {
   def stringToKnownFacts(cols: Array[Option[String]]) = {
     BulkKnownFacts(Ref(cols(1).getOrElse("")), PostCode(Some(cols(10).getOrElse[String](""))), CountryCode(Some(cols(11).getOrElse[String](""))))
   }
@@ -73,10 +74,12 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
     def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, bulkKnownFact) =>
+
       for {
         responseStatus <- averageSink(bulkKnownFact)
         fseq <- a
       } yield {
+
         thing = s"${bulkKnownFact.ref} finished with $responseStatus"
         responseStatus :: fseq
       }
