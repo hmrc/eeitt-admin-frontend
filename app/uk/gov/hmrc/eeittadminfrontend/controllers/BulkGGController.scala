@@ -19,12 +19,12 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream._
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{ Keep, Sink, Source }
 import play.api.Logger
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.concurrent.Promise
-import play.api.libs.iteratee.{Enumerator, Iteratee}
-import play.api.mvc.{Action, WebSocket}
+import play.api.libs.iteratee.{ Enumerator, Iteratee }
+import play.api.mvc.{ Action, WebSocket }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -36,7 +36,6 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 
 object BulkLoadHelper {
   def stringToKnownFacts(cols: Array[Option[String]]) = {
@@ -86,9 +85,8 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
     }
 
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
-          eMACConnector.loadKF(a)
+      eMACConnector.loadKF(a)
     }
-
 
     val runnable = knownFactsLines
       .throttle(1, 3.second, 1, ThrottleMode.shaping)
