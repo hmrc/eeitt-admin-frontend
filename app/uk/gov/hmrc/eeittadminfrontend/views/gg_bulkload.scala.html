@@ -196,33 +196,4 @@ GroupId : @listOfCredIds("USER3").groupId <br/>
     ></textarea>
     <input type="submit" class="button" value="Bulk Load"/>
 </form>
-
-
-<body></body>
-
-
-<script>
-
-var conf = "@sc"
-var output = document.getElementById("output");
-    var echoSocket = new WebSocket(conf.replace("http", "ws"));
-    echoSocket.onopen = function(){
-echoSocket.send("hello");
-    console.log("Connection is open");
-    }
-    function f (event) {
-    writeToScreen("got data: " + event.data)}
-
-    echoSocket.addEventListener("message", f)
-
-function writeToScreen(message)
-  {
-    var pre = document.createElement("p");
-    pre.style.wordWrap = "break-word";
-    pre.innerHTML = message;
-    output.appendChild(pre);
-  }
-</script>
-
-<div id="output"></div>
 }
