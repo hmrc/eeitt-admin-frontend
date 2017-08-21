@@ -33,5 +33,7 @@ POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
+GET        /echo                    uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.socket
+
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)
 
