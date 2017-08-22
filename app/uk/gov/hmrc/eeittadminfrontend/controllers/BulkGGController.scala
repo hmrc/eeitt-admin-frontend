@@ -45,6 +45,34 @@ object BulkLoadHelper {
 
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer)(implicit appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
+  def helloCometView = Action {
+    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.helloComet())
+  }
+
+  def helloComet = Action {
+    import akka.stream.Materializer
+    import akka.stream.scaladsl.Source
+    import play.api.http.ContentTypes
+    import play.api.inject.guice.GuiceApplicationBuilder
+    import play.api.libs.Comet
+    import play.api.libs.iteratee.Enumerator
+    import play.api.libs.json._
+    import play.api.libs.streams.Streams
+    import play.api.mvc._
+
+    implicit val m = materializer
+    val data = for {
+      a <- List("You ", "They ", "We ")
+      b <- List("started ", "managed ", "stopped ")
+      c <- List("doing well.", "making money.", "barfing after end of the day.")
+      x = a + b + c
+    } yield x
+
+    def stringSource: Source[String, _] = Source(data)
+
+    Ok.chunked(stringSource.throttle(1, 1.second, 1, ThrottleMode.shaping) via Comet.string("parent.doSomething")).as(ContentTypes.HTML)
+  }
+
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head.replace("select", " ").split(",").map {
       case " " => None
