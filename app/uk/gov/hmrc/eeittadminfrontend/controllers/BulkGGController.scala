@@ -22,9 +22,7 @@ import akka.stream._
 import akka.stream.scaladsl.{ Keep, Sink, Source }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.libs.concurrent.Promise
-import play.api.libs.iteratee.{ Enumerator, Iteratee }
-import play.api.mvc.{ Action, WebSocket }
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -45,34 +43,6 @@ object BulkLoadHelper {
 
 class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer)(implicit appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
 
-  def helloCometView = Action {
-    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.helloComet())
-  }
-
-  def helloComet = Action {
-    import akka.stream.Materializer
-    import akka.stream.scaladsl.Source
-    import play.api.http.ContentTypes
-    import play.api.inject.guice.GuiceApplicationBuilder
-    import play.api.libs.Comet
-    import play.api.libs.iteratee.Enumerator
-    import play.api.libs.json._
-    import play.api.libs.streams.Streams
-    import play.api.mvc._
-
-    implicit val m = materializer
-    val data = for {
-      a <- List("You ", "They ", "We ")
-      b <- List("started ", "managed ", "stopped ")
-      c <- List("doing well.", "making money.", "barfing after end of the day.")
-      x = a + b + c
-    } yield x
-
-    def stringSource: Source[String, _] = Source(data)
-
-    Ok.chunked(stringSource.throttle(1, 1.second, 1, ThrottleMode.shaping) via Comet.string("parent.doSomething")).as(ContentTypes.HTML)
-  }
-
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head.replace("select", " ").split(",").map {
       case " " => None
@@ -84,20 +54,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
     stream(kf)
 
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.test()))
+    Future.successful(Ok("Please look at the logs for updates on this bulk load"))
   }
 
-  var thing: String = ""
-  val out: Enumerator[String] = Enumerator.repeatM(Promise.timeout(thing, 3009))
-  def socket = WebSocket.using[String] { _ =>
-
-    val in: Iteratee[String, Unit] = Iteratee.ignore[String]
-
-    (in, out)
-
-  }
-
-  def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier) = {
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
     def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, bulkKnownFact) =>
@@ -106,34 +66,29 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
         responseStatus <- averageSink(bulkKnownFact)
         fseq <- a
       } yield {
-
-        thing = s"${bulkKnownFact.ref} finished with $responseStatus"
         responseStatus :: fseq
       }
     }
 
     def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
-      eMACConnector.loadKF(a)
+      eMACConnector.loadKF(a).map {
+        case 204 => 204
+        case _ => {
+          Logger.info("Their has been an error")
+          actorSystem.terminate()
+          500
+        }
+      }
     }
 
     val runnable = knownFactsLines
       .throttle(1, 3.second, 1, ThrottleMode.shaping)
       .toMat(sink)(Keep.right)
 
-    val res: Future[Future[List[Int]]] = runnable.run()
-
-    val returnedStatus = for {
-      a <- res
-      b <- a
-      _ = Logger.info(s" Size of futures${b.size}")
-    } yield {
-      thing = "finished"
-      b
-    }
-    returnedStatus.map(x => x.forall(x => x == 204))
-
+    val res: Future[Future[List[Int]]] = runnable.run()(mat)
   }
 
-  private implicit lazy val mat = materializer
+  private implicit lazy val mat = ActorMaterializer.create(ActorMaterializerSettings.create(sys)
+    .withSyncProcessingLimit(1), sys)
   private implicit lazy val sys = actorSystem
 }
