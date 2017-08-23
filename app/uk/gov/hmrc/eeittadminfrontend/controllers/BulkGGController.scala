@@ -90,5 +90,5 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
 
   private implicit lazy val mat = ActorMaterializer.create(ActorMaterializerSettings.create(sys)
     .withSyncProcessingLimit(1), sys)
-  private implicit lazy val sys = actorSystem
+  private implicit lazy val sys = ActorSystem()
 }
