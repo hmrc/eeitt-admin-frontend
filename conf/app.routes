@@ -37,3 +37,5 @@ GET        /echo                    uk.gov.hmrc.eeittadminfrontend.controllers.B
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)
 
+GET        /helloCometView          uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.helloCometView
+GET        /helloComet              uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.helloComet
