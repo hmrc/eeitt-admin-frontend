@@ -18,7 +18,7 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 
-@(loginForm : Form[uk.gov.hmrc.eeittadminfrontend.models.Token], clientID : String)(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@(loginForm : Form[String], clientID : String)(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "EEITT-Admin Login Page"){
 
@@ -50,7 +50,7 @@
 
 function onSignIn(googleUser){
 
-    var id_token = googleUser.getAuthResponse().id_token;
+    var id_token = googleUser.getBasicProfile().getEmail;<!--.getAuthResponse().id_token; -->
 
     setEmail(id_token);
 
