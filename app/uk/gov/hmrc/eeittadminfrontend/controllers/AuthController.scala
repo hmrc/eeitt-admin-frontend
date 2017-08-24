@@ -37,9 +37,9 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
   val loginForm = Form(
-    mapping(
+    single(
       "token" -> nonEmptyText
-    )(Token.apply)(Token.unapply)
+    )
   )
 
   def loginPage(): Action[AnyContent] = Action.async { implicit request =>
@@ -59,7 +59,7 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
-        val email = Email(googleService(success.value))
+        val email = Email(success)//googleService(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
             Logger.info(s"${email.value} Logged in")
