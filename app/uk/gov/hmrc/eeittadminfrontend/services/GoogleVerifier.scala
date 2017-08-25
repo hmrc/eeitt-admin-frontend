@@ -16,21 +16,42 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
+import java.net.{ Authenticator, InetSocketAddress, PasswordAuthentication, Proxy, SocketAddress }
 import java.util.Collections
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.http.javanet.NetHttpTransport.Builder
 import com.google.api.client.json.jackson2.JacksonFactory
 import play.api.Logger
+import play.api.libs.json.Format
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.ClientID
 
 class GoogleVerifier extends GoogleVerifierHelper
+
+case class Squid(environmentEnabled: Boolean, username: String, password: String, host: String, port: Int)
 
 trait GoogleVerifierHelper {
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
-  lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance)
+  //  val environmentProxy: Boolean = pureconfig.loadConfigOrThrow[Boolean]("proxy.proxyRequiredForThisEnvironment")
+  val squid: Squid = pureconfig.loadConfigOrThrow[Squid]("proxy")
+
+  val httpTransport: NetHttpTransport = if (squid.environmentEnabled) {
+    val authenticator = new Authenticator() {
+
+      override def getPasswordAuthentication(): PasswordAuthentication = {
+        new PasswordAuthentication(squid.username, squid.password.toCharArray)
+      }
+    }
+    Authenticator.setDefault(authenticator);
+    val proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(squid.host, squid.port))
+    new NetHttpTransport.Builder().setProxy(proxy).build()
+  } else GoogleNetHttpTransport.newTrustedTransport()
+
+  lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(httpTransport, JacksonFactory.getDefaultInstance)
     .setAudience(Collections.singletonList(clientID.id))
     .build()
 
