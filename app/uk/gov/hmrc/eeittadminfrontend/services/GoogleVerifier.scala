@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
-import java.net.{Authenticator, InetSocketAddress, PasswordAuthentication, Proxy, SocketAddress}
+import java.net.{ Authenticator, InetSocketAddress, PasswordAuthentication, Proxy, SocketAddress }
 import java.util.Collections
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
