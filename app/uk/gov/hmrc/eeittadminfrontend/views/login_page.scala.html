@@ -50,8 +50,9 @@
 
 function onSignIn(googleUser){
 
-    var id_token = googleUser.getBasicProfile().getEmail;<!--.getAuthResponse().id_token; -->
+    var id_token = googleUser.getBasicProfile().getEmail();<!--.getAuthResponse().id_token; -->
 
+    console.log(id_token);
     setEmail(id_token);
 
 }
