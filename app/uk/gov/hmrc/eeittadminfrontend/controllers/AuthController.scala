@@ -59,7 +59,7 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
-        val email = Email(success)//googleService(success.value))
+        val email = Email(success) //googleService(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
             Logger.info(s"${email.value} Logged in")
