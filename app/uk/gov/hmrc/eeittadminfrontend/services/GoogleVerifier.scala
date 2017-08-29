@@ -55,7 +55,7 @@ trait GoogleVerifierHelper {
     Authenticator.setDefault(authenticator)
     System.setProperty("http.proxyHost", squid.host)
     System.setProperty("http.proxyPort", squid.port.toString)
-    val proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(s"${squid.username}:${squid.password}@${squid.host}", squid.port))
+    val proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(squid.host, squid.port))
     new NetHttpTransport.Builder().setProxy(proxy).build()
   } else GoogleNetHttpTransport.newTrustedTransport()
 
