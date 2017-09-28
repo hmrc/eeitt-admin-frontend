@@ -65,13 +65,11 @@
     <h2>Save a template</h2>
     @CSRF.formField
     <p>Json Template:</p>
-    <textarea
-            type="text"
+    <input
+            type="file"
             name="template"
             id="template"
-            value=""
-            class="form-control form-control--block"
-    ></textarea>
+    />
     <input type="submit" class="button" value="Save"/>
 </form>
 
