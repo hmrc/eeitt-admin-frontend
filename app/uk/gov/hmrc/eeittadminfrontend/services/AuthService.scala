@@ -26,7 +26,7 @@ import uk.gov.hmrc.eeittadminfrontend.models.{ Email, LoginError }
 case class AuthorisedUsers(users: String)
 class AuthService {
 
-  lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicauth").users.split(":")
+  lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicAuth").users.split(":")
 
   def checkUser(email: Email): Validated[LoginError, Unit] = {
     if (validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
