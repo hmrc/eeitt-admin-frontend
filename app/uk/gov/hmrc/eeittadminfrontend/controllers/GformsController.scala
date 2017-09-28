@@ -46,8 +46,8 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     )
   }
 
-  def saveGformSchema = Authentication.async(parse.urlFormEncoded) { implicit request =>
-    val template = Json.parse(request.body.apply("template").mkString)
+  def saveGformSchema = Authentication.async(parse.multipartFormData) { implicit request =>
+    val template = Json.parse(request.body.dataParts("template").mkString)
     GformConnector.saveTemplate(template).map {
       x =>
         {

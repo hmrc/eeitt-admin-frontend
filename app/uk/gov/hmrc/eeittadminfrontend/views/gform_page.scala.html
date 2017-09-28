@@ -61,7 +61,7 @@
 
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
-      class="js-form">
+      class="js-form" enctype="multipart/form-data">
     <h2>Save a template</h2>
     @CSRF.formField
     <p>Json Template:</p>
