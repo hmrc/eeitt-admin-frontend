@@ -52,6 +52,7 @@ object WhiteListingConf {
           Logger.warn("Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access")
           None
         case Some(x) =>
+
           Logger.info(s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
           Some(x)
       }
