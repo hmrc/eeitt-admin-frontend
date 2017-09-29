@@ -64,7 +64,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     GformConnector.saveTemplate(template).map {
       x =>
       {
-        Logger.info(s" ${request.session.get("token").get} saved ID: ${template \ "formTypeId"} version: ${template \ "version"}")
+        Logger.info(s" ${request.session.get("token").get} saved ID: ${template \ "_id"} }")
         Ok("Saved")
       }
     }
