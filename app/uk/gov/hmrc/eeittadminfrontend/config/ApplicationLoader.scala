@@ -32,7 +32,9 @@ import play.api.routing.Router
 import play.core.SourceMapper
 import play.filters.csrf.{ CSRFComponents, CSRFFilter }
 import play.filters.headers.SecurityHeadersFilter
+import play.modules.reactivemongo.ReactiveMongoComponentImpl
 import play.twirl.api.Html
+import reactivemongo.api.DefaultDB
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.controllers._
@@ -261,9 +263,15 @@ trait ApplicationModule extends BuiltInComponents
   val bulkLoad = new BulkGGController(authConnector, emacConnector, messagesApi, actorSystem, materializer)(appConfig)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
+
+  lazy val reactiveMongoComponent = new ReactiveMongoComponentImpl(self.configuration, environment, applicationLifecycle)
+  implicit lazy val db: () => DefaultDB = reactiveMongoComponent.mongoConnector.db
+  lazy val repository = new userwhitelist.Repository(db)
+  val userWhitelistController = new userwhitelist.Controller(authConnector, repository)(appConfig, messagesApi)
+
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
-  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, gformController, queryController, deltaController, bulkGGController, bulkLoad, eeittAdminController, assets)
+  val appRoutes = new _root_.app.Routes(httpErrorHandler, authController, gformController, queryController, deltaController, bulkGGController, bulkLoad, eeittAdminController, userWhitelistController, assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
