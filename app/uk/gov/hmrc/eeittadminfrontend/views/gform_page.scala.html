@@ -60,7 +60,7 @@
 </form>
 
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.uploadGformSchema method="POST"
       class="js-form" enctype="multipart/form-data">
     <h2>Save a template</h2>
     @CSRF.formField
@@ -68,8 +68,25 @@
     <input
             type="file"
             name="template"
-            id="template"
+            id="file"
+            value=""
+            class="form-control form-control--block"
     />
+    <input type="submit" class="button" value="Save"/>
+</form>
+
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
+      class="js-form" enctype="multipart/form-data">
+    <h2>Save a template</h2>
+    @CSRF.formField
+    <p>Json Template:</p>
+    <textarea
+            type="text"
+            name="template"
+            id="template"
+            value=""
+            class="form-control form-control--block"
+    ></textarea>
     <input type="submit" class="button" value="Save"/>
 </form>
 
