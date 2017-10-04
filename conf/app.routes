@@ -34,6 +34,11 @@ POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
+GET        /white-list/users                uk.gov.hmrc.eeittadminfrontend.controllers.GformWhiteListing.showWhitlisting
+POST       /white-list/users/add            uk.gov.hmrc.eeittadminfrontend.controllers.GformWhiteListing.addUser
+POST       /white-list/users/delete         uk.gov.hmrc.eeittadminfrontend.controllers.GformWhiteListing.deleteUser
+POST       /white-list/users/show           uk.gov.hmrc.eeittadminfrontend.controllers.GformWhiteListing.show
+
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)
 

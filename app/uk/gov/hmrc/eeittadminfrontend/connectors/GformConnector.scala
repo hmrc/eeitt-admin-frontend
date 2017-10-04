@@ -48,4 +48,16 @@ object GformConnector {
   def deleteTemplate(formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
     WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId")
   }
+
+  def addWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
+    WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/insert", email)
+  }
+
+  def deleteWhiteListUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
+    WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/delete", email)
+  }
+
+  def show(implicit headerCarrier: HeaderCarrier) = {
+    WSHttp.GET[HttpResponse](gformUrl + s"/white-list/users/all")
+  }
 }
