@@ -58,8 +58,9 @@
 
 
 <a>Get all Gform WhiteListed Users</a>
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.show">
-    <input type="submit" value="Get All Templates"/>
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.show" method="POST">
+    @CSRF.formField
+    <input type="submit" value="Get All Users"/>
 </form>
 
 }
