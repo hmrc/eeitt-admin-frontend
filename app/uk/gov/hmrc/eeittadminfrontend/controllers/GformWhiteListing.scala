@@ -31,8 +31,8 @@ import scala.concurrent.Future
 
 class GformWhiteListing(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
 
-  def showWhitlisting = Authentication.async {
-    Future.successful(Ok("Page to Come"))
+  def showWhitlisting = Authentication.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.white_listing(request, appConfig)))
   }
 
   val email = Form(
