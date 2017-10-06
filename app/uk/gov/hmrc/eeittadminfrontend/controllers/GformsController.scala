@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import java.util.Base64
+
+import org.apache.commons.codec
+import com.google.common.io.BaseEncoding
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
@@ -60,7 +64,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   def saveGformSchema = Authentication.async(parse.multipartFormData) { implicit request =>
-    val template = Json.parse(request.body.dataParts("template").mkString)
+    val template = Json.parse(org.apache.commons.codec.binary.Base64.decodeBase64(request.body.dataParts("template").mkString).map(_.toChar).mkString)
     GformConnector.saveTemplate(template).map {
       x =>
         {
