@@ -75,7 +75,7 @@
     <input type="submit" class="button" value="Save"/>
 </form>
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
+<form id="templateId" action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema method="POST"
       class="js-form" enctype="multipart/form-data">
     <h2>Save a template</h2>
     @CSRF.formField
@@ -87,9 +87,11 @@
             value=""
             class="form-control form-control--block"
     ></textarea>
-    <input type="submit" class="button" value="Save"/>
 </form>
 
+<div>
+<button value="Save" class="button" onclick="encode()"> Click Me</button>
+</div>
 
 <a>Get all Gform Templates</a>
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates">
@@ -101,4 +103,15 @@
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllSchema">
     <input type="submit" value="Get All Schema"/>
 </form>
+
+
+<script>
+    function encode(){
+        var string = document.getElementById("template").value;
+        var encodeData = window.btoa(string);
+        document.getElementById("template").value = encodeData;
+        console.log(document.getElementById("template").value);
+        document.getElementById("templateId").submit();
+    }
+</script>
 }
