@@ -53,7 +53,7 @@ object GformConnector {
     WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/insert", email)
   }
 
-  def deleteWhiteListUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
+  def deleteWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
     WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/delete", email)
   }
 
