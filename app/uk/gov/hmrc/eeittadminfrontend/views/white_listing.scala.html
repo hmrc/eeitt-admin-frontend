@@ -27,7 +27,7 @@
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.addUser" method="POST"
       class="js-form">
-    <h2>Add a user to the whitelist</h2>
+    <h2>Add a user to the Gform whitelist</h2>
     @CSRF.formField
     <p>Email:</p>
     <fieldset class="form-field-group">
@@ -44,7 +44,7 @@
 
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.deleteUser method="POST"
       class="js-form" enctype="multipart/form-data">
-    <h2>Delete a user from the whitelist</h2>
+    <h2>Delete a user from the Gform whitelist</h2>
     @CSRF.formField
     <p>Email:</p>
     <input
@@ -57,8 +57,8 @@
 </form>
 
 
-<a>Get all Gform whitelisted users</a>
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.show" method="POST">
+    <h2>Get all whitelisted Gform users</h2>
     @CSRF.formField
     <input type="submit" value="Get All Users"/>
 </form>
