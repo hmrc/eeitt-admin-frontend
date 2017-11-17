@@ -29,7 +29,6 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier, GoogleVerifierHelper }
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import cats.data._
 import cats.syntax.all._

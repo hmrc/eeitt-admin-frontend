@@ -36,21 +36,18 @@ class GformWhiteListing(val authConnector: AuthConnector)(implicit appConfig: Ap
   }
 
   val email = Form(
-    single("email" -> nonEmptyText)
-  )
+    single("email" -> nonEmptyText))
 
   def addUser = Authentication.async { implicit request =>
     email.bindFromRequest().fold(
       hasErrors => Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
-      success => GformConnector.addWhiteListedUser(success).map(_ => Ok("Successful"))
-    )
+      success => GformConnector.addWhiteListedUser(success).map(_ => Ok("Successful")))
   }
 
   def deleteUser = Authentication.async { implicit request =>
     email.bindFromRequest().fold(
       hasErrors => Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
-      success => GformConnector.deleteWhiteListedUser(success).map(_ => Ok("Successful"))
-    )
+      success => GformConnector.deleteWhiteListedUser(success).map(_ => Ok("Successful")))
   }
 
   def show = Authentication.async { implicit request =>

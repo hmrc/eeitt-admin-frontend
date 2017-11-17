@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend
 
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.Materializer
 import com.kenshoo.play.metrics._
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
@@ -33,25 +33,19 @@ import play.core.SourceMapper
 import play.filters.csrf.{ CSRFComponents, CSRFFilter }
 import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
-import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
-import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
-import uk.gov.hmrc.play.audit.http.config.ErrorAuditingSettings
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.{ AppName, ControllerConfig, ServicesConfig }
-import uk.gov.hmrc.play.filters.frontend.{ CSRFExceptionsFilter, DeviceIdFilter, HeadersFilter }
-import uk.gov.hmrc.play.filters.{ CacheControlFilter, RecoveryFilter }
 import uk.gov.hmrc.play.frontend.bootstrap.ShowErrorPage
-import uk.gov.hmrc.play.frontend.filters.{ DeviceIdCookieFilter, SecurityHeadersFilterFactory, SessionCookieCryptoFilter }
+import uk.gov.hmrc.play.frontend.filters._
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.health.AdminController
-import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.frontend.config.ErrorAuditingSettings
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
@@ -61,11 +55,10 @@ class ApplicationLoader extends play.api.ApplicationLoader {
 }
 
 class CustomHttpRequestHandler(
-    router: Router,
-    httpErrorHandler: HttpErrorHandler,
-    httpConfiguration: HttpConfiguration,
-    httpFilters: Seq[EssentialFilter]
-) extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
+  router: Router,
+  httpErrorHandler: HttpErrorHandler,
+  httpConfiguration: HttpConfiguration,
+  httpFilters: Seq[EssentialFilter]) extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
   override def routeRequest(request: RequestHeader): Option[Handler] = {
     router.handlerFor(request).orElse {
       Some(request.path).filter(_.endsWith("/")).flatMap(p => router.handlerFor(request.copy(path = p.dropRight(1))))
@@ -74,15 +67,14 @@ class CustomHttpRequestHandler(
 }
 
 class CustomErrorHandling(
-    val auditConnector: AuditConnector,
-    val appName: String,
-    environment: Environment,
-    configuration: Configuration,
-    sourceMapper: Option[SourceMapper] = None,
-    router: => Option[Router] = None,
-    appConfig: AppConfig,
-    messages: MessagesApi
-) extends DefaultHttpErrorHandler(environment, configuration, sourceMapper, router) with ErrorAuditingSettings with DoNothingHandler {
+  val auditConnector: AuditConnector,
+  val appName: String,
+  environment: Environment,
+  configuration: Configuration,
+  sourceMapper: Option[SourceMapper] = None,
+  router: => Option[Router] = None,
+  appConfig: AppConfig,
+  messages: MessagesApi) extends DefaultHttpErrorHandler(environment, configuration, sourceMapper, router) with ErrorAuditingSettings with DoNothingHandler {
   import scala.concurrent.ExecutionContext.Implicits.global
   val showErrorPage = new ShowErrorPage with I18nSupport {
     val messagesApi: MessagesApi = messages
@@ -129,12 +121,11 @@ class Graphite(configuration: Configuration) extends GraphiteConfig {
 }
 
 class Filters(
-    configuration: Configuration,
-    metrics: Metrics,
-    csrfFilter: CSRFFilter,
-    val auditConnector: AuditConnector,
-    appName: String
-)(implicit materializer: Materializer) { self =>
+  configuration: Configuration,
+  metrics: Metrics,
+  csrfFilter: CSRFFilter,
+  val auditConnector: AuditConnector,
+  appName: String)(implicit materializer: Materializer) { self =>
 
   val metricsFilter: MetricsFilter = new MetricsFilterImpl(metrics)
 
@@ -161,17 +152,15 @@ class Filters(
     CSRFExceptionsFilter,
     csrfFilter,
     CacheControlFilter.fromConfig("caching.allowedContentTypes"),
-    RecoveryFilter
-  )
+    RecoveryFilter)
 
   object ControllerConfiguration extends ControllerConfig {
     lazy val controllerConfigs = configuration.underlying.as[Config]("controllers")
   }
 
   class AuditFilter(
-      override val appNameConfiguration: Configuration,
-      override val auditConnector: AuditConnector
-  ) extends FrontendAuditFilter with AppName {
+    override val appNameConfiguration: Configuration,
+    override val auditConnector: AuditConnector) extends FrontendAuditFilter with AppName {
     override def mat = materializer
     override lazy val maskedFormFields = Seq("password")
     override lazy val applicationPort = None
@@ -186,11 +175,11 @@ class Filters(
 }
 
 trait ApplicationModule extends BuiltInComponents
-    with AhcWSComponents
-    with I18nComponents
-    with AppName
-    with CSRFComponents
-    with ServicesConfig { self =>
+  with AhcWSComponents
+  with I18nComponents
+  with AppName
+  with CSRFComponents
+  with ServicesConfig { self =>
 
   override lazy val appNameConfiguration = configuration
   override lazy val mode: Mode.Mode = environment.mode
@@ -204,11 +193,9 @@ trait ApplicationModule extends BuiltInComponents
     new Graphite(configuration).onStart(configurationApp)
   }
 
-  val auditConnector = new FrontendAuditConnector(materializer)
-
   val appConfig = new FrontendAppConfig(configuration)
 
-  override lazy val httpErrorHandler: HttpErrorHandler = new CustomErrorHandling(auditConnector, appName, environment, configuration, sourceMapper, Some(router), appConfig, messagesApi)
+  override lazy val httpErrorHandler: HttpErrorHandler = new CustomErrorHandling(MicroserviceAuditConnector, appName, environment, configuration, sourceMapper, Some(router), appConfig, messagesApi)
 
   override lazy val httpRequestHandler: HttpRequestHandler = new CustomHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters)
 
@@ -232,7 +219,7 @@ trait ApplicationModule extends BuiltInComponents
   // Don't use uk.gov.hmrc.play.graphite.GraphiteMetricsImpl as it won't allow hot reload due to overridden onStop() method
   lazy val metrics = new MetricsImpl(applicationLifecycle, configuration)
 
-  override lazy val httpFilters: Seq[EssentialFilter] = new Filters(configuration, metrics, csrfFilter, auditConnector, appName)(materializer).filters
+  override lazy val httpFilters: Seq[EssentialFilter] = new Filters(configuration, metrics, csrfFilter, MicroserviceAuditConnector, appName)(materializer).filters
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
@@ -274,8 +261,7 @@ trait ApplicationModule extends BuiltInComponents
     bulkLoad,
     eeittAdminController,
     gformsController,
-    assets
-  )
+    assets)
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
