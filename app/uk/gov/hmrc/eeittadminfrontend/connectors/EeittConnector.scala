@@ -22,7 +22,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpGet, HttpPost }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -41,11 +41,11 @@ object EeittConnector {
   private val sc = new ServicesConfig {}
   val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
 
-  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     WSHttp.GET[JsValue](eeittUrl + "/business-users-all")
   }
 
-  def getAllAgents(implicit headerCarrier: HeaderCarrier): Future[JsValue] = {
+  def getAllAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
   }
 

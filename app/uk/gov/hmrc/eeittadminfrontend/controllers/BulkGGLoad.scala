@@ -24,13 +24,11 @@ import play.api.libs.json.Json
 import play.api.mvc.{ Action, AnyContent }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector.sc
 import uk.gov.hmrc.eeittadminfrontend.connectors._
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -57,14 +55,10 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
       "enrollmentKey" -> mapping(
         "service" -> nonEmptyText,
         "identifier" -> nonEmptyText,
-        "value" -> nonEmptyText
-      )(EnrollmentKey.apply)(EnrollmentKey.unapply),
+        "value" -> nonEmptyText)(EnrollmentKey.apply)(EnrollmentKey.unapply),
       "verifiers" -> list(mapping(
         "key" -> nonEmptyText,
-        "value" -> nonEmptyText
-      )(KeyValuePair.apply)(KeyValuePair.unapply))
-    )(KnownFacts.apply)(KnownFacts.unapply)
-  )
+        "value" -> nonEmptyText)(KeyValuePair.apply)(KeyValuePair.unapply)))(KnownFacts.apply)(KnownFacts.unapply))
 
   val allocateEnrolment = Form(
     mapping(
@@ -72,15 +66,11 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
       "enrolmentKey" -> mapping(
         "service" -> nonEmptyText,
         "identifier" -> nonEmptyText,
-        "value" -> nonEmptyText
-      )(EnrollmentKey.apply)(EnrollmentKey.unapply),
+        "value" -> nonEmptyText)(EnrollmentKey.apply)(EnrollmentKey.unapply),
       "verifiers" -> list(mapping(
         "key" -> nonEmptyText,
-        "value" -> nonEmptyText
-      )(KeyValuePair.apply)(KeyValuePair.unapply)),
-      "friendlyName" -> nonEmptyText
-    )(Enrollment.apply)(Enrollment.unapply)
-  )
+        "value" -> nonEmptyText)(KeyValuePair.apply)(KeyValuePair.unapply)),
+      "friendlyName" -> nonEmptyText)(Enrollment.apply)(Enrollment.unapply))
 
   val deleteForm = Form(
     mapping(
@@ -88,10 +78,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
       "enrollmentKey" -> mapping(
         "service" -> nonEmptyText,
         "identifier" -> nonEmptyText,
-        "value" -> nonEmptyText
-      )(EnrollmentKey.apply)(EnrollmentKey.unapply)
-    )(Delete.apply)(Delete.unapply)
-  )
+        "value" -> nonEmptyText)(EnrollmentKey.apply)(EnrollmentKey.unapply))(Delete.apply)(Delete.unapply))
 
   /*  def loadKF(): Action[AnyContent] = Authentication.async { implicit request =>
     Logger.debug("ERROR ::: " + request.body.toString)
@@ -124,8 +111,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
           case Some(x) =>
             Ok(x.toString)
         }
-      }
-    )
+      })
   }
 
   def deleteEndPoint(): Action[AnyContent] = Authentication.async { implicit request =>
@@ -141,8 +127,7 @@ class BulkGGLoad(val authConnector: AuthConnector, eMACConnector: EMACConnector)
             Ok("DELETED")
           } else BadRequest("Failed Check logs")
         }
-      }
-    )
+      })
   }
 
   def startDelete(enrollmentKey: EnrollmentKey, user: User)(implicit hc: HeaderCarrier): Future[Boolean] = {

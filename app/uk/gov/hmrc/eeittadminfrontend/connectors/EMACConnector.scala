@@ -17,17 +17,13 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Logger
-import play.api.http.Status
-import play.api.libs.json.{ JsString, JsValue, Json, OFormat }
-import play.api.libs.ws.WSRequest
-import play.api.mvc.Request
-import play.utils.UriEncoding
+import play.api.libs.json.{ JsValue, Json }
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.controllers.User
 import uk.gov.hmrc.eeittadminfrontend.models.BulkKnownFacts
-import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ ExecutionContext, Future }
+import uk.gov.hmrc.http.{ BadRequestException, HeaderCarrier, HttpDelete, HttpPost, HttpPut, HttpResponse }
 
 class EMACConnector extends EMACConnectorHelper
 
@@ -69,8 +65,7 @@ trait EMACConnectorHelper {
          | "value": "${list(2).value}"
          | }
          |]
-         |}""".stripMargin
-      )
+         |}""".stripMargin)
     } else if (list.size == 2) {
       Json.parse(
         s"""{
@@ -82,8 +77,7 @@ trait EMACConnectorHelper {
            | "value" : "${list(1).value}"
            | }
            |]
-           |}""".stripMargin
-      )
+           |}""".stripMargin)
     } else {
       Json.parse(
         s"""{
@@ -93,8 +87,7 @@ trait EMACConnectorHelper {
            | "value" : "${list.head.value}"
            | }
            |]
-           |}""".stripMargin
-      )
+           |}""".stripMargin)
     }
   }
 

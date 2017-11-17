@@ -16,15 +16,10 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.iteratee.Input.Empty
-import play.api.libs.json.{ JsValue, Json }
-import uk.gov.hmrc.eeittadminfrontend.connectors.KeyValuePair
-
 case class BulkKnownFacts(
-    ref: Ref,
-    postCode: PostCode,
-    countryCode: CountryCode
-) {
+  ref: Ref,
+  postCode: PostCode,
+  countryCode: CountryCode) {
 
   override def toString = {
 

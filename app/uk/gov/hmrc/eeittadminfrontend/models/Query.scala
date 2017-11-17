@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.json._
-import play.api.Logger
 
 case class RegistrationNumber(registration: String, database: Database)
 
@@ -109,7 +108,6 @@ object ValueClassFormatter {
         case JsString(str) => JsSuccess(fromStringToA(str))
         case unknown => JsError(s"JsString value expected, got: $unknown")
       },
-      Writes[A](a => JsString(fromAToString(a)))
-    )
+      Writes[A](a => JsString(fromAToString(a))))
   }
 }

@@ -10,7 +10,7 @@ addSbtPlugin("uk.gov.hmrc" % "sbt-distributables" % "1.0.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.12")
 
-addSbtPlugin("org.scalariform"  % "sbt-scalariform" % "1.6.0")
+addSbtPlugin("org.scalariform"  % "sbt-scalariform" % "1.7.0")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 

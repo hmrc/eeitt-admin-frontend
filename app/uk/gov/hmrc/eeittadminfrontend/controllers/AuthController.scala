@@ -38,9 +38,7 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
 
   val loginForm = Form(
     single(
-      "token" -> nonEmptyText
-    )
-  )
+      "token" -> nonEmptyText))
 
   def loginPage(): Action[AnyContent] = Action.async { implicit request =>
     sa.whiteListing {
@@ -67,8 +65,7 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
           case Invalid(err) =>
             Future.successful(Unauthorized(s"Failed ${err.error}"))
         }
-      }
-    )
+      })
   }
 
 }

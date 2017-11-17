@@ -20,44 +20,44 @@ import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 object GformConnector {
 
   private val sc = new ServicesConfig {}
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
-  def getGformsTemplate(formTypeId: FormTypeId)(implicit hc: HeaderCarrier): Future[JsValue] = {
+  def getGformsTemplate(formTypeId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     WSHttp.GET[JsValue](gformUrl + s"/formtemplates/$formTypeId")
   }
 
-  def getAllGformsTemplates(implicit hc: HeaderCarrier): Future[JsValue] = {
+  def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     WSHttp.GET[JsValue](gformUrl + "/formtemplates")
   }
 
-  def getAllSchema(implicit hc: HeaderCarrier): Future[JsValue] = {
+  def getAllSchema(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     WSHttp.GET[JsValue](gformUrl + "/schemas")
   }
 
-  def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     WSHttp.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
   }
 
-  def deleteTemplate(formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+  def deleteTemplate(formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId")
   }
 
-  def addWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
+  def addWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext) = {
     WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/insert", email)
   }
 
-  def deleteWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier) = {
+  def deleteWhiteListedUser(email: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext) = {
     WSHttp.POST[String, HttpResponse](gformUrl + s"/white-list/users/delete", email)
   }
 
-  def show(implicit headerCarrier: HeaderCarrier) = {
+  def show(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext) = {
     WSHttp.GET[HttpResponse](gformUrl + s"/white-list/users/all")
   }
 }
