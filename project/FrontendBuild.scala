@@ -15,7 +15,7 @@ object FrontendBuild extends Build with MicroService {
     "com.github.pureconfig" %% "pureconfig" % "0.9.1",
     "com.google.gdata" % "core" % "1.47.1",
     "com.google.apis" % "google-api-services-oauth2" % "v2-rev137-1.23.0",
-    "org.typelevel" % "cats-core_2.11" % "1.1.0",
+    "org.typelevel" %% "cats-core" % "1.1.0",
     "com.google.api-client" % "google-api-client" % "1.23.0"
   )
 
