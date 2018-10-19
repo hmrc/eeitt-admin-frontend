@@ -1,3 +1,4 @@
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport.scalafmtOnCompile
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
@@ -33,6 +34,7 @@ trait MicroService {
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
+      scalafmtOnCompile := true,
       libraryDependencies ++= appDependencies,
       routesImport ++= Seq(
         "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
