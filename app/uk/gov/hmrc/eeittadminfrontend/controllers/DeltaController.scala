@@ -30,31 +30,31 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
+    extends FrontendController with Actions with I18nSupport {
 
   def goToDelta = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token")} went to Deltas Page")
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
 
-  def agent() = {
+  def agent() =
     delta[DeltaAgent]
-  }
 
-  def business() = {
+  def business() =
     delta[DeltaBusiness]
-  }
 
-  private def delta[A: Format](implicit eeittConnector: EeittConnector[A]) = Authentication.async(parse.urlFormEncoded) { implicit request =>
-    Logger.info(Json.prettyPrint(Json.toJson(request.body.map(x => x._1 -> x._2.mkString))))
-    Json.toJson(request.body.map(x => x._1 -> x._2.mkString)).validate match {
-      case JsSuccess(x, _) =>
-        eeittConnector(x).map { y =>
-          Ok(y.toString)
-        }
-      case JsError(err) =>
-        Future.successful(BadRequest(err.toString))
+  private def delta[A: Format](implicit eeittConnector: EeittConnector[A]) =
+    Authentication.async(parse.urlFormEncoded) { implicit request =>
+      Logger.info(Json.prettyPrint(Json.toJson(request.body.map(x => x._1 -> x._2.mkString))))
+      Json.toJson(request.body.map(x => x._1                              -> x._2.mkString)).validate match {
+        case JsSuccess(x, _) =>
+          eeittConnector(x).map { y =>
+            Ok(y.toString)
+          }
+        case JsError(err) =>
+          Future.successful(BadRequest(err.toString))
+      }
     }
-  }
 
 }

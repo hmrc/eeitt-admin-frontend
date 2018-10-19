@@ -32,13 +32,16 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authService: AuthService, googleService: GoogleVerifier)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+class AuthController(
+  val authConnector: AuthConnector,
+  sa: SecuredActions,
+  authService: AuthService,
+  googleService: GoogleVerifier)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
+    extends FrontendController with Actions with I18nSupport {
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
-  val loginForm = Form(
-    single(
-      "token" -> nonEmptyText))
+  val loginForm = Form(single("token" -> nonEmptyText))
 
   def loginPage(): Action[AnyContent] = Action.async { implicit request =>
     sa.whiteListing {
@@ -47,7 +50,8 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
   }
 
   def signOut(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
+    Future.successful(
+      Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
   }
 
   def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
@@ -61,11 +65,14 @@ class AuthController(val authConnector: AuthConnector, sa: SecuredActions, authS
         authService.checkUser(email) match {
           case Valid(()) =>
             Logger.info(s"${email.value} Logged in")
-            Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery()).withSession(request.session + ("token", email.value)))
+            Future.successful(
+              Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery())
+                .withSession(request.session + ("token", email.value)))
           case Invalid(err) =>
             Future.successful(Unauthorized(s"Failed ${err.error}"))
         }
-      })
+      }
+    )
   }
 
 }

@@ -33,7 +33,10 @@ trait EeittConnector[A] extends ServicesConfig {
 
   val eeittUrl: String = baseUrl("eeitt") + "/eeitt"
 
-  def apply(a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]): Future[List[Response]]
+  def apply(a: A)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext,
+    request: Request[Map[String, Seq[String]]]): Future[List[Response]]
 }
 
 object EeittConnector {
@@ -41,16 +44,15 @@ object EeittConnector {
   private val sc = new ServicesConfig {}
   val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
 
-  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+  def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](eeittUrl + "/business-users-all")
-  }
 
-  def getAllAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+  def getAllAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
-  }
 
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
-    override def apply(a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) = {
+    override def apply(
+      a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) =
       if (isLive(request)) {
         Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Live")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
@@ -58,7 +60,6 @@ object EeittConnector {
         Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Dry-run")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
       }
-    }
   }
 
   private def isLive(implicit request: Request[Map[String, Seq[String]]]): Boolean = {
@@ -67,13 +68,11 @@ object EeittConnector {
     isLive.contains("LIVE")
   }
 
-  implicit def agentConnector: EeittConnector[DeltaAgent] = {
+  implicit def agentConnector: EeittConnector[DeltaAgent] =
     postEEITTConnector[DeltaAgent]()
-  }
 
-  implicit def businessConnector: EeittConnector[DeltaBusiness] = {
+  implicit def businessConnector: EeittConnector[DeltaBusiness] =
     postEEITTConnector[DeltaBusiness]()
-  }
 
   implicit def arnConnector: EeittConnector[Arn] = {
     Logger.info("ARN")
@@ -95,21 +94,23 @@ object EeittConnector {
     getEeittConnector[Regime](_.database.regime.get) // Business Only
   }
 
-  private def getEeittConnector[A](getPath: A => String): EeittConnector[A] = {
+  private def getEeittConnector[A](getPath: A => String): EeittConnector[A] =
     new EeittConnector[A] {
 
-      override def apply(value: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]): Future[List[Response]] = {
-        def call[B](a: String, b: B): Future[List[Response]] = {
+      override def apply(value: A)(
+        implicit hc: HeaderCarrier,
+        ec: ExecutionContext,
+        request: Request[Map[String, Seq[String]]]): Future[List[Response]] = {
+        def call[B](a: String, b: B): Future[List[Response]] =
           b match {
             case ETMP =>
               httpGet.GET[Either[List[ETMPBusiness], List[ETMPAgent]]](eeittUrl + getPath(value) + a).map {
-                case Left(x) => x
+                case Left(x)  => x
                 case Right(y) => y
               }
             case x =>
               httpGet.GET[List[EnrollmentResponse]](eeittUrl + getPath(value) + a)
           }
-        }
 
         value match {
           case RegistrationNumber(x, y) =>
@@ -131,6 +132,4 @@ object EeittConnector {
       }
 
     }
-  }
 }
-

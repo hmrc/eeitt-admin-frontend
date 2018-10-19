@@ -58,12 +58,12 @@ class CustomHttpRequestHandler(
   router: Router,
   httpErrorHandler: HttpErrorHandler,
   httpConfiguration: HttpConfiguration,
-  httpFilters: Seq[EssentialFilter]) extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
-  override def routeRequest(request: RequestHeader): Option[Handler] = {
+  httpFilters: Seq[EssentialFilter])
+    extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
+  override def routeRequest(request: RequestHeader): Option[Handler] =
     router.handlerFor(request).orElse {
       Some(request.path).filter(_.endsWith("/")).flatMap(p => router.handlerFor(request.copy(path = p.dropRight(1))))
     }
-  }
 }
 
 class CustomErrorHandling(
@@ -74,41 +74,46 @@ class CustomErrorHandling(
   sourceMapper: Option[SourceMapper] = None,
   router: => Option[Router] = None,
   appConfig: AppConfig,
-  messages: MessagesApi) extends DefaultHttpErrorHandler(environment, configuration, sourceMapper, router) with ErrorAuditingSettings with DoNothingHandler {
+  messages: MessagesApi)
+    extends DefaultHttpErrorHandler(environment, configuration, sourceMapper, router) with ErrorAuditingSettings
+    with DoNothingHandler {
   import scala.concurrent.ExecutionContext.Implicits.global
   val showErrorPage = new ShowErrorPage with I18nSupport {
     val messagesApi: MessagesApi = messages
-    override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit rh: Request[_]): Html = {
+    override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
+      implicit rh: Request[_]): Html =
       uk.gov.hmrc.eeittadminfrontend.views.html.error_template(appConfig, pageTitle, heading, message)
-    }
   }
 
   override def onBadRequest(request: RequestHeader, error: String): Future[Result] = {
     val errorPage = showErrorPage.onBadRequest(request, error)
     errorPage andThen {
-      case x => super.onBadRequest(request, error) // We want run this just because of side effect in ErrorAuditingSettings
+      case x =>
+        super.onBadRequest(request, error) // We want run this just because of side effect in ErrorAuditingSettings
     }
   }
 
   override def onNotFound(request: RequestHeader, message: String): Future[Result] = {
     val errorPage = showErrorPage.onHandlerNotFound(request)
     errorPage andThen {
-      case x => super.onHandlerNotFound(request) // We want run this just because of side effect in ErrorAuditingSettings
+      case x =>
+        super.onHandlerNotFound(request) // We want run this just because of side effect in ErrorAuditingSettings
     }
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     val errorPage = showErrorPage.onError(request, exception)
     errorPage andThen {
-      case x => super.onError(request, exception) // We want run this just because of side effect in ErrorAuditingSettings
+      case x =>
+        super.onError(request, exception) // We want run this just because of side effect in ErrorAuditingSettings
     }
   }
 }
 
 /**
- * Sole purpose of this trait is to prevent calls to methods on GlobalSettings
- * by mixing it into ErrorAuditingSettings
- */
+  * Sole purpose of this trait is to prevent calls to methods on GlobalSettings
+  * by mixing it into ErrorAuditingSettings
+  */
 trait DoNothingHandler extends GlobalSettings {
   val response = Future.successful(NotImplemented)
   override def onError(request: RequestHeader, ex: Throwable): Future[Result] = response
@@ -117,7 +122,8 @@ trait DoNothingHandler extends GlobalSettings {
 }
 
 class Graphite(configuration: Configuration) extends GraphiteConfig {
-  override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = configuration.getConfig(s"microservice.metrics")
+  override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] =
+    configuration.getConfig(s"microservice.metrics")
 }
 
 class Filters(
@@ -134,52 +140,53 @@ class Filters(
   def frontendAuditFilter: FrontendAuditFilter = new AuditFilter(configuration, auditConnector)
   def loggingFilter: FrontendLoggingFilter = LoggingFilter
 
-  def securityFilter: SecurityHeadersFilter = new SecurityHeadersFilterFactory {
-    override def configuration = self.configuration
-  }.newInstance
+  def securityFilter: SecurityHeadersFilter =
+    new SecurityHeadersFilterFactory {
+      override def configuration = self.configuration
+    }.newInstance
 
   lazy val enableSecurityHeaderFilter = configuration.getBoolean("security.headers.filter.enabled").getOrElse(true)
 
   def filters = if (enableSecurityHeaderFilter) Seq(securityFilter) ++ frontendFilters else frontendFilters
 
-  def frontendFilters: Seq[EssentialFilter] = Seq(
-    metricsFilter,
-    HeadersFilter,
-    SessionCookieCryptoFilter,
-    deviceIdFilter,
-    loggingFilter,
-    frontendAuditFilter,
-    CSRFExceptionsFilter,
-    csrfFilter,
-    CacheControlFilter.fromConfig("caching.allowedContentTypes"),
-    RecoveryFilter)
+  def frontendFilters: Seq[EssentialFilter] =
+    Seq(
+      metricsFilter,
+      HeadersFilter,
+      SessionCookieCryptoFilter,
+      deviceIdFilter,
+      loggingFilter,
+      frontendAuditFilter,
+      CSRFExceptionsFilter,
+      csrfFilter,
+      CacheControlFilter.fromConfig("caching.allowedContentTypes"),
+      RecoveryFilter
+    )
 
   object ControllerConfiguration extends ControllerConfig {
     lazy val controllerConfigs = configuration.underlying.as[Config]("controllers")
   }
 
-  class AuditFilter(
-    override val appNameConfiguration: Configuration,
-    override val auditConnector: AuditConnector) extends FrontendAuditFilter with AppName {
+  class AuditFilter(override val appNameConfiguration: Configuration, override val auditConnector: AuditConnector)
+      extends FrontendAuditFilter with AppName {
     override def mat = materializer
     override lazy val maskedFormFields = Seq("password")
     override lazy val applicationPort = None
 
-    override def controllerNeedsAuditing(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsAuditing
+    override def controllerNeedsAuditing(controllerName: String) =
+      ControllerConfiguration.paramsForController(controllerName).needsAuditing
   }
 
   object LoggingFilter extends FrontendLoggingFilter {
     override def mat = materializer
-    override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
+    override def controllerNeedsLogging(controllerName: String) =
+      ControllerConfiguration.paramsForController(controllerName).needsLogging
   }
 }
 
-trait ApplicationModule extends BuiltInComponents
-  with AhcWSComponents
-  with I18nComponents
-  with AppName
-  with CSRFComponents
-  with ServicesConfig { self =>
+trait ApplicationModule
+    extends BuiltInComponents with AhcWSComponents with I18nComponents with AppName with CSRFComponents
+    with ServicesConfig { self =>
 
   override lazy val appNameConfiguration = configuration
   override lazy val mode: Mode.Mode = environment.mode
@@ -195,12 +202,28 @@ trait ApplicationModule extends BuiltInComponents
 
   val appConfig = new FrontendAppConfig(configuration)
 
-  override lazy val httpErrorHandler: HttpErrorHandler = new CustomErrorHandling(MicroserviceAuditConnector, appName, environment, configuration, sourceMapper, Some(router), appConfig, messagesApi)
+  override lazy val httpErrorHandler: HttpErrorHandler = new CustomErrorHandling(
+    MicroserviceAuditConnector,
+    appName,
+    environment,
+    configuration,
+    sourceMapper,
+    Some(router),
+    appConfig,
+    messagesApi)
 
-  override lazy val httpRequestHandler: HttpRequestHandler = new CustomHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters)
+  override lazy val httpRequestHandler: HttpRequestHandler =
+    new CustomHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters)
 
-  override lazy val application: Application = new DefaultApplication(environment, applicationLifecycle, customInjector,
-    configuration, httpRequestHandler, httpErrorHandler, actorSystem, materializer)
+  override lazy val application: Application = new DefaultApplication(
+    environment,
+    applicationLifecycle,
+    customInjector,
+    configuration,
+    httpRequestHandler,
+    httpErrorHandler,
+    actorSystem,
+    materializer)
 
   // To avoid circular dependency when creating Graphite we will provide them this artificial
   // application. It is ok to do so since both of them are using mainly provided configuration.
@@ -219,7 +242,8 @@ trait ApplicationModule extends BuiltInComponents
   // Don't use uk.gov.hmrc.play.graphite.GraphiteMetricsImpl as it won't allow hot reload due to overridden onStop() method
   lazy val metrics = new MetricsImpl(applicationLifecycle, configuration)
 
-  override lazy val httpFilters: Seq[EssentialFilter] = new Filters(configuration, metrics, csrfFilter, MicroserviceAuditConnector, appName)(materializer).filters
+  override lazy val httpFilters: Seq[EssentialFilter] =
+    new Filters(configuration, metrics, csrfFilter, MicroserviceAuditConnector, appName)(materializer).filters
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
@@ -227,7 +251,8 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val templateController = new _root_.controllers.template.Template(httpErrorHandler)
 
-  lazy val customInjector: Injector = new SimpleInjector(injector) + adminController + templateController + wsApi + messagesApi
+  lazy val customInjector
+    : Injector = new SimpleInjector(injector) + adminController + templateController + wsApi + messagesApi
 
   lazy val healthRoutes: health.Routes = health.Routes
 
@@ -240,7 +265,8 @@ trait ApplicationModule extends BuiltInComponents
   val authService = new AuthService()
   val googleService = new GoogleVerifier()
   val emacConnector = new EMACConnector()
-  val authController = new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
+  val authController =
+    new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
@@ -261,7 +287,8 @@ trait ApplicationModule extends BuiltInComponents
     bulkLoad,
     eeittAdminController,
     gformsController,
-    assets)
+    assets
+  )
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 

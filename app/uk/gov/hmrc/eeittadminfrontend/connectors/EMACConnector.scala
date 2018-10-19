@@ -48,79 +48,86 @@ trait EMACConnectorHelper {
   val ES8url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/groups/"
   val ES11url = "http://enrolment-store-proxy.protected.mdtp:80/enrolment-store-proxy/enrolment-store/users/"
 
-  def getJson(list: List[KeyValuePair]): JsValue = {
+  def getJson(list: List[KeyValuePair]): JsValue =
     if (list.size == 3) {
-      Json.parse(
-        s"""{
-         |"verifiers" : [
-         |{
-         |"key" : "${list.head.key}",
-         | "value" : "${list.head.value}"
-         | },
-         |{
-         |"key" : "${list(1).key}",
-         |"value" : "${list(1).value}"
-         |},
-         |{"key" : "${list(2).key}",
-         | "value": "${list(2).value}"
-         | }
-         |]
-         |}""".stripMargin)
+      Json.parse(s"""{
+                    |"verifiers" : [
+                    |{
+                    |"key" : "${list.head.key}",
+                    | "value" : "${list.head.value}"
+                    | },
+                    |{
+                    |"key" : "${list(1).key}",
+                    |"value" : "${list(1).value}"
+                    |},
+                    |{"key" : "${list(2).key}",
+                    | "value": "${list(2).value}"
+                    | }
+                    |]
+                    |}""".stripMargin)
     } else if (list.size == 2) {
-      Json.parse(
-        s"""{
-           |"verifiers" : [
-           |{"key" : "${list.head.key}",
-           | "value" : "${list.head.value}"},
-           |{
-           |"key" : "${list(1).key}",
-           | "value" : "${list(1).value}"
-           | }
-           |]
-           |}""".stripMargin)
+      Json.parse(s"""{
+                    |"verifiers" : [
+                    |{"key" : "${list.head.key}",
+                    | "value" : "${list.head.value}"},
+                    |{
+                    |"key" : "${list(1).key}",
+                    | "value" : "${list(1).value}"
+                    | }
+                    |]
+                    |}""".stripMargin)
     } else {
-      Json.parse(
-        s"""{
-           |"verifiers" : [
-           |{
-           |"key" : "${list.head.key}",
-           | "value" : "${list.head.value}"
-           | }
-           |]
-           |}""".stripMargin)
+      Json.parse(s"""{
+                    |"verifiers" : [
+                    |{
+                    |"key" : "${list.head.key}",
+                    | "value" : "${list.head.value}"
+                    | }
+                    |]
+                    |}""".stripMargin)
     }
-  }
 
   //ES6
   def loadKF(bulkFacts: BulkKnownFacts)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     val json = Json.parse(bulkFacts.toString)
-    PUT.PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json).map(x => {
-      Logger.info(s"${bulkFacts.ref} was successful")
-      x.status
-    }).recover {
-      case err: BadRequestException => {
-        Logger.info(s"${bulkFacts.ref} experienced a bad requested exception: ${err.message}")
-        400
+    PUT
+      .PUT[JsValue, HttpResponse](s"$ES6url/HMRC-OBTDS-ORG~EtmpRegistrationNumber~${bulkFacts.ref}", json)
+      .map(x => {
+        Logger.info(s"${bulkFacts.ref} was successful")
+        x.status
+      })
+      .recover {
+        case err: BadRequestException => {
+          Logger.info(s"${bulkFacts.ref} experienced a bad requested exception: ${err.message}")
+          400
+        }
       }
-    }
   }
 
   //ES8
-  def allocateAnEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def allocateAnEnrollment(enrollment: Enrollment, user: User)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] = {
     val allocateInsertJson: JsValue =
       Json.parse(s"""
-         |{
-         |    "friendlyName": "${enrollment.friendlyName}",
-         |    "type": "principal",
-         |    ${getJson(enrollment.verifiers).toString.drop(1).dropRight(1)}
-         |}
+                    |{
+                    |    "friendlyName": "${enrollment.friendlyName}",
+                    |    "type": "principal",
+                    |    ${getJson(enrollment.verifiers).toString.drop(1).dropRight(1)}
+                    |}
       """.stripMargin)
 
-    POST.POST[JsValue, HttpResponse](s"$ES8url${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}?legacy-credentialId=${user.credId}", allocateInsertJson, Seq("Content-Type" -> "application/json"))
+    POST.POST[JsValue, HttpResponse](
+      s"$ES8url${user.groupId}/enrolments/${enrollment.enrollmentKey.service}~${enrollment.enrollmentKey.identifier}~${enrollment.enrollmentKey.value}?legacy-credentialId=${user.credId}",
+      allocateInsertJson,
+      Seq("Content-Type" -> "application/json")
+    )
   }
 
   //ES11
-  def assignEnrollment(enrollment: Enrollment, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
+  def assignEnrollment(enrollment: Enrollment, user: User)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Option[JsValue]] =
     allocateAnEnrollment(enrollment, user).map(result).flatMap {
       case None => {
         Future.successful(None)
@@ -137,9 +144,8 @@ trait EMACConnectorHelper {
         Logger.error("EMAC Connector returned an error.")
         Future.successful(err)
     }
-  }
 
-  def result(response: HttpResponse): Option[JsValue] = {
+  def result(response: HttpResponse): Option[JsValue] =
     response.status match {
       case 204 =>
         None
@@ -148,20 +154,29 @@ trait EMACConnectorHelper {
       case _ =>
         Some(Json.parse(response.body))
     }
-  }
 
   //ES7
-  def removeUnallocated(enrollment: EnrollmentKey)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
-    DELETE.DELETE[HttpResponse](s"$ES6url${enrollment.service}~${enrollment.identifier}~${enrollment.value}").map(result)
-  }
+  def removeUnallocated(
+    enrollment: EnrollmentKey)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] =
+    DELETE
+      .DELETE[HttpResponse](s"$ES6url${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+      .map(result)
 
   //ES9
-  def deallocateEnrollment(enrollment: EnrollmentKey, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
-    DELETE.DELETE[HttpResponse](s"$ES8url${user.groupId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}").map(result)
-  }
+  def deallocateEnrollment(enrollment: EnrollmentKey, user: User)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Option[JsValue]] =
+    DELETE
+      .DELETE[HttpResponse](
+        s"$ES8url${user.groupId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+      .map(result)
 
   //ES12
-  def deassignEnrollment(enrollment: EnrollmentKey, user: User)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] = {
-    DELETE.DELETE[HttpResponse](s"$ES11url${user.credId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}").map(result)
-  }
+  def deassignEnrollment(enrollment: EnrollmentKey, user: User)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Option[JsValue]] =
+    DELETE
+      .DELETE[HttpResponse](
+        s"$ES11url${user.credId}/enrolments/${enrollment.service}~${enrollment.identifier}~${enrollment.value}")
+      .map(result)
 }

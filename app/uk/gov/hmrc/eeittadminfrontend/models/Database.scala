@@ -51,22 +51,20 @@ object Error extends Database {
 object Database {
 
   implicit val format = new Format[Database] {
-    override def reads(json: JsValue): JsResult[Database] = {
+    override def reads(json: JsValue): JsResult[Database] =
       (json \ "database").getOrElse(JsString("Error")) match {
-        case JsString("ETMP") => JsSuccess(ETMP)
+        case JsString("ETMP")        => JsSuccess(ETMP)
         case JsString("Enrollments") => JsSuccess(Enrollments)
-        case _ => JsError("Bob")
+        case _                       => JsError("Bob")
       }
-    }
 
-    override def writes(o: Database): JsValue = {
+    override def writes(o: Database): JsValue =
       o match {
-        case ETMP => Json.obj("database" -> "ETMP")
+        case ETMP        => Json.obj("database" -> "ETMP")
         case Enrollments => Json.obj("database" -> "Enrollments")
         case Error =>
           Logger.error("Illegal arguement")
           JsString("Error")
       }
-    }
   }
 }

@@ -25,16 +25,16 @@ object RegisterError {
 
   implicit val format: OFormat[RegisterError] = Json.format[RegisterError]
 
-  implicit val readsRegisterErrorString: Reads[Validated[RegisterError, String]] = new Reads[Validated[RegisterError, String]] {
-    override def reads(json: JsValue): JsResult[Validated[RegisterError, String]] = {
-      json.validateOpt[String] match {
-        case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))
-        case JsError(err) =>
-          json.validateOpt[RegisterError] match {
-            case JsSuccess(Some(y), _) => JsSuccess(Validated.invalid(y))
-            case JsError(error) => JsError(error.++(err))
-          }
-      }
+  implicit val readsRegisterErrorString: Reads[Validated[RegisterError, String]] =
+    new Reads[Validated[RegisterError, String]] {
+      override def reads(json: JsValue): JsResult[Validated[RegisterError, String]] =
+        json.validateOpt[String] match {
+          case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))
+          case JsError(err) =>
+            json.validateOpt[RegisterError] match {
+              case JsSuccess(Some(y), _) => JsSuccess(Validated.invalid(y))
+              case JsError(error)        => JsError(error.++(err))
+            }
+        }
     }
-  }
 }

@@ -36,17 +36,25 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 object BulkLoadHelper {
-  def stringToKnownFacts(cols: Array[Option[String]]) = {
-    BulkKnownFacts(Ref(cols(1).getOrElse("")), PostCode(Some(cols(10).getOrElse[String](""))), CountryCode(Some(cols(11).getOrElse[String](""))))
-  }
+  def stringToKnownFacts(cols: Array[Option[String]]) =
+    BulkKnownFacts(
+      Ref(cols(1).getOrElse("")),
+      PostCode(Some(cols(10).getOrElse[String](""))),
+      CountryCode(Some(cols(11).getOrElse[String](""))))
 }
 
-class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConnector, val messagesApi: MessagesApi, actorSystem: ActorSystem, materializer: Materializer)(implicit appConfig: AppConfig) extends FrontendController with Actions with I18nSupport {
+class BulkGGController(
+  val authConnector: AuthConnector,
+  eMACConnector: EMACConnector,
+  val messagesApi: MessagesApi,
+  actorSystem: ActorSystem,
+  materializer: Materializer)(implicit appConfig: AppConfig)
+    extends FrontendController with Actions with I18nSupport {
 
   def load = Action.async(parse.urlFormEncoded) { implicit request =>
     val requestBuilder = request.body.apply("bulk-load").head.replace("select", " ").split(",").map {
       case " " => None
-      case x => Some(x)
+      case x   => Some(x)
     }
 
     val knownFactAsString: Iterator[Array[Option[String]]] = requestBuilder.sliding(12, 12)
@@ -60,17 +68,17 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   def stream(request: List[BulkKnownFacts])(implicit hc: HeaderCarrier) = {
     val knownFactsLines: Source[BulkKnownFacts, NotUsed] = Source.fromIterator(() => request.toIterator)
 
-    def sink(implicit hc: HeaderCarrier) = Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, bulkKnownFact) =>
-
-      for {
-        responseStatus <- averageSink(bulkKnownFact)
-        fseq <- a
-      } yield {
-        responseStatus :: fseq
+    def sink(implicit hc: HeaderCarrier) =
+      Sink.fold[Future[List[Int]], BulkKnownFacts](Future.successful(List.empty[Int])) { (a, bulkKnownFact) =>
+        for {
+          responseStatus <- averageSink(bulkKnownFact)
+          fseq           <- a
+        } yield {
+          responseStatus :: fseq
+        }
       }
-    }
 
-    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] = {
+    def averageSink(a: BulkKnownFacts)(implicit hc: HeaderCarrier): Future[Int] =
       eMACConnector.loadKF(a).map {
         case 204 => 204
         case _ => {
@@ -79,7 +87,6 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
           500
         }
       }
-    }
 
     val runnable = knownFactsLines
       .throttle(1, 3.second, 1, ThrottleMode.shaping)
@@ -89,7 +96,10 @@ class BulkGGController(val authConnector: AuthConnector, eMACConnector: EMACConn
   }
 
   private implicit lazy val sys = ActorSystem()
-  private implicit lazy val mat = ActorMaterializer.create(ActorMaterializerSettings.create(sys)
-    .withSyncProcessingLimit(1), sys)
+  private implicit lazy val mat = ActorMaterializer.create(
+    ActorMaterializerSettings
+      .create(sys)
+      .withSyncProcessingLimit(1),
+    sys)
 
 }

@@ -25,17 +25,15 @@ trait UserType {
 
 object Agent extends UserType {
 
-  override def toString() = {
+  override def toString() =
     "Enrollment Agent "
-  }
 
   override val url: String = "/agent/group-id/"
 }
 object Business extends UserType {
 
-  override def toString() = {
+  override def toString() =
     "Enrollment Business "
-  }
 
   override val url: String = "/business/group-id/"
 }
@@ -43,22 +41,20 @@ object Business extends UserType {
 object UserType {
 
   implicit val format: Format[UserType] = new Format[UserType] {
-    override def reads(json: JsValue): JsResult[UserType] = {
+    override def reads(json: JsValue): JsResult[UserType] =
       (json \ "user").getOrElse(JsString("Error")) match {
-        case JsString("Agent") => JsSuccess(Agent)
+        case JsString("Agent")    => JsSuccess(Agent)
         case JsString("Business") => JsSuccess(Business)
-        case _ => JsError("Bob")
+        case _                    => JsError("Bob")
       }
-    }
 
-    override def writes(o: UserType): JsValue = {
+    override def writes(o: UserType): JsValue =
       o match {
-        case Agent => Json.obj("user" -> "Agent")
+        case Agent    => Json.obj("user" -> "Agent")
         case Business => Json.obj("user" -> "Business")
         case _ =>
           Logger.error("illegal arguement")
           JsString("Error")
       }
-    }
   }
 }

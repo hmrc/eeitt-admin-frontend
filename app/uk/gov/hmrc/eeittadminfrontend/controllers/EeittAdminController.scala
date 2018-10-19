@@ -24,7 +24,8 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class EeittAdminController(val authConnector: AuthConnector, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+class EeittAdminController(val authConnector: AuthConnector, val messagesApi: MessagesApi)
+    extends FrontendController with Actions with I18nSupport {
 
   def index = Authentication.async {
     Future.successful(Ok("HOME PAGE"))

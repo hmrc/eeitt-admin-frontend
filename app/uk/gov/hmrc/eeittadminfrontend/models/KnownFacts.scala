@@ -16,58 +16,49 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-case class BulkKnownFacts(
-  ref: Ref,
-  postCode: PostCode,
-  countryCode: CountryCode) {
+case class BulkKnownFacts(ref: Ref, postCode: PostCode, countryCode: CountryCode) {
 
   override def toString = {
 
     val filteredList = List(postCode.toString, countryCode.toString).filter(_.nonEmpty)
 
-    def getJson(list: List[String]): String = {
-
+    def getJson(list: List[String]): String =
       if (list.size == 3) {
         s"""{"verifiers" : [${list.head},${list(1)},${list(2)}]}""".stripMargin
       } else if (list.size == 2) {
         s"""{"verifiers" : [${list.head},${list(1)}]}""".stripMargin
       } else
         s"""{"verifiers" : [${list.head}]}""".stripMargin
-    }
 
     getJson(filteredList)
   }
 }
 
 case class Ref(ref: String) {
-  override def toString = {
+  override def toString =
     ref.replaceAll("[\\r\\n ]", "")
-  }
 }
 
 case class Utr(utr: Option[String]) {
-  override def toString = {
+  override def toString =
     utr match {
-      case Some(utr) => s"""{"key" : "UTR","value" : "${utr}"}"""
-      case None => ""
+      case Some(utr) => s"""{"key" : "UTR","value" : "$utr"}"""
+      case None      => ""
     }
-  }
 }
 
 case class PostCode(postCode: Option[String]) {
-  override def toString = {
+  override def toString =
     postCode match {
-      case Some(y) if y.nonEmpty => s"""{"key" : "BusinessPostcode","value" : "${y}"}"""
-      case _ => ""
+      case Some(y) if y.nonEmpty => s"""{"key" : "BusinessPostcode","value" : "$y"}"""
+      case _                     => ""
     }
-  }
 }
 
 case class CountryCode(countryCode: Option[String]) {
-  override def toString = {
+  override def toString =
     countryCode match {
-      case Some(x) if x.nonEmpty => s"""{"key" : "NonUKCountryCode","value" : "${x}"}"""
-      case _ => ""
+      case Some(x) if x.nonEmpty => s"""{"key" : "NonUKCountryCode","value" : "$x"}"""
+      case _                     => ""
     }
-  }
 }

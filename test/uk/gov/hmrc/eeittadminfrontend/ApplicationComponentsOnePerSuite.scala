@@ -38,4 +38,3 @@ trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeAppli
     play.api.ApplicationLoader.createContext(env)
   }
 }
-

@@ -44,7 +44,7 @@ object Permission {
     override def reads(json: JsValue): JsResult[Permission] = {
       println("BOB" + Json.prettyPrint(json))
       (json \ "value").getOrElse(JsString("Error")) match {
-        case JsString("Query") => JsSuccess(QueryPermission)
+        case JsString("Query")  => JsSuccess(QueryPermission)
         case JsString("Deltas") => JsSuccess(DeltasPermission)
         case JsString("Gforms") => JsSuccess(GFormsPermission)
         case _ =>
@@ -53,15 +53,14 @@ object Permission {
       }
     }
 
-    override def writes(o: Permission) = {
+    override def writes(o: Permission) =
       o match {
-        case QueryPermission => Json.obj("value" -> "Query")
+        case QueryPermission  => Json.obj("value" -> "Query")
         case DeltasPermission => Json.obj("value" -> "Deltas")
         case GFormsPermission => Json.obj("value" -> "Gforms")
         case _ =>
           Logger.error("Some writes Error")
           JsString("Error")
       }
-    }
   }
 }

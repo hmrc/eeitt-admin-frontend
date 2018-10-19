@@ -21,16 +21,17 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.AuthController
 
 object TestUsers {
 
-  def invalidUser() = {
+  def invalidUser() =
     AnyContentAsFormUrlEncoded(Map("token" -> Seq("invalid@test.com")))
-  }
 
-  def registration() = {
-    AnyContentAsFormUrlEncoded(Map("email.value" -> Seq("test@test.com"), "permissions.[0].value" -> Seq("Query"), "permissions.[1].value" -> Seq("Deltas")))
-  }
+  def registration() =
+    AnyContentAsFormUrlEncoded(
+      Map(
+        "email.value"           -> Seq("test@test.com"),
+        "permissions.[0].value" -> Seq("Query"),
+        "permissions.[1].value" -> Seq("Deltas")))
 
-  def validUser() = {
+  def validUser() =
     AnyContentAsFormUrlEncoded(Map("token" -> Seq("test@test.com")))
-  }
 
 }

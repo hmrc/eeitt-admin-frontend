@@ -36,12 +36,13 @@ trait Hooks extends HttpHooks with HttpAuditing {
   override lazy val auditConnector: AuditConnector = MicroserviceAuditConnector
 }
 
-trait WSHttp extends HttpGet with WSGet with HttpPut with WSPut with HttpPost with WSPost with HttpDelete with WSDelete with Hooks with AppName
+trait WSHttp
+    extends HttpGet with WSGet with HttpPut with WSPut with HttpPost with WSPost with HttpDelete with WSDelete
+    with Hooks with AppName
 object WSHttp extends WSHttp
 
-class FrontendAuthConnector(
-  override val runModeConfiguration: Configuration,
-  override val mode: Mode.Mode) extends AuthConnector with ServicesConfig with WSHttp {
+class FrontendAuthConnector(override val runModeConfiguration: Configuration, override val mode: Mode.Mode)
+    extends AuthConnector with ServicesConfig with WSHttp {
   override val serviceUrl: String = baseUrl("auth")
 
   override def http = new HttpGet with WSGet {

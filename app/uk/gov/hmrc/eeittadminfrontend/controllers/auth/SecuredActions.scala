@@ -34,7 +34,8 @@ trait SecuredActions extends Actions {
 
 class SecuredActionsImpl(config: Configuration, val authConnector: AuthConnector) extends SecuredActions {
 
-  override def whiteListing(r: => Future[Result])(implicit request: RequestHeader) = BasicAuth(WhiteListingConf(config))(r)
+  override def whiteListing(r: => Future[Result])(implicit request: RequestHeader) =
+    BasicAuth(WhiteListingConf(config))(r)
 
 }
 
@@ -49,26 +50,28 @@ object WhiteListingConf {
         _.split(",").map(a => Address(a)).toList
       } match {
         case None =>
-          Logger.warn("Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access")
+          Logger.warn(
+            "Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access")
           None
         case Some(x) =>
-
-          Logger.info(s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
+          Logger.info(
+            s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
           Some(x)
       }
     }
 
-    config.getString("feature.basicAuthEnabled")
+    config
+      .getString("feature.basicAuthEnabled")
       .flatMap(flag => Try(flag.toBoolean).toOption) match {
-        case Some(true) => WhiteListingEnabled(getWhitelist(config))
-        case Some(false) => WhiteListingIsDisabled
-        case _ => {
-          Logger.warn("A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
-          WhiteListingIsDisabled
-        }
+      case Some(true)  => WhiteListingEnabled(getWhitelist(config))
+      case Some(false) => WhiteListingIsDisabled
+      case _ => {
+        Logger.warn(
+          "A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
+        WhiteListingIsDisabled
       }
+    }
   }
 }
 
 final case class ClientID(id: String)
-

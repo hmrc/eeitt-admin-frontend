@@ -37,14 +37,20 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with ScalaFutures {
 
-  override def additionalConfiguration: Map[String, Any] = Map("basicAuth.whitelist" -> "192.168.1.1", "feature.basicAuthEnabled" -> true)
+  override def additionalConfiguration: Map[String, Any] =
+    Map("basicAuth.whitelist" -> "192.168.1.1", "feature.basicAuthEnabled" -> true)
 
   val serverUrl = "http://test.invalid:8000"
 
   "auth controller " should {
 
     "allow access when given a valid email" in {
-      val fakeRequest = new FakeRequest("POST", "/eeittadminfrontend/login", FakeHeaders(), TestUsers.validUser(), tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
+      val fakeRequest = new FakeRequest(
+        "POST",
+        "/eeittadminfrontend/login",
+        FakeHeaders(),
+        TestUsers.validUser(),
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
         override lazy val host: String = serverUrl
       }.withHeaders("True-Client-IP" -> "192.168.1.1")
 
@@ -54,7 +60,12 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "deny access when given an invalid email" in {
-      val fakeRequest = new FakeRequest("POST", "/eeittadminfrontend/login", FakeHeaders(), TestUsers.invalidUser(), tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
+      val fakeRequest = new FakeRequest(
+        "POST",
+        "/eeittadminfrontend/login",
+        FakeHeaders(),
+        TestUsers.invalidUser(),
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
         override lazy val host: String = serverUrl
       }.withHeaders("True-Client-IP" -> "192.168.1.1")
 
@@ -64,7 +75,12 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "return FORBIDDEN when whiteListing is missing" in {
-      val fakeRequest = new FakeRequest("GET", "/eeittadminfrontend/login", FakeHeaders(), AnyContentAsEmpty, tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
+      val fakeRequest = new FakeRequest(
+        "GET",
+        "/eeittadminfrontend/login",
+        FakeHeaders(),
+        AnyContentAsEmpty,
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
         override lazy val host: String = serverUrl
       }
 
@@ -74,7 +90,12 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "return FORBIDDEN when whiteListing is incorrect" in {
-      val fakeRequest = new FakeRequest("GET", "/eeittadminfrontend/login", FakeHeaders(), AnyContentAsEmpty, tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
+      val fakeRequest = new FakeRequest(
+        "GET",
+        "/eeittadminfrontend/login",
+        FakeHeaders(),
+        AnyContentAsEmpty,
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
         override lazy val host: String = serverUrl
       }.withHeaders("True-Client-IP" -> "192.168.1.2")
 
@@ -100,23 +121,25 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
   val langs = new DefaultLangs(configuration)
   val messageApi = new DefaultMessagesApi(env, configuration, langs)
 
-  val authController = new AuthController(new FakeAuthConnector(), securedActions, new FakeAuthService, new FakeGoogleVerifier)(appConfig, messageApi)
+  val authController = new AuthController(
+    new FakeAuthConnector(),
+    securedActions,
+    new FakeAuthService,
+    new FakeGoogleVerifier)(appConfig, messageApi)
 
   class FakeAuthService extends AuthService {
-    override def checkUser(email: Email): Validated[LoginError, Unit] = {
+    override def checkUser(email: Email): Validated[LoginError, Unit] =
       if (email.value == "test@test.com") ().valid else LoginError("Test Error").invalid
-    }
   }
 
   class FakeGoogleVerifier extends GoogleVerifier {
 
-    override def apply(string: String) = {
+    override def apply(string: String) =
       if (string == "test@test.com") {
         "test@test.com"
       } else {
         "invalidtest@test.com"
       }
-    }
   }
 
   class FakeAuthConnector extends AuthConnector {

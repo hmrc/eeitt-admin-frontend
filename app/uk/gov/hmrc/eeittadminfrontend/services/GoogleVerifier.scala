@@ -48,9 +48,8 @@ trait GoogleVerifierHelper {
   val httpTransport: NetHttpTransport = if (squid.environmentEnabled) {
     val authenticator = new Authenticator() {
 
-      override def getPasswordAuthentication(): PasswordAuthentication = {
+      override def getPasswordAuthentication(): PasswordAuthentication =
         new PasswordAuthentication(squid.username, squid.password.toCharArray)
-      }
     }
     Authenticator.setDefault(authenticator)
     System.setProperty("http.proxyUser", squid.username)
@@ -60,11 +59,11 @@ trait GoogleVerifierHelper {
     new NetHttpTransport.Builder().setProxy(proxy).build()
   } else GoogleNetHttpTransport.newTrustedTransport()
 
-  lazy val tokenVerifier: GoogleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(httpTransport, JacksonFactory.getDefaultInstance)
-    .setAudience(Collections.singletonList(clientID.id))
-    .build()
+  lazy val tokenVerifier: GoogleIdTokenVerifier =
+    new GoogleIdTokenVerifier.Builder(httpTransport, JacksonFactory.getDefaultInstance)
+      .setAudience(Collections.singletonList(clientID.id))
+      .build()
 
-  def apply(token: String): String = {
+  def apply(token: String): String =
     tokenVerifier.verify(token).getPayload.getEmail
-  }
 }

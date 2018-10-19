@@ -29,25 +29,35 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class GformWhiteListing(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi) extends FrontendController with Actions with I18nSupport {
+class GformWhiteListing(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
+    extends FrontendController with Actions with I18nSupport {
 
   def showWhitlisting = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.white_listing(request, appConfig)))
   }
 
-  val email = Form(
-    single("email" -> nonEmptyText))
+  val email = Form(single("email" -> nonEmptyText))
 
   def addUser = Authentication.async { implicit request =>
-    email.bindFromRequest().fold(
-      hasErrors => Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
-      success => GformConnector.addWhiteListedUser(success).map(_ => Ok("Successful")))
+    email
+      .bindFromRequest()
+      .fold(
+        hasErrors =>
+          Future.successful(
+            Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
+        success => GformConnector.addWhiteListedUser(success).map(_ => Ok("Successful"))
+      )
   }
 
   def deleteUser = Authentication.async { implicit request =>
-    email.bindFromRequest().fold(
-      hasErrors => Future.successful(Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
-      success => GformConnector.deleteWhiteListedUser(success).map(_ => Ok("Successful")))
+    email
+      .bindFromRequest()
+      .fold(
+        hasErrors =>
+          Future.successful(
+            Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.showWhitlisting())),
+        success => GformConnector.deleteWhiteListedUser(success).map(_ => Ok("Successful"))
+      )
   }
 
   def show = Authentication.async { implicit request =>
