@@ -35,6 +35,7 @@ trait MicroService {
     .settings(defaultSettings(): _*)
     .settings(
       scalafmtOnCompile := true,
+      scalaVersion := "2.11.12",
       libraryDependencies ++= appDependencies,
       routesImport ++= Seq(
         "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
