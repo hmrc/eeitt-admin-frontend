@@ -1,0 +1,137 @@
+@*
+ * Copyright 2018 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import helper._
+@import play.api.i18n.Messages.Implicits._
+
+@()(implicit request : Request[_], messages: Messages, appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform analytics") {
+  <meta name="google-signin-client_id" content="414711673206-8c53ik1peqct770aaccmfkaih9hcb224.apps.googleusercontent.com">
+  <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
+  <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery" class="back-link">Back</a>
+  <div id="form-analytics" class="grid-row">
+    <div class="grid-column-full">
+      <h1 class="h1-heading">
+        Gforms analytics
+      </h1>
+
+      <p class="g-signin2 float-right" data-onsuccess="handleLoadGA"></p>
+      <p>
+        <select class="govuk-select" id="form-selector">
+          <option value="/" selected>All Gforms</option>
+        </select>
+        <select class="govuk-select" id="ga-period">
+          <option value="30daysAgo">Last 30 days</option>
+          <option value="14daysAgo">Last 14 days</option>
+          <option value="7daysAgo" selected>Last 7 days</option>
+          <option value="3daysAgo">Last 3 days</option>
+          <option value="1daysAgo">Last day</option>
+        </select>
+        <select class="govuk-select" id="ga-view-select" data-query="pageViewQuery">
+          <option value="dev">Development</option>
+          <option value="qa">QA</option>
+          <option value="staging">Staging</option>
+          <option value="production" selected>Production</option>
+        </select>
+        <button class="load-ga govuk-button">Load</button>
+      </p>
+
+      <h2 class="govuk-heading-m">
+        <span class="govuk-!-font-size-48" id="env-name">Production</span>
+        <span id="section-name"></span>
+      </h2>
+
+      <div class="stats-container">
+
+        <h3 class="stats govuk-heading-m">
+          Total page views
+          <a class="stats-link" href="#" data-stats="views-table">
+            <span class="govuk-!-font-size-48 stats-total" id="views-total">0</span>
+          </a>
+        </h3>
+
+        <h3 class="stats govuk-heading-m">
+          Total sessions
+          <span class="govuk-!-font-size-48 stats-total" id="sessions-total">0</span>
+        </h3>
+
+        <h3 class="stats govuk-heading-m">
+          Total submissions
+          <a class="stats-link" href="#" data-stats="submissions-table">
+            <span class="govuk-!-font-size-48 stats-total" id="submissions-total">0</span>
+          </a>
+        </h3>
+
+        <h3 class="stats govuk-heading-m">
+          Total user errors
+          <a class="stats-link" href="#" data-stats="errors-table">
+            <span class="govuk-!-font-size-48 stats-total govuk-error-message" id="errors-total">0</span>
+          </a>
+        </h3>
+
+        <h3 class="stats govuk-heading-m">
+          Completion rate
+          <span class="govuk-!-font-size-48 stats-total" id="completion-rate">0</span>
+        </h3>
+
+      </div>
+
+      <div class="chart-container">
+        <canvas id="pageViewsChart" width="200" height="100"></canvas>
+      </div>
+
+      <table id="ga-views" class="govuk-table stats-table views-table">
+        <caption id="pageview-header" class="govuk-table__caption govuk-!-font-size-24">Page views</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Page</th>
+            <th class="govuk-table__header" scope="col">Views</th>
+          </tr>
+        </thead>
+        <tbody id="results-table" class="govuk-table__body stats-results">
+        </tbody>
+      </table>
+
+      <table id="ga-submissions" class="govuk-table stats-table submissions-table">
+        <caption id="submissions-header" class="govuk-table__caption govuk-!-font-size-24">Form submissions</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Date</th>
+            <th class="govuk-table__header" scope="col">Browser</th>
+            <th class="govuk-table__header" scope="col">Submissions</th>
+          </tr>
+        </thead>
+        <tbody id="submissions-table" class="govuk-table__body stats-results">
+        </tbody>
+      </table>
+
+      <table id="ga-errors" class="govuk-table stats-table errors-table">
+        <caption id="errors-header" class="govuk-table__caption govuk-!-font-size-24">User errors</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Form field</th>
+            <th class="govuk-table__header" scope="col">Error</th>
+            <th class="govuk-table__header" scope="col">Count</th>
+          </tr>
+        </thead>
+        <tbody id="errors-table" class="govuk-table__body stats-results">
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+}
