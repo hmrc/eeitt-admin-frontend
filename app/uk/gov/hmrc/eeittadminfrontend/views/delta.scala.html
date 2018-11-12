@@ -20,23 +20,7 @@
 
 @()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Query"){
-
-<script>
-function colorFunction(value){
-  var str = "isLive";
-  var color = document.getElementById(str.concat(value));
-
-    console.log = color.options[color.selectedIndex].value
-  if(color.options[color.selectedIndex].value == "LIVE"){
-    document.getElementById(value).style.backgroundColor = "#ff0000";
-  } else {
-    document.getElementById(value).style.backgroundColor = "#fff";
-  }
-}
-</script>
-
-
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Update delta"){
 
 <div class="text-center">
     <div class="col-md-4 col-md-offset-2 red">

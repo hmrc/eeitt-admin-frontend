@@ -20,123 +20,96 @@
 
 @()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Query"){
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u">
-<h2 class="text-center">Query</h2>
-<div class="text-center">
-    <div class="col-md-4 col-md-offset-2">
-        <h3>ETMP</h3>
-        <div class="form-group">
-            <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery method="POST"
-                  class="js-form">
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Query"){
+  <h1>Query</h1>
 
-                @CSRF.formField
+  <h2>ETMP</h2>
+  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery" method="POST">
 
-                <select id="database_arn" class="drop-down" name="UserDB" onclick="return changeId(); ">
-                    <option value="ARN"> ARN</option>
-                    <option value="Business Users"> Business Registration</option>
+    @CSRF.formField
 
-                </select>
+    <div class="form-group">
 
-                <select id="database" class="drop-down" name="database">
-                    <option value="Enrollments"> Enrollments</option>
-                    <option value="ETMP"> ETMP</option>
+      <select id="database_arn" class="drop-down" name="UserDB" onclick="return changeId(); ">
+          <option value="ARN"> ARN</option>
+          <option value="Business Users"> Business Registration</option>
+      </select>
 
-                    <fieldset class="form-field-group">
-                        <input
-                                name="arn"
-                                id="arn"
-                                value=""
-                                class="form-control form-control--block"
-                        />
-                        </label>
-                    </fieldset>
-                </select>
-                <input type="submit" class="button" value="search"/>
-            </form>
-            <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllBusinessUsers">
-                @CSRF.formField
-                <input type="submit" value="Get All Business Users"/>
-            </form>
-        </div>
+      <select id="database" class="drop-down" name="database">
+          <option value="Enrollments"> Enrollments</option>
+          <option value="ETMP"> ETMP</option>
+      </select>
+
     </div>
 
-
-    <div class="col-md-4 ">
-        <h3>Enrollments</h3>
-        <div class="form-group">
-            <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery
-                  method="POST"
-                  class="js-form">
-
-                @CSRF.formField
-
-                <select id="user" class="drop-down" name="user">
-                    <option value="Agent"> Agent</option>
-                    <option value="Business"> Business</option>
-                </select>
-
-                <select id="criteria" class="drop-down" name="selectsomething" onclick="return changeName();">
-                    <option value="groupid"> Group ID</option>
-                    <option value="regime"> Regime</option>
-                </select>
-
-                <fieldset class="form-field-group">
-                    <label for="groupid">
-                        <input
-                                name="groupid"
-                                id="groupid"
-                                value=""
-                                class="form-control form-control--block"
-                        />
-                    </label>
-                </fieldset>
-                <input name="database" class="hidden" value="Enrollments">
-                <input type="submit" class="button" value="search"/>
-            </form>
-            <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgents">
-                @CSRF.formField
-                <input type="submit" value="Get All Agents"/>
-            </form>
-        </div>
+    <div class="form-group">
+      <input
+        name="arn"
+        id="arn"
+        value=""
+        class="form-control form-control--block"
+        />
     </div>
-</div>
+
+    <div class="form-group">
+      <input type="submit" class="button" value="Search"/>
+    </div>
+
+  </form>
+
+  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllBusinessUsers">
+
+    @CSRF.formField
+
+    <div class="form-group">
+      <input type="submit" class="button" value="Get All Business Users"/>
+    </div>
+
+  </form>
+
+  <h2>Enrollments</h2>
+  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery" method="POST">
+
+    @CSRF.formField
+
+    <div class="form-group">
+      <select id="user" class="drop-down" name="user">
+          <option value="Agent"> Agent</option>
+          <option value="Business"> Business</option>
+      </select>
+
+      <select id="criteria" class="drop-down" name="selectsomething" onclick="return changeName();">
+          <option value="groupid"> Group ID</option>
+          <option value="regime"> Regime</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="groupid"></label>
+      <input
+              name="groupid"
+              id="groupid"
+              value=""
+              class="form-control form-control--block"
+      />
+    </div>
+
+    <input name="database" class="hidden" value="Enrollments">
+
+    <div class="form-group">
+      <input type="submit" class="button" value="Search"/>
+    </div>
+
+  </form>
+
+  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgents">
+
+    @CSRF.formField
+
+    <div class="form-group">
+      <input type="submit" class="button" value="Get All Agents"/>
+    </div>
+
+  </form>
 
 }
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-></script>
-
-<script>
-function changeId(){
-var elemArn = document.getElementById('database_arn');
-var selectedValue = elemArn.options[elemArn.selectedIndex].value;
-
-var y = document.getElementById('arn');
-
-if(selectedValue=="ARN"){
-  y.name = "arn";
-}
-else if (selectedValue == "Business Users"){
-  y.name = "registration";
-}
-}
-
-
-</script>
-<script>
-function changeName(){
-var elem = document.getElementById('criteria');
-var selectedValue = elem.options[elem.selectedIndex].value;
-
-var x = document.getElementById('groupid');
-
-if(selectedValue == "groupid"){
-x.name = "groupid";
-}else if (selectedValue == 'regime'){
-x.name = "regime";
-}
-}
-
-</script>
