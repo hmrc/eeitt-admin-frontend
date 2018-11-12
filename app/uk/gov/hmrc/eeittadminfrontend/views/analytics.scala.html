@@ -19,8 +19,7 @@
 
 @()(implicit request : Request[_], messages: Messages, appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform analytics") {
-  <meta name="google-signin-client_id" content="414711673206-8c53ik1peqct770aaccmfkaih9hcb224.apps.googleusercontent.com">
-  <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
+
   <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery" class="back-link">Back</a>
   <div id="form-analytics" class="grid-row">
     <div class="grid-column-full">

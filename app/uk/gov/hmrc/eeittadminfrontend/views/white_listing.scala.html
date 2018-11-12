@@ -23,44 +23,60 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
 
 @(implicit request : Request[_], appConfig: AppConfig)
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform"){
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.addUser" method="POST"
-      class="js-form">
-    <h2>Add a user to the Gform whitelist</h2>
-    @CSRF.formField
-    <p>Email:</p>
-    <fieldset class="form-field-group">
-        <input
-                name="email"
-                id="email-add"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.addUser" method="POST">
+
+  <h2>Add a user to the Gform whitelist</h2>
+  @CSRF.formField
+
+  <div class="form-group">
+    <label for="email-add">Email:</label>
+    <input
+      name="email"
+      id="email-add"
+      value=""
+      class="form-control form-control--block"
+      />
+  </div>
+  <div class="form-group">
     <input type="submit" class="button" />
+  </div>
 </form>
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.deleteUser method="POST"
-      class="js-form" enctype="multipart/form-data">
-    <h2>Delete a user from the Gform whitelist</h2>
-    @CSRF.formField
-    <p>Email:</p>
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.deleteUser" method="POST">
+
+  <h2>Delete a user from the Gform whitelist</h2>
+
+  @CSRF.formField
+
+  <div class="form-group">
+    <label for="email-delete">Email:</label>
     <input
-            name="email"
-            id="email-delete"
-            value=""
-            class="form-control form-control--block"
-    />
-    <input type="submit" class="button"/>
+      name="email"
+      id="email-delete"
+      value=""
+      class="form-control form-control--block"
+      />
+  </div>
+
+  <div class="form-group">
+    <input type="submit" class="button button--delete" value="Delete" />
+  </div>
+
 </form>
 
 
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformWhiteListing.show" method="POST">
-    <h2>Get all whitelisted Gform users</h2>
-    @CSRF.formField
-    <input type="submit" value="Get All Users"/>
+
+  <h2>Get all whitelisted Gform users</h2>
+
+  @CSRF.formField
+
+  <div class="form-group">
+    <input type="submit" class="button" value="Get All Users"/>
+  </div>
+
 </form>
 
 }

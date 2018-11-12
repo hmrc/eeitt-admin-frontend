@@ -23,13 +23,13 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
 
 @(form: Form[GformId])(implicit request : Request[_], appConfig: AppConfig)
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform"){
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform"){
 
-<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST"
-      class="js-form">
+<form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST">
     <h2>Find a Gform Template</h2>
     @CSRF.formField
-    <p>Form Type ID:</p>
+  <div class="form-group">
+    <label for="value">Form Type ID:</label>
     <fieldset class="form-field-group">
         <input
                 name="formTypeId.value"
@@ -39,11 +39,11 @@
         />
         </label>
     </fieldset>
-       <input type="submit" class="button" value="search"/>
+  </div>
+  <input type="submit" class="button" value="Search"/>
 </form>
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate" method="POST"
-      class="js-form">
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate" method="POST">
     <h2>Delete A template</h2>
     @CSRF.formField
     <p>Form Type ID:</p>
@@ -63,40 +63,32 @@
       class="js-form" enctype="multipart/form-data">
     <h2>Save a template</h2>
     @CSRF.formField
-    <p>Json Template:</p>
+  <div class="form-group">
+    <label for="template">Json Template:</label>
     <textarea
             type="text"
             name="template"
             id="template"
             value=""
             class="form-control form-control--block"
+            style="min-height: 300px;"
     ></textarea>
+  </div>
 </form>
 
-<div>
-<button value="Save" class="button" onclick="encode()"> Click Me</button>
+<div class="form-group">
+  <button value="Save" class="button" onclick="encode()">Save</button>
 </div>
 
-<a>Get all Gform Templates</a>
+<h3>Get all Gform Templates</h3>
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates">
     <input type="submit" value="Get All Templates"/>
 </form>
 
 
-<a>Get all Gform Schema</a>
+<h3>Get all Gform Schema</h3>
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllSchema">
     <input type="submit" value="Get All Schema"/>
 </form>
 
-    <script src="assets/javascript/base64.min.js"></script>
-
-    <script>
-    function encode(){
-        var string = document.getElementById("template").value;
-        var encodeData = Base64.encode(string);
-        document.getElementById("template").value = encodeData;
-        console.log(document.getElementById("template").value);
-        document.getElementById("templateId").submit();
-    }
-</script>
 }
