@@ -16,6 +16,7 @@
 
 @import helper._
 @import play.api.i18n.Messages.Implicits._
+@import uk.gov.hmrc.eeittadminfrontend.views.html.components._
 
 @()(implicit request : Request[_], messages: Messages, appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform analytics") {
@@ -92,43 +93,17 @@
         <canvas id="pageViewsChart" width="200" height="100"></canvas>
       </div>
 
-      <table id="ga-views" class="govuk-table stats-table views-table">
-        <caption id="pageview-header" class="govuk-table__caption govuk-!-font-size-24">Page views</caption>
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th class="govuk-table__header" scope="col">Page</th>
-            <th class="govuk-table__header" scope="col">Views</th>
-          </tr>
-        </thead>
-        <tbody id="results-table" class="govuk-table__body stats-results">
-        </tbody>
-      </table>
+      @table_structure("ga-views", "views-table", "Page views", List("Page", "Views"))
 
-      <table id="ga-submissions" class="govuk-table stats-table submissions-table">
-        <caption id="submissions-header" class="govuk-table__caption govuk-!-font-size-24">Form submissions</caption>
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th class="govuk-table__header" scope="col">Date</th>
-            <th class="govuk-table__header" scope="col">Browser</th>
-            <th class="govuk-table__header" scope="col">Submissions</th>
-          </tr>
-        </thead>
-        <tbody id="submissions-table" class="govuk-table__body stats-results">
-        </tbody>
-      </table>
+      @table_structure("ga-submissions", "submissions-table", "Form submissions", List("Date", "Browser", "Submissions"))
 
-      <table id="ga-errors" class="govuk-table stats-table errors-table">
-        <caption id="errors-header" class="govuk-table__caption govuk-!-font-size-24">User errors</caption>
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th class="govuk-table__header" scope="col">Form field</th>
-            <th class="govuk-table__header" scope="col">Error</th>
-            <th class="govuk-table__header" scope="col">Count</th>
-          </tr>
-        </thead>
-        <tbody id="errors-table" class="govuk-table__body stats-results">
-        </tbody>
-      </table>
+      @table_structure("ga-errors", "errors-table", "User errors", List("Form field", "Error", "Count"))
+
+      <div class="field-errors">
+        <h2><span class="govuk-!-font-size-48 stats-total govuk-error-message"><span id="fieldErrorsTotal"></span> errors on field:</span> <span id="field-error-field"></span></h2>
+        <h3><em>Page:</em> <span id="field-error-page"></span></h3>
+        @table_structure("ga-field-errors", "field-errors-table", "", List("Date", "Error message", "Count"))
+      </div>
 
     </div>
   </div>
