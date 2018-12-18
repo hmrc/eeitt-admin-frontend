@@ -211,3 +211,7 @@ select:focus::-ms-value, .govuk-select:focus::-ms-value {
     float: right;
     margin-top: 5px;
 }
+
+.field-errors {
+    display: none;
+}

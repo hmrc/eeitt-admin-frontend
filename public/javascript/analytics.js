@@ -1,5 +1,11 @@
 /* global window, $, JSONEditor, alert, gapi, moment, Chart */
 
+/* TODO: break this down into modules and templates and create build system
+** this may require a separate repository to avoid npm dependencies
+** in this one - the advantage would be a more robust SPA with templating
+** that may be portable to other services
+ */
+
 function govDate (date) {
   if (date === 'today') {
     return moment().format('D MMMM YYYY')
@@ -47,7 +53,8 @@ const GADefaultConfig = {
   endPeriod: 'today',
   slug: '/',
   sectionSlug: '',
-  query: 'pageViewQuery'
+  query: 'pageViewQuery',
+  samplingLevel: 'LARGE'
 }
 
 function handleLoadGA () {
@@ -107,14 +114,13 @@ function setSessionsTotal (total) {
 
 function setSubmissionsTotal (total) {
   $('#submissions-total').html(total)
-  calcCompletionRate()
+  setCompletionRate(calcCompletionRate() + '%')
 }
 
 function calcCompletionRate () {
   const sessions = parseInt($('#sessions-total').text())
   const submissions = parseInt($('#submissions-total').text())
-  const rate = sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
-  setCompletionRate(rate + '%')
+  return sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
 }
 
 function setCompletionRate (rate) {
@@ -129,11 +135,17 @@ function setErrorsTotal (total) {
   $('#errors-total').html(total)
 }
 
+function setFieldErrorsTotal (total) {
+  $('#fieldErrorsTotal').html(total)
+}
+
 function emptyTables () {
   $('.stats-table').hide().find('.stats-results').empty()
 }
 
 function loadingTotals () {
+  $('.stats-container').show()
+  $('.field-errors').hide()
   emptyTables()
   // TODO: add screen reader busy text and aria live labelling to containers
   const spinnerHtml = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>'
@@ -147,7 +159,6 @@ function loadingTotals () {
 function showStatsTable (stats) {
   $('.stats-table').hide()
   $('.' + stats).show()
-
 }
 
 function GAQuery (reportRequests, parseFn) {
@@ -180,9 +191,9 @@ function viewFilters (config) {
 
 function filterConcat (config, filters) {
   return filters.reduce((list, filter) => {
-    list.push(...filter(config))
-  return list
-}, [])
+    list.push(...filter(config));
+    return list
+  }, [])
 }
 
 function pathLevelFilter (slug, level) {
@@ -190,6 +201,14 @@ function pathLevelFilter (slug, level) {
     dimensionName: 'ga:pagePathLevel' + level,
     operator: 'PARTIAL',
     expressions: [slug]
+  }
+}
+
+function pageTitleFilter (title) {
+  return {
+    dimensionName: 'ga:pageTitle',
+    operator: 'PARTIAL',
+    expressions: [title]
   }
 }
 
@@ -201,10 +220,23 @@ function errorFilter () {
   }]
 }
 
-function userErrorQuery (config) {
+function fieldErrorFilter (field, pageTitle) {
+  function filter() {
+    return [{
+      dimensionName: 'ga:eventAction',
+      operator: 'EXACT',
+      expressions: [field]
+    }, pageTitleFilter(pageTitle)]
+  }
+  return filter
+}
+
+function fieldErrorQuery (fieldFilter) {
+  const config = setConfig()
   return [
     {
       viewId: config.view.id,
+      samplingLevel:  config.samplingLevel,
       dateRanges: [
         {
           startDate: config.startPeriod,
@@ -216,14 +248,12 @@ function userErrorQuery (config) {
       ],
       dimensionFilterClauses: [{
         operator: 'AND',
-        filters: filterConcat(config, [viewFilters, errorFilter])
+        filters: filterConcat(config, [fieldFilter])
       }],
       dimensions: [
-        {name: 'ga:pageTitle'},
         {name: 'ga:eventLabel'},
-        {name: 'ga:eventAction'},
-        {name: 'ga:browser'},
         {name: 'ga:dateHourMinute'},
+        {name: 'ga:browser'},
         {name: 'ga:operatingSystem'}
       ],
       orderBys: [
@@ -236,28 +266,50 @@ function userErrorQuery (config) {
   ]
 }
 
+function handleDrillDownError (e) {
+  e.preventDefault()
+  loadingTotals()
+  emptyTables()
+  hideChart()
+  $('.stats-container').hide()
+  $('.field-errors').show()
+  showStatsTable('field-errors-table')
+  const $elData = $(e.currentTarget).data()
+  $('#field-error-page').text($elData.title)
+  $('#field-error-field').text($elData.field)
+  const fieldFilter = fieldErrorFilter($elData.field, $elData.title)
+  GAQuery(fieldErrorQuery(fieldFilter), parseErrorDrillDown)
+}
+
+function parseErrorDrillDown (response) {
+  const reports = response.result.reports
+  parseFieldErrorEvents(reports[0].data)
+}
+
 function withSlug (slug) {
   return !slug || slug === '/' ? pathLevelFilter('submissions', 1) : pathLevelFilter(slug, 3)
 }
 
-function submissionsQuery (config) {
-  let filter = withSlug(config.slug)
-  return [
-    {
-      viewId: config.view.id,
-      dateRanges: [
-        {
-          startDate: config.startPeriod,
-          endDate: 'today'
-        }
-      ],
+function query (config, names) {
+  const core = {
+    viewId: config.view.id,
+    samplingLevel:  config.samplingLevel,
+    dateRanges: [
+      {
+        startDate: config.startPeriod,
+        endDate: config.endPeriod
+      }
+    ]
+  }
+  const queries = {
+    submissions: {
       metrics: [
         {expression: 'ga:uniquePageviews'}
       ],
       dimensionFilterClauses: [{
         operator: 'AND',
         filters: [
-          filter,
+          withSlug(config.slug),
           pathLevelFilter('acknowledgement', 2)
         ]
       }],
@@ -272,115 +324,144 @@ function submissionsQuery (config) {
           sortOrder: 'DESCENDING'
         }
       ]
-    }
-  ]
-}
-
-function sectionViewQuery (config) {
-  const reportRequests = [
-    {
-      viewId: config.view.id,
-      dateRanges: [
-        {
-          startDate: config.startPeriod,
-          endDate: 'today'
-        }
-      ],
+    },
+    pageViews: {
       metrics: [
         {expression: 'ga:pageviews'},
         {expression: 'ga:sessions'}
       ],
       dimensionFilterClauses: [{
+        filters: viewFilters(config)
+      }],
+      dimensions: [
+        {name: 'ga:pagePath'},
+        {name: 'ga:date'}
+      ],
+      orderBys: [
+        {
+          fieldName: 'ga:pageviews',
+          sortOrder: 'DESCENDING'
+        }
+      ]
+    },
+    sectionView: {
+        metrics: [
+          {expression: 'ga:pageviews'},
+          {expression: 'ga:sessions'}
+        ],
+          dimensionFilterClauses: [{
         operator: 'AND',
         filters: viewFilters(config)
       }],
-      dimensions: [
+        dimensions: [
         {name: 'ga:pagePath'},
         {name: 'ga:date'},
         {name: 'ga:pageTitle'}
       ],
-      orderBys: [
+        orderBys: [
         {
           fieldName: 'ga:pageviews',
           sortOrder: 'DESCENDING'
         }
       ]
+    },
+    userError: {
+      metrics: [
+        {expression: 'ga:totalEvents'}
+      ],
+      dimensionFilterClauses: [{
+        operator: 'AND',
+        filters: filterConcat(config, [viewFilters, errorFilter])
+      }],
+      dimensions: [
+        {name: 'ga:pageTitle'},
+        {name: 'ga:eventLabel'},
+        {name: 'ga:eventAction'},
+        {name: 'ga:date'}
+      ],
+      orderBys: [
+        {
+          fieldName: 'ga:totalEvents',
+          sortOrder: 'DESCENDING'
+        }
+      ]
+    },
+    allForms: {
+      metrics: [
+        {expression: 'ga:pageviews'}
+      ],
+      dimensions: [
+        {name: 'ga:pagePathLevel3'}
+      ]
     }
-  ]
-  reportRequests.push(
-    userErrorQuery(config)
-  )
-  GAQuery(reportRequests, parseSectionResults)
+  }
+
+  return names.reduce((list, name) => {
+    list.push(Object.assign({}, core, queries[name]))
+    return list
+  }, [])
+}
+
+function sectionViewQuery (config) {
+  GAQuery([query(config, ['sectionView', 'userError'])], parseSectionResults)
 }
 
 function pageViewQuery (config) {
-  const reportRequests = [
-    {
-      viewId: config.view.id,
-      dateRanges: [
-        {
-          startDate: config.startPeriod,
-          endDate: 'today'
-        }
-      ],
-      metrics: [
-        {expression: 'ga:pageviews'},
-        {expression: 'ga:sessions'}
-      ],
-      dimensionFilterClauses: [{
-        filters: viewFilters(config)
-      }],
-      dimensions: [
-        {name: 'ga:pagePath'},
-        {name: 'ga:date'},
-        {name: 'ga:pageTitle'}
-      ],
-      orderBys: [
-        {
-          fieldName: 'ga:pageviews',
-          sortOrder: 'DESCENDING'
-        }
-      ]
-    }
-  ]
-
-  reportRequests.push(
-    submissionsQuery(config),
-    userErrorQuery(config)
-  )
+  const names = ['pageViews', 'submissions', 'userError']
 
   if (!GAConfig.formNames) {
-    reportRequests.push(getAllFormsQuery(config))
+    names.push('allForms')
   }
 
-  GAQuery(reportRequests, parseResults)
+  GAQuery(query(config, names), parseResults)
 }
+
+const tdClass = "govuk-table__cell";
+const trClass = "govuk-table__row";
+const fontSize16 = "govuk-!-font-size-16";
 
 function writePageViewRow (row) {
   const pageLevels = row.dimensions[0].split('/')
-  const tr = $('<tr class="govuk-table__row"></tr>')
-  const td1 = $('<td class="govuk-table__cell govuk-!-font-size-16"><a href="#" class="section-stats" data-query="sectionViewQuery" data-view="dev" data-slug="' + pageLevels[3] + '" data-section-slug="' + pageLevels[4] + '">' + row.dimensions[0] + '</a><br>' + govDate(row.dimensions[1]) + '</td>')
-  const td2 = $('<td class="govuk-table__cell">' + row.metrics[0].values[0] + '</td>')
+  const tr = $('<tr class="' + trClass + '"></tr>')
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '"></td>')
+  td1.append('<a href="#" class="section-stats" data-query="sectionViewQuery" data-view="dev" data-slug="' + pageLevels[3] + '" data-section-slug="' + pageLevels[4] + '">' + row.dimensions[0] + '</a><br>' + govDate(row.dimensions[1]))
+  const td2 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
+  if (row.dimensions[2]) {
+    td1.find('a').text(row.dimensions[2].split('-')[0].trim())
+  }
   tr.append(td1).append(td2)
-  $('#results-table').append(tr)
+  $('#views-table').append(tr)
 }
 
 function writeSubmissionRow (row) {
-  const tr = $('<tr class="govuk-table__row"></tr>')
-  const td1 = $('<td class="govuk-table__cell govuk-!-font-size-16">' + govDate(row.dimensions[2]) + '</td>')
-  const td2 = $('<td class="govuk-table__cell govuk-!-font-size-16">' + row.dimensions[1] + '</td>')
-  const td3 = $('<td class="govuk-table__cell">' + row.metrics[0].values[0] + '</td>')
+  const tr = $('<tr class="' + trClass + '"></tr>')
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + govDate(row.dimensions[2]) + '</td>')
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[1] + '</td>')
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
   tr.append(td1).append(td2).append(td3)
   $('#submissions-table').append(tr)
 }
 
 function writeErrorRow (row) {
-  const tr = $('<tr class="govuk-table__row"></tr>')
-  const td1 = $('<td class="govuk-table__cell govuk-!-font-size-16">' + row.dimensions[2] + '</td>')
-  const td2 = $('<td class="govuk-table__cell govuk-!-font-size-16"><span class="govuk-error-message  govuk-!-font-size-16">' + row.dimensions[1] + '</span><span class="hidden-dimensions">Browser: ' + row.dimensions[3] + ', OS: ' + row.dimensions[5] + ', Date: ' + govDateTime(row.dimensions[4]) + '<br>' + row.dimensions[0] + '</span></td>')
-  const td3 = $('<td class="govuk-table__cell">' + row.metrics[0].values[0] + '</td>')
+  const tr = $('<tr class="' + trClass + '"></tr>')
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[2] + '</td>')
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Date: ' + govDate(row.dimensions[3]) + '<br>' + row.dimensions[0] + '</span></td>')
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
+  const $errorLink = $('<a href="#" class="drilldown-error" data-title="' + row.dimensions[0] + '" data-field="' + row.dimensions[2] + '"><span class="govuk-error-message  govuk-!-font-size-16">' + row.dimensions[1] + '</span></a>')
+  td2.prepend($errorLink)
   tr.append(td1).append(td2).append(td3)
   $('#errors-table').append(tr)
+}
+
+function writeFieldErrorRow (row) {
+  const tr = $('<tr class="' + trClass + '"></tr>')
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + govDateTime(row.dimensions[1]) + '</td>')
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Browser: ' + row.dimensions[2] + ', OS: ' + row.dimensions[3] + '</span></td>')
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
+  const $errorLink = $('<span class="govuk-error-message  ' + fontSize16 + '">' + row.dimensions[0] + '</span>')
+  td2.prepend($errorLink)
+  tr.append(td1).append(td2).append(td3)
+  $('#field-errors-table').append(tr)
 }
 
 function cloneTimeline () {
@@ -429,8 +510,8 @@ function parseSectionResults (response) {
 function buildChartY (timeline) {
   return Object.keys(timeline).reduce((data, key) => {
     data.push(timeline[key])
-  return data
-}, [])
+    return data
+  }, [])
 }
 
 function addChartData (chart, data) {
@@ -468,6 +549,14 @@ function createChart (timeline) {
   })
 }
 
+function showChart () {
+  $('.chart-container').show()
+}
+
+function hideChart () {
+  $('.chart-container').hide()
+}
+
 function parsePageRows (data, timeline) {
   const sessionsTimeline = cloneTimeline()
   if (data.rows) {
@@ -489,6 +578,7 @@ function parsePageRows (data, timeline) {
     borderWidth: 1
   }
   addChartData(GAConfig.chart, sessionChartData)
+  showChart()
   setSessionsTotal(data.totals[0].values[1])
   setPageViewsTotal(data.totals[0].values[0])
 }
@@ -514,12 +604,22 @@ function parseSubmissions (data) {
   setSubmissionsTotal(data.totals[0].values[0])
 }
 
+function parseFieldErrorEvents (errorData) {
+  if (errorData.rows) {
+    errorData.rows.forEach(row => {
+      writeFieldErrorRow(row)
+    })
+  }
+  setFieldErrorsTotal(errorData.totals[0].values[0])
+}
+
 function parseErrorEvents (errorData) {
+  console.log('parseErrorEvents', errorData)
   const timeline = cloneTimeline()
   if (errorData.rows) {
     errorData.rows.forEach(row => {
+      timeline[row.dimensions[3]] += parseInt(row.metrics[0].values[0])
       writeErrorRow(row)
-      timeline[extractDate(row.dimensions[4])] += parseInt(row.metrics[0].values[0])
     })
     const errorChartData = {
       label: '# of errors',
@@ -543,48 +643,26 @@ function handleStatsLink (e) {
 }
 
 function populateFormSelector () {
-  const $formSelector = $('#form-selector')
   GAConfig.formNames.forEach(name => {
-    $formSelector.append('<option value="' + name + '">' + name + '</option>')
-})
+      $('#form-selector').append('<option value="' + name + '">' + name + '</option>')
+  })
 }
 
 function parseFormNameResults (data) {
   return data.rows.reduce((names, row) => {
     const name = row.dimensions[0].replace(/\//gi, '')
     if (!names.includes(name) && !/^[A-F0-9]{8,9}-/.test(name) && !/^testGroupId/.test(name)) {
-    names.push(name)
-  }
-  return names
-}, [])
-}
-
-function getAllFormsQuery (config) {
-  return [
-    {
-      viewId: config.view.id,
-      dateRanges: [
-        {
-          startDate: config.startPeriod,
-          endDate: 'today'
-        }
-      ],
-      metrics: [
-        {expression: 'ga:pageviews'}
-      ],
-      dimensions: [
-        {name: 'ga:pagePathLevel3'}
-      ]
+      names.push(name)
     }
-  ]
+    return names
+  }, [])
 }
 
 $(document).ready(function () {
-  // this is an admin site
-  $('#global-cookie-message').remove()
 
   $('#form-analytics')
     .on('click', 'button.load-ga', handleLoadGA)
     .on('click', 'a.stats-link', handleStatsLink)
     .on('click', 'a.section-stats', handleSectionStatsLink)
+    .on('click', 'a.drilldown-error', handleDrillDownError)
 })
