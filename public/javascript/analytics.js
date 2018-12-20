@@ -271,9 +271,6 @@ function handleDrillDownError (e) {
   loadingTotals()
   emptyTables()
   hideChart()
-  $('.stats-container').hide()
-  $('.field-errors').show()
-  showStatsTable('field-errors-table')
   const $elData = $(e.currentTarget).data()
   $('#field-error-page').text($elData.title)
   $('#field-error-field').text($elData.field)
@@ -283,6 +280,9 @@ function handleDrillDownError (e) {
 
 function parseErrorDrillDown (response) {
   const reports = response.result.reports
+  $('.stats-container').hide()
+  $('.field-errors').show()
+  showStatsTable('field-errors-table')
   parseFieldErrorEvents(reports[0].data)
 }
 
@@ -614,7 +614,6 @@ function parseFieldErrorEvents (errorData) {
 }
 
 function parseErrorEvents (errorData) {
-  console.log('parseErrorEvents', errorData)
   const timeline = cloneTimeline()
   if (errorData.rows) {
     errorData.rows.forEach(row => {
