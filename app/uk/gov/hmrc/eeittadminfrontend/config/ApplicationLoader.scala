@@ -272,7 +272,6 @@ trait ApplicationModule
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
   val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
   val bulkLoad = new BulkGGController(authConnector, emacConnector, messagesApi, actorSystem, materializer)(appConfig)
-  val gformsController = new GformWhiteListing(authConnector)(appConfig, messagesApi)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
@@ -286,7 +285,6 @@ trait ApplicationModule
     bulkGGController,
     bulkLoad,
     eeittAdminController,
-    gformsController,
     assets
   )
 
