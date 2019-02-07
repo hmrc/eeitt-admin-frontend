@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,7 +272,6 @@ trait ApplicationModule
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
   val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
   val bulkLoad = new BulkGGController(authConnector, emacConnector, messagesApi, actorSystem, materializer)(appConfig)
-  val gformsController = new GformWhiteListing(authConnector)(appConfig, messagesApi)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
@@ -286,7 +285,6 @@ trait ApplicationModule
     bulkGGController,
     bulkLoad,
     eeittAdminController,
-    gformsController,
     assets
   )
 
