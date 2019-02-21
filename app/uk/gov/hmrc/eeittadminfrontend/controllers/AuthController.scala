@@ -30,6 +30,7 @@ import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
+import pureconfig.generic.auto._
 import scala.concurrent.Future
 
 class AuthController(

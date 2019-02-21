@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import play.api.Play
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
@@ -26,7 +27,10 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object GformConnector {
 
-  private val sc = new ServicesConfig {}
+  private val sc = new ServicesConfig {
+    override protected def mode = Play.current.mode
+    override protected val runModeConfiguration = Play.current.configuration
+  }
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(formTypeId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =

@@ -41,7 +41,8 @@ import uk.gov.hmrc.play.config.{ AppName, ControllerConfig, ServicesConfig }
 import uk.gov.hmrc.play.frontend.bootstrap.ShowErrorPage
 import uk.gov.hmrc.play.frontend.filters._
 import uk.gov.hmrc.play.graphite.GraphiteConfig
-import uk.gov.hmrc.play.health.AdminController
+import uk.gov.hmrc.play.health.HealthController
+import uk.gov.hmrc.crypto.ApplicationCrypto
 
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
@@ -149,11 +150,14 @@ class Filters(
 
   def filters = if (enableSecurityHeaderFilter) Seq(securityFilter) ++ frontendFilters else frontendFilters
 
+  val applicationCrypto = new ApplicationCrypto(configuration.underlying)
+  val sessionCookieCryptoFilter = new SessionCookieCryptoFilter(applicationCrypto)
+
   def frontendFilters: Seq[EssentialFilter] =
     Seq(
       metricsFilter,
       HeadersFilter,
-      SessionCookieCryptoFilter,
+      sessionCookieCryptoFilter,
       deviceIdFilter,
       loggingFilter,
       frontendAuditFilter,
@@ -247,12 +251,12 @@ trait ApplicationModule
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
-  lazy val adminController = new AdminController(configuration)
+  lazy val healthController = new HealthController(configuration, environment)
 
   lazy val templateController = new _root_.controllers.template.Template(httpErrorHandler)
 
   lazy val customInjector
-    : Injector = new SimpleInjector(injector) + adminController + templateController + wsApi + messagesApi
+    : Injector = new SimpleInjector(injector) + healthController + templateController + wsApi + messagesApi
 
   lazy val healthRoutes: health.Routes = health.Routes
 

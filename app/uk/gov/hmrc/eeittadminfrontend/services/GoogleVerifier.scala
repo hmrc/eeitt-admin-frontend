@@ -33,6 +33,7 @@ import play.api.Logger
 import play.api.libs.json.Format
 import sun.security.util.SecurityConstants
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.ClientID
+import pureconfig.generic.auto._
 
 class GoogleVerifier extends GoogleVerifierHelper
 

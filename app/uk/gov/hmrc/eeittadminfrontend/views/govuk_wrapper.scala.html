@@ -31,8 +31,9 @@
 @import layouts.{govuk_template => hmrcGovUkTemplate}
 @import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
 @import uk.gov.hmrc.play.views.html.{helpers => uiHelpers}
+@import pureconfig.generic.auto._
 
-  @dsCss = {
+@dsCss = {
     <link rel="stylesheet" href="@routes.Assets.at("stylesheets/analytics.css")" />
   }
 
