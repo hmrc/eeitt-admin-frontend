@@ -22,6 +22,7 @@ import play.api.{ Configuration, Logger }
 import play.api.Configuration
 import pureconfig.loadConfigOrThrow
 import uk.gov.hmrc.eeittadminfrontend.models.{ Email, LoginError }
+import pureconfig.generic.auto._
 
 case class AuthorisedUsers(users: String)
 class AuthService {

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import play.api.Logger
+import play.api.{ Logger, Play }
 import play.api.libs.json.{ Format, JsObject, JsValue }
 import play.api.mvc.Request
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
@@ -41,7 +41,10 @@ trait EeittConnector[A] extends ServicesConfig {
 
 object EeittConnector {
 
-  private val sc = new ServicesConfig {}
+  private val sc = new ServicesConfig {
+    override protected def mode = Play.current.mode
+    override protected val runModeConfiguration = Play.current.configuration
+  }
   val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
 
   def getAllBusinessUsers(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
@@ -51,6 +54,8 @@ object EeittConnector {
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
 
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
+    override protected def mode = Play.current.mode
+    override protected val runModeConfiguration = Play.current.configuration
     override def apply(
       a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) =
       if (isLive(request)) {
@@ -97,6 +102,8 @@ object EeittConnector {
   private def getEeittConnector[A](getPath: A => String): EeittConnector[A] =
     new EeittConnector[A] {
 
+      override protected def mode = Play.current.mode
+      override protected val runModeConfiguration = Play.current.configuration
       override def apply(value: A)(
         implicit hc: HeaderCarrier,
         ec: ExecutionContext,

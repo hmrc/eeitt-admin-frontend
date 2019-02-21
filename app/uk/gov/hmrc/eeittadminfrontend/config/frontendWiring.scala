@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend
 
-import play.api.{ Configuration, Mode }
+import play.api.{ Configuration, Mode, Play }
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHooks
 import uk.gov.hmrc.play.audit.http.HttpAuditing
@@ -26,6 +26,8 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.{ AppName, ServicesConfig }
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.ws._
+import akka.actor.ActorSystem
+import com.typesafe.config.Config
 
 object MicroserviceAuditConnector extends AuditConnector {
   lazy val auditingConfig: AuditingConfig = LoadAuditingConfig(s"auditing")
@@ -39,13 +41,22 @@ trait Hooks extends HttpHooks with HttpAuditing {
 trait WSHttp
     extends HttpGet with WSGet with HttpPut with WSPut with HttpPost with WSPost with HttpDelete with WSDelete
     with Hooks with AppName
-object WSHttp extends WSHttp
+object WSHttp extends WSHttp {
+  override protected def actorSystem: ActorSystem = Play.current.actorSystem
+  override protected def configuration: Option[Config] = Option(Play.current.configuration.underlying)
+  override protected def appNameConfiguration: Configuration = Play.current.configuration
+}
 
 class FrontendAuthConnector(override val runModeConfiguration: Configuration, override val mode: Mode.Mode)
     extends AuthConnector with ServicesConfig with WSHttp {
+  override protected def actorSystem: ActorSystem = Play.current.actorSystem
+  override protected def configuration: Option[Config] = Option(Play.current.configuration.underlying)
+  override protected def appNameConfiguration: Configuration = Play.current.configuration
   override val serviceUrl: String = baseUrl("auth")
 
   override def http = new HttpGet with WSGet {
+    override protected def actorSystem: ActorSystem = Play.current.actorSystem
+    override protected def configuration: Option[Config] = Option(Play.current.configuration.underlying)
     override val hooks = NoneRequired
   }
 }
