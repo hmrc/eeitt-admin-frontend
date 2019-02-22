@@ -2,10 +2,8 @@ import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport.scalafmtOnCompi
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
-import play.routes.compiler.StaticRoutesGenerator
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import play.sbt.routes.RoutesKeys.{routesGenerator, routesImport}
-
+import play.sbt.routes.RoutesKeys.routesImport
 
 trait MicroService {
 

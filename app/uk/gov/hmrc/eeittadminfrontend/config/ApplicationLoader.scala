@@ -37,7 +37,7 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.{ AppName, ControllerConfig, ServicesConfig }
+import uk.gov.hmrc.play.config._
 import uk.gov.hmrc.play.frontend.bootstrap.ShowErrorPage
 import uk.gov.hmrc.play.frontend.filters._
 import uk.gov.hmrc.play.graphite.GraphiteConfig
@@ -255,8 +255,11 @@ trait ApplicationModule
 
   lazy val templateController = new _root_.controllers.template.Template(httpErrorHandler)
 
+  lazy val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig(configuration)
+  lazy val assetsConfig: AssetsConfig = new AssetsConfig(configuration)
+
   lazy val customInjector
-    : Injector = new SimpleInjector(injector) + healthController + templateController + wsApi + messagesApi
+    : Injector = new SimpleInjector(injector) + healthController + templateController + wsApi + messagesApi + optimizelyConfig + assetsConfig
 
   lazy val healthRoutes: health.Routes = health.Routes
 
