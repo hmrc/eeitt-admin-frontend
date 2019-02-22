@@ -53,6 +53,9 @@ object EeittConnector {
   def getAllAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
 
+  def getAllAgentEnrollments(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    WSHttp.GET[JsValue](eeittUrl + "/agents-all")
+
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
     override protected def mode = Play.current.mode
     override protected val runModeConfiguration = Play.current.configuration
