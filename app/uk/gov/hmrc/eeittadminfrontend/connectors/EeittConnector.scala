@@ -50,6 +50,9 @@ object EeittConnector {
   def getAllAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
 
+  def getAllAgentEnrollments(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    WSHttp.GET[JsValue](eeittUrl + "/agents-all")
+
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
     override def apply(
       a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) =

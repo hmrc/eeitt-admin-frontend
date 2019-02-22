@@ -102,7 +102,17 @@
 
   </form>
 
-  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgents">
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgentEnrollments">
+
+        @CSRF.formField
+
+        <div class="form-group">
+            <input type="submit" class="button" value="Get All Agent Enrollments"/>
+        </div>
+
+    </form>
+
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgents">
 
     @CSRF.formField
 

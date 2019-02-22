@@ -23,6 +23,7 @@ POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
 GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
 GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
+GET        /agents-enrollments/all   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgentEnrollments
 
 #POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
 POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment

@@ -43,6 +43,11 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     EeittConnector.getAllAgents.map(x => Ok(x))
   }
 
+  def getAllAgentEnrollments() = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} got all agent enrollments")
+    EeittConnector.getAllAgentEnrollments.map(x => Ok(x))
+  }
+
   def goToQuery = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token")} went to Query Page")
     Future
