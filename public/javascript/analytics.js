@@ -114,6 +114,7 @@ function setSubmissionsTotal (total) {
 
 function setLegacySubmissionsTotal (total) {
   $('#legacy-submissions-total').html(total);
+  setLegacyCompletionRate(calcLegacyCompletionRate() + '%')
 }
 
 function calcCompletionRate () {
@@ -122,8 +123,18 @@ function calcCompletionRate () {
   return sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
 }
 
+function calcLegacyCompletionRate () {
+  const sessions = parseInt($('#sessions-total').text());
+  const submissions = parseInt($('#legacy-submissions-total').text());
+  return sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
+}
+
 function setCompletionRate (rate) {
-  $('#completion-rate').html(rate)
+  $('#completion-rate').html(rate);
+}
+
+function setLegacyCompletionRate (rate) {
+  $('#legacy-completion-rate').html(rate)
 }
 
 function setPageViewsTotal (total) {
