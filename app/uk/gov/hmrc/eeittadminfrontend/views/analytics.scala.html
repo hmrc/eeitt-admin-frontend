@@ -28,7 +28,7 @@
         Gforms analytics
       </h1>
 
-      <p class="g-signin2 float-right" data-onsuccess="handleLoadGA"></p>
+      <p class="g-signin2 float-right" style="margin-top: 0;" data-onsuccess="handleLoadGA"></p>
       <p>
         <select class="govuk-select" id="form-selector">
           <option value="/" selected>All Gforms</option>
@@ -50,7 +50,6 @@
       </p>
 
       <h2 class="govuk-heading-m">
-        <span class="govuk-!-font-size-48" id="env-name">Production</span>
         <span id="section-name"></span>
       </h2>
 
@@ -87,6 +86,8 @@
           <span class="govuk-!-font-size-48 stats-total" id="completion-rate">0</span>
         </h3>
 
+        <h4 style="float:left; color: #888888">Legacy submissions count: <span id="legacy-submissions-total"></span></h4>
+
       </div>
 
       <div class="chart-container">
@@ -95,13 +96,13 @@
 
       @table_structure("ga-views", "views-table", "Page views", List("Page", "Views"))
 
-      @table_structure("ga-submissions", "submissions-table", "Form submissions", List("Date", "Browser", "Submissions"))
+      @table_structure("ga-submissions", "submissions-table", "Form submissions", List("Submission Reference", "Form", "Acknowledgement Page Views"))
 
       @table_structure("ga-errors", "errors-table", "User errors", List("Form field", "Error", "Count"))
 
       <div class="field-errors">
-        <h2><span class="govuk-!-font-size-48 stats-total govuk-error-message"><span id="fieldErrorsTotal"></span> errors on field:</span> <span id="field-error-field"></span></h2>
-        <h3><em>Page:</em> <span id="field-error-page"></span></h3>
+        <h2><span id="fieldErrorsTotal"></span> errors for</h2>
+        <p id="field-error-field"></p>
         @table_structure("ga-field-errors", "field-errors-table", "", List("Date", "Error message", "Count"))
       </div>
 
