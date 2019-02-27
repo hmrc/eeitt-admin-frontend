@@ -22,7 +22,7 @@ function govDateTime (date) {
   if (date === 'today') {
     return moment().format('D MMMM YYYY')
   }
-  const withoutTime = extractDate(date)
+  const withoutTime = extractDate(date);
   return moment(withoutTime).format('D MMMM YYYY') + ' ' + date.substr(8, 2) + ':' + date.substr(10, 2)
 }
 
@@ -43,9 +43,9 @@ const GAViews = {
     name: 'Production',
     id: '155026244'
   }
-}
+};
 
-let GAConfig = {}
+let GAConfig = {};
 
 const GADefaultConfig = {
   view: GAViews['production'],
@@ -55,10 +55,10 @@ const GADefaultConfig = {
   sectionSlug: '',
   query: 'pageViewQuery',
   samplingLevel: 'LARGE'
-}
+};
 
 function handleLoadGA () {
-  setSectionName('')
+  setSectionName('');
   if (GAConfig.chart) {
     GAConfig.chart.destroy()
   }
@@ -66,13 +66,13 @@ function handleLoadGA () {
 }
 
 function handleSectionStatsLink (e) {
-  e.preventDefault()
-  const $config = $(e.target)
-  let sectionName = 'Page: ' + $config.attr('data-section-slug').replace(/-/gi, ' ')
+  e.preventDefault();
+  const $config = $(e.target);
+  let sectionName = 'Page: ' + $config.attr('data-section-slug').replace(/-/gi, ' ');
   if (GAConfig.slug !== $config.attr('data-slug')) {
     sectionName = $config.attr('data-slug') + '/' + $config.attr('data-section-slug')
   }
-  setSectionName(sectionName)
+  setSectionName(sectionName);
   return loadGAQuery(setConfig({
     query: $config.attr('data-query'),
     sectionSlug: $config.attr('data-section-slug')
@@ -84,28 +84,23 @@ function setSectionName (name) {
 }
 
 function setConfig (custom) {
-  custom = custom || {}
-  const $viewConfig = $('#ga-view-select')
-  const $slug = $('#form-selector')
+  custom = custom || {};
+  const $viewConfig = $('#ga-view-select');
+  const $slug = $('#form-selector');
   const userConfig = {
     startPeriod: $('#ga-period').val(),
     slug: $slug.val(),
     view: GAViews[$viewConfig.val()],
     query: $viewConfig.attr('data-query'),
     formNames: GAConfig.formNames
-  }
+  };
   return Object.assign({}, GADefaultConfig, userConfig, custom)
 }
 
 function loadGAQuery (config) {
-  loadingTotals()
-  GAConfig = config || setConfig()
-  setEnvName(GAConfig.view.name)
+  loadingTotals();
+  GAConfig = config || setConfig();
   window[GAConfig.query](GAConfig)
-}
-
-function setEnvName (name) {
-  $('#env-name').text(name)
 }
 
 function setSessionsTotal (total) {
@@ -113,18 +108,33 @@ function setSessionsTotal (total) {
 }
 
 function setSubmissionsTotal (total) {
-  $('#submissions-total').html(total)
+  $('#submissions-total').html(total);
   setCompletionRate(calcCompletionRate() + '%')
 }
 
+function setLegacySubmissionsTotal (total) {
+  $('#legacy-submissions-total').html(total);
+  setLegacyCompletionRate(calcLegacyCompletionRate() + '%')
+}
+
 function calcCompletionRate () {
-  const sessions = parseInt($('#sessions-total').text())
-  const submissions = parseInt($('#submissions-total').text())
+  const sessions = parseInt($('#sessions-total').text());
+  const submissions = parseInt($('#submissions-total').text());
+  return sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
+}
+
+function calcLegacyCompletionRate () {
+  const sessions = parseInt($('#sessions-total').text());
+  const submissions = parseInt($('#legacy-submissions-total').text());
   return sessions > 0 && submissions > 0 ? ((submissions / sessions) * 100).toFixed(2) : 0
 }
 
 function setCompletionRate (rate) {
-  $('#completion-rate').html(rate)
+  $('#completion-rate').html(rate);
+}
+
+function setLegacyCompletionRate (rate) {
+  $('#legacy-completion-rate').html(rate)
 }
 
 function setPageViewsTotal (total) {
@@ -144,20 +154,20 @@ function emptyTables () {
 }
 
 function loadingTotals () {
-  $('.stats-container').show()
-  $('.field-errors').hide()
-  emptyTables()
-  // TODO: add screen reader busy text and aria live labelling to containers
-  const spinnerHtml = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>'
-  setSubmissionsTotal(spinnerHtml)
-  setPageViewsTotal(spinnerHtml)
-  setErrorsTotal(spinnerHtml)
-  setSessionsTotal(spinnerHtml)
-  setCompletionRate(spinnerHtml)
+  $('.stats-container').show();
+  $('.field-errors').hide();
+  emptyTables();
+  const spinnerHtml = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>';
+  setLegacySubmissionsTotal(0);
+  setSubmissionsTotal(spinnerHtml);
+  setPageViewsTotal(spinnerHtml);
+  setErrorsTotal(spinnerHtml);
+  setSessionsTotal(spinnerHtml);
+  setCompletionRate(spinnerHtml);
 }
 
 function showStatsTable (stats) {
-  $('.stats-table').hide()
+  $('.stats-table').hide();
   $('.' + stats).show()
 }
 
@@ -182,7 +192,7 @@ function pathFilters (config) {
 */
 
 function viewFilters (config) {
-  let filters = [withSlug(config.slug)]
+  let filters = [withSlug(config.slug)];
   if (config.sectionSlug) {
     filters.push(pathLevelFilter(config.sectionSlug, 4))
   }
@@ -212,6 +222,14 @@ function pageTitleFilter (title) {
   }
 }
 
+function submissionFilter () {
+  return [{
+    dimensionName: 'ga:eventCategory',
+    operator: 'EXACT',
+    expressions: ['submission']
+  }]
+}
+
 function errorFilter () {
   return [{
     dimensionName: 'ga:eventCategory',
@@ -232,7 +250,7 @@ function fieldErrorFilter (field, pageTitle) {
 }
 
 function fieldErrorQuery (fieldFilter) {
-  const config = setConfig()
+  const config = setConfig();
   return [
     {
       viewId: config.view.id,
@@ -266,23 +284,31 @@ function fieldErrorQuery (fieldFilter) {
   ]
 }
 
+function getPageNameForError (pageTitle) {
+  // split page title on - and ignore the first 'Error:' part
+  return pageTitle.split('-')[0].substr(6)
+}
+
+function getFormName (pageTitle) {
+  return pageTitle.split('-')[1].trim();
+}
+
 function handleDrillDownError (e) {
-  e.preventDefault()
-  loadingTotals()
-  emptyTables()
-  hideChart()
-  $('.stats-container').hide()
-  $('.field-errors').show()
-  showStatsTable('field-errors-table')
-  const $elData = $(e.currentTarget).data()
-  $('#field-error-page').text($elData.title)
-  $('#field-error-field').text($elData.field)
-  const fieldFilter = fieldErrorFilter($elData.field, $elData.title)
+  e.preventDefault();
+  loadingTotals();
+  emptyTables();
+  hideChart();
+  $('.stats-container').hide();
+  $('.field-errors').show();
+  showStatsTable('field-errors-table');
+  const $elData = $(e.currentTarget).data();
+  $('#field-error-field').text(getFormName($elData.title) + ' / ' + getPageNameForError($elData.title) + ' / ' + $elData.field);
+  const fieldFilter = fieldErrorFilter($elData.field, $elData.title);
   GAQuery(fieldErrorQuery(fieldFilter), parseErrorDrillDown)
 }
 
 function parseErrorDrillDown (response) {
-  const reports = response.result.reports
+  const reports = response.result.reports;
   parseFieldErrorEvents(reports[0].data)
 }
 
@@ -300,9 +326,24 @@ function query (config, names) {
         endDate: config.endPeriod
       }
     ]
-  }
+  };
   const queries = {
     submissions: {
+      metrics: [
+        {expression: 'ga:totalEvents'}
+      ],
+      dimensionFilterClauses: [{
+        operator: 'AND',
+        filters: filterConcat(config, [viewFilters, submissionFilter])
+      }],
+      dimensions: [
+        {name: 'ga:pageTitle'},
+        {name: 'ga:eventAction'},
+        {name: 'ga:eventLabel'},
+        {name: 'ga:date'}
+      ]
+    },
+    acknowledgementPageViews: {
       metrics: [
         {expression: 'ga:uniquePageviews'}
       ],
@@ -394,10 +435,10 @@ function query (config, names) {
         {name: 'ga:pagePathLevel3'}
       ]
     }
-  }
+  };
 
   return names.reduce((list, name) => {
-    list.push(Object.assign({}, core, queries[name]))
+    list.push(Object.assign({}, core, queries[name]));
     return list
   }, [])
 }
@@ -407,7 +448,7 @@ function sectionViewQuery (config) {
 }
 
 function pageViewQuery (config) {
-  const names = ['pageViews', 'submissions', 'userError']
+  const names = ['pageViews', 'submissions', 'userError', 'acknowledgementPageViews'];
 
   if (!GAConfig.formNames) {
     names.push('allForms')
@@ -421,46 +462,46 @@ const trClass = "govuk-table__row";
 const fontSize16 = "govuk-!-font-size-16";
 
 function writePageViewRow (row) {
-  const pageLevels = row.dimensions[0].split('/')
-  const tr = $('<tr class="' + trClass + '"></tr>')
-  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '"></td>')
-  td1.append('<a href="#" class="section-stats" data-query="sectionViewQuery" data-view="dev" data-slug="' + pageLevels[3] + '" data-section-slug="' + pageLevels[4] + '">' + row.dimensions[0] + '</a><br>' + govDate(row.dimensions[1]))
-  const td2 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
+  const pageLevels = row.dimensions[0].split('/');
+  const tr = $('<tr class="' + trClass + '"></tr>');
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '"></td>');
+  td1.append('<a href="#" class="section-stats" data-query="sectionViewQuery" data-view="dev" data-slug="' + pageLevels[3] + '" data-section-slug="' + pageLevels[4] + '">' + row.dimensions[0] + '</a><br>' + govDate(row.dimensions[1]));
+  const td2 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>');
   if (row.dimensions[2]) {
     td1.find('a').text(row.dimensions[2].split('-')[0].trim())
   }
-  tr.append(td1).append(td2)
+  tr.append(td1).append(td2);
   $('#views-table').append(tr)
 }
 
 function writeSubmissionRow (row) {
-  const tr = $('<tr class="' + trClass + '"></tr>')
-  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + govDate(row.dimensions[2]) + '</td>')
-  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[1] + '</td>')
-  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
-  tr.append(td1).append(td2).append(td3)
+  const tr = $('<tr class="' + trClass + '"></tr>');
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[2] + '</td>');
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[1] + '<br>' + govDate(row.dimensions[3]) + '</td>');
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>');
+  tr.append(td1).append(td2).append(td3);
   $('#submissions-table').append(tr)
 }
 
 function writeErrorRow (row) {
-  const tr = $('<tr class="' + trClass + '"></tr>')
-  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[2] + '</td>')
-  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Date: ' + govDate(row.dimensions[3]) + '<br>' + row.dimensions[0] + '</span></td>')
-  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
-  const $errorLink = $('<a href="#" class="drilldown-error" data-title="' + row.dimensions[0] + '" data-field="' + row.dimensions[2] + '"><span class="govuk-error-message  govuk-!-font-size-16">' + row.dimensions[1] + '</span></a>')
-  td2.prepend($errorLink)
-  tr.append(td1).append(td2).append(td3)
+  const tr = $('<tr class="' + trClass + '"></tr>');
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + row.dimensions[2] + '</td>');
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Date: ' + govDate(row.dimensions[3]) + '<br>' + row.dimensions[0] + '</span></td>');
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>');
+  const $errorLink = $('<a href="#" class="drilldown-error govuk-error-message" data-title="' + row.dimensions[0] + '" data-field="' + row.dimensions[2] + '"><span class="govuk-error-message  govuk-!-font-size-16">' + row.dimensions[1] + '</span></a>');
+  td2.prepend($errorLink);
+  tr.append(td1).append(td2).append(td3);
   $('#errors-table').append(tr)
 }
 
 function writeFieldErrorRow (row) {
-  const tr = $('<tr class="' + trClass + '"></tr>')
-  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + govDateTime(row.dimensions[1]) + '</td>')
-  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Browser: ' + row.dimensions[2] + ', OS: ' + row.dimensions[3] + '</span></td>')
-  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>')
-  const $errorLink = $('<span class="govuk-error-message  ' + fontSize16 + '">' + row.dimensions[0] + '</span>')
-  td2.prepend($errorLink)
-  tr.append(td1).append(td2).append(td3)
+  const tr = $('<tr class="' + trClass + '"></tr>');
+  const td1 = $('<td class="' + tdClass + ' ' + fontSize16 + '">' + govDateTime(row.dimensions[1]) + '</td>');
+  const td2 = $('<td class="' + tdClass + ' ' + fontSize16 + '"><span class="hidden-dimensions">Browser: ' + row.dimensions[2] + ', OS: ' + row.dimensions[3] + '</span></td>');
+  const td3 = $('<td class="' + tdClass + '">' + row.metrics[0].values[0] + '</td>');
+  const $errorLink = $('<span class="govuk-error-message  ' + fontSize16 + '">' + row.dimensions[0] + '</span>');
+  td2.prepend($errorLink);
+  tr.append(td1).append(td2).append(td3);
   $('#field-errors-table').append(tr)
 }
 
@@ -469,29 +510,30 @@ function cloneTimeline () {
 }
 
 function buildPageViewTimeline (resolution, data, fn) {
-  resolution = resolution || 'days'
-  const periodCount = GAConfig.startPeriod.split('daysAgo')[0]
-  const timeline = {}
-  const max = moment()
-  let plot = max.subtract(parseInt(periodCount) + 1, 'days')
-  let i = 0
+  resolution = resolution || 'days';
+  const periodCount = GAConfig.startPeriod.split('daysAgo')[0];
+  const timeline = {};
+  const max = moment();
+  let plot = max.subtract(parseInt(periodCount) + 1, 'days');
+  let i = 0;
   for (i; i < parseInt(periodCount) + 1; i++) {
-    plot = plot.add(1, resolution)
-    timeline[plot.format('YYYYMMDD')] = 0
+    plot = plot.add(1, resolution);
+    timeline[plot.format('YYYYMMDD')] = 0;
     if (i === parseInt(periodCount)) {
-      GAConfig.timeline = Object.assign({}, timeline)
+      GAConfig.timeline = Object.assign({}, timeline);
       fn(data, cloneTimeline())
     }
   }
 }
 
 function parseResults (response) {
-  const reports = response.result.reports
-  parsePageViews(reports[0].data)
-  parseSubmissions(reports[1].data)
-  parseErrorEvents(reports[2].data)
-  if (reports[3]) {
-    GAConfig.formNames = parseFormNameResults(reports[3].data)
+  const reports = response.result.reports;
+  parsePageViews(reports[0].data);
+  parseSubmissions(reports[1].data);
+  parseErrorEvents(reports[2].data);
+  parseLegacySubmissions(reports[3].data);
+  if (reports[4]) {
+    GAConfig.formNames = parseFormNameResults(reports[4].data);
     populateFormSelector()
   }
 }
@@ -501,21 +543,21 @@ function parsePageViews (data) {
 }
 
 function parseSectionResults (response) {
-  const reports = response.result.reports
-  parsePageViews(reports[0].data)
-  parseErrorEvents(reports[1].data)
+  const reports = response.result.reports;
+  parsePageViews(reports[0].data);
+  parseErrorEvents(reports[1].data);
   setSubmissionsTotal('N/A')
 }
 
 function buildChartY (timeline) {
   return Object.keys(timeline).reduce((data, key) => {
-    data.push(timeline[key])
+    data.push(timeline[key]);
     return data
   }, [])
 }
 
 function addChartData (chart, data) {
-  chart.data.datasets.push(data)
+  chart.data.datasets.push(data);
   chart.update()
 }
 
@@ -523,8 +565,8 @@ function createChart (timeline) {
   if (GAConfig.chart) {
     GAConfig.chart.destroy()
   }
-  const chartVals = buildChartY(timeline)
-  const ctx = document.getElementById('pageViewsChart')
+  const chartVals = buildChartY(timeline);
+  const ctx = document.getElementById('pageViewsChart');
 
   GAConfig.chart = new Chart(ctx, {
     type: 'line',
@@ -558,16 +600,16 @@ function hideChart () {
 }
 
 function parsePageRows (data, timeline) {
-  const sessionsTimeline = cloneTimeline()
+  const sessionsTimeline = cloneTimeline();
   if (data.rows) {
-    showStatsTable('views-table')
+    showStatsTable('views-table');
     data.rows.forEach(row => {
-      writePageViewRow(row)
-      timeline[row.dimensions[1]] += parseInt(row.metrics[0].values[0])
+      writePageViewRow(row);
+      timeline[row.dimensions[1]] += parseInt(row.metrics[0].values[0]);
       sessionsTimeline[row.dimensions[1]] += parseInt(row.metrics[0].values[1])
     })
   }
-  createChart(timeline)
+  createChart(timeline);
   const sessionChartData = {
     label: '# of sessions',
     data: buildChartY(sessionsTimeline),
@@ -576,20 +618,20 @@ function parsePageRows (data, timeline) {
     pointBackgroundColor: '#005ea5',
     backgroundColor: 'rgba(0, 94, 165, 0.4)',
     borderWidth: 1
-  }
-  addChartData(GAConfig.chart, sessionChartData)
-  showChart()
-  setSessionsTotal(data.totals[0].values[1])
+  };
+  addChartData(GAConfig.chart, sessionChartData);
+  showChart();
+  setSessionsTotal(data.totals[0].values[1]);
   setPageViewsTotal(data.totals[0].values[0])
 }
 
 function parseSubmissions (data) {
-  const timeline = cloneTimeline()
+  const timeline = cloneTimeline();
   if (data.rows) {
     data.rows.forEach(row => {
-      writeSubmissionRow(row)
-      timeline[row.dimensions[2]] += parseInt(row.metrics[0].values[0])
-    })
+      writeSubmissionRow(row);
+      timeline[row.dimensions[3]] += parseInt(row.metrics[0].values[0])
+    });
     const submissionChartData = {
       label: '# of submissions',
       data: buildChartY(timeline),
@@ -598,10 +640,14 @@ function parseSubmissions (data) {
       pointBackgroundColor: '#00823b',
       backgroundColor: 'rgba(0, 130, 59, 0.8)',
       borderWidth: 1
-    }
+    };
     addChartData(GAConfig.chart, submissionChartData)
   }
-  setSubmissionsTotal(data.totals[0].values[0])
+  setSubmissionsTotal(data.rowCount || 0)
+}
+
+function parseLegacySubmissions (data) {
+  setLegacySubmissionsTotal(data.totals[0].values[0])
 }
 
 function parseFieldErrorEvents (errorData) {
@@ -614,13 +660,12 @@ function parseFieldErrorEvents (errorData) {
 }
 
 function parseErrorEvents (errorData) {
-  console.log('parseErrorEvents', errorData)
-  const timeline = cloneTimeline()
+  const timeline = cloneTimeline();
   if (errorData.rows) {
     errorData.rows.forEach(row => {
-      timeline[row.dimensions[3]] += parseInt(row.metrics[0].values[0])
+      timeline[row.dimensions[3]] += parseInt(row.metrics[0].values[0]);
       writeErrorRow(row)
-    })
+    });
     const errorChartData = {
       label: '# of errors',
       data: buildChartY(timeline),
@@ -629,16 +674,16 @@ function parseErrorEvents (errorData) {
       pointBackgroundColor: '#b10e1e',
       backgroundColor: 'rgba(177, 14, 30, 0.8)',
       borderWidth: 1
-    }
+    };
     addChartData(GAConfig.chart, errorChartData)
   }
   setErrorsTotal(errorData.totals[0].values[0])
 }
 
 function handleStatsLink (e) {
-  e.preventDefault()
-  const $link = $(e.currentTarget)
-  const stats = $link.attr('data-stats')
+  e.preventDefault();
+  const $link = $(e.currentTarget);
+  const stats = $link.attr('data-stats');
   showStatsTable(stats)
 }
 
@@ -650,9 +695,11 @@ function populateFormSelector () {
 
 function parseFormNameResults (data) {
   return data.rows.reduce((names, row) => {
-    const name = row.dimensions[0].replace(/\//gi, '')
+    const name = row.dimensions[0].replace(/\//gi, '').trim();
     if (!names.includes(name) && !/^[A-F0-9]{8,9}-/.test(name) && !/^testGroupId/.test(name)) {
-      names.push(name)
+      if (name.length) {
+        names.push(name)
+      }
     }
     return names
   }, [])
@@ -665,4 +712,4 @@ $(document).ready(function () {
     .on('click', 'a.stats-link', handleStatsLink)
     .on('click', 'a.section-stats', handleSectionStatsLink)
     .on('click', 'a.drilldown-error', handleDrillDownError)
-})
+});
