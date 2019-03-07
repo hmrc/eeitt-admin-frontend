@@ -17,14 +17,16 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.Logger
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import play.api.libs.streams.Accumulator
 import play.api.mvc.{ Action, BodyParser, Request, RequestHeader }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ Arn, GroupId, Regime, RegistrationNumber }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ ESProxyConnector, EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
@@ -86,4 +88,28 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
       }
     }
 
+  def knownFactsQuery() =
+    Authentication.async { implicit request =>
+      knownFactsForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))
+          },
+          getRequest => {
+            ESProxyConnector
+              .queryKnownFacts(Json.fromJson[List[KnownFact]](Json.parse(getRequest.request)).get)
+              .map { y =>
+                Ok(y.toString)
+              }
+          }
+        )
+        .recover { case e: Exception => BadRequest(e.getMessage) }
+    }
+
+  val knownFactsForm: Form[TaxEnrolmentRequest] = Form(
+    mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
+
 }
+
+case class TaxEnrolmentRequest(request: String)

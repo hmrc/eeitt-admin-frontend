@@ -17,13 +17,14 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.Logger
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
-import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ DeltaAgent, DeltaBusiness, ETMPAgent, ETMPBusiness }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -57,4 +58,98 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       }
     }
 
+  def upsertKnownFacts() =
+    Authentication.async { implicit request =>
+      upsertKnownFactsRequestForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+          },
+          upsertRequest => {
+            upsertRequest.request match {
+              case Left(r) =>
+                TaxEnrolmentsConnector
+                  .upsertKnownFacts(r.identifiers, r.verifiers)
+                  .map { y =>
+                    Ok(y.body)
+                  }
+              case Right(e) =>
+                Future.successful(BadRequest(e.getMessage))
+            }
+          }
+        )
+        .recover { case e: Exception => BadRequest(e.getMessage) }
+    }
+
+  def deleteKnownFacts() =
+    Authentication.async { implicit request =>
+      deleteKnownFactsRequestForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+          },
+          deleteRequest => {
+            deleteRequest.request match {
+              case Left(r) =>
+                TaxEnrolmentsConnector.deleteKnownFacts(r).map { y =>
+                  Ok(y.body)
+                }
+              case Right(e) => Future.successful(BadRequest(e.getMessage))
+            }
+          }
+        )
+        .recover { case e: Exception => BadRequest(e.getMessage) }
+    }
+
+  val upsertKnownFactsRequestForm: Form[UpsertKnownFactsRequest] = Form(
+    mapping("identifiersverifiers" -> text)(UpsertKnownFactsRequest.apply)(UpsertKnownFactsRequest.toStrings))
+
+  val deleteKnownFactsRequestForm: Form[DeleteKnownFactsRequest] = Form(
+    mapping("identifiers" -> text)(DeleteKnownFactsRequest.apply)(DeleteKnownFactsRequest.toStrings))
+
+}
+
+case class UpsertRequest(identifiers: List[Identifier], verifiers: List[Verifier])
+
+case class UpsertKnownFactsRequest(request: Either[UpsertRequest, Exception])
+
+object UpsertKnownFactsRequest {
+  def apply(taxEnrolment: String): UpsertKnownFactsRequest =
+    try {
+      Json
+        .fromJson[TaxEnrolment](Json.parse(taxEnrolment))
+        .fold(
+          invalid => UpsertKnownFactsRequest(Right(new Exception(invalid.toString()))),
+          valid => UpsertKnownFactsRequest(Left(UpsertRequest(valid.identifiers, valid.verifiers)))
+        )
+    } catch {
+      case e: Exception => UpsertKnownFactsRequest(Right(e))
+    }
+
+  def toStrings(u: UpsertKnownFactsRequest): Option[String] = u.request match {
+    case Left(x)  => Some(Json.toJson(TaxEnrolment(x.identifiers, x.verifiers)).toString())
+    case Right(e) => None
+  }
+}
+
+case class DeleteKnownFactsRequest(request: Either[List[Identifier], Exception])
+
+object DeleteKnownFactsRequest {
+  def apply(identifiers: String): DeleteKnownFactsRequest =
+    try {
+      Json
+        .fromJson[List[Identifier]](Json.parse(identifiers))
+        .fold(
+          invalid => DeleteKnownFactsRequest(Right(new Exception(invalid.toString()))),
+          valid => DeleteKnownFactsRequest(Left(valid))
+        )
+    } catch {
+      case e: Exception => DeleteKnownFactsRequest(Right(e))
+    }
+  def toStrings(d: DeleteKnownFactsRequest): Option[String] = d.request match {
+    case Left(x)  => Some(Json.toJson(x).toString())
+    case Right(e) => None
+  }
 }

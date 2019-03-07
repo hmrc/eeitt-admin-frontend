@@ -18,89 +18,89 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 
-@()(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@()(implicit request: Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Query"){
-  <h1>Query</h1>
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Query") {
+    <h1>Query</h1>
 
-  <h2>ETMP</h2>
-  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery" method="POST">
+    <h2>Eeitt-auth ETMP</h2>
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.UidQuery" method="POST">
 
-    @CSRF.formField
+        @CSRF.formField
 
-    <div class="form-group">
+        <div class="form-group">
 
-      <select id="database_arn" class="drop-down" name="UserDB" onclick="return changeId(); ">
-          <option value="ARN"> ARN</option>
-          <option value="Business Users"> Business Registration</option>
-      </select>
+            <select id="database_arn" class="drop-down" name="UserDB" onclick="return changeId(); ">
+                <option value="ARN"> ARN</option>
+                <option value="Business Users"> Business Registration</option>
+            </select>
 
-      <select id="database" class="drop-down" name="database">
-          <option value="Enrollments"> Enrollments</option>
-          <option value="ETMP"> ETMP</option>
-      </select>
+            <select id="database" class="drop-down" name="database">
+                <option value="Enrollments"> Enrollments</option>
+                <option value="ETMP"> ETMP</option>
+            </select>
 
-    </div>
+        </div>
 
-    <div class="form-group">
-      <input
-        name="arn"
-        id="arn"
-        value=""
-        class="form-control form-control--block"
-        />
-    </div>
+        <div class="form-group">
+            <input
+            name="arn"
+            id="arn"
+            value=""
+            class="form-control form-control--block"
+            />
+        </div>
 
-    <div class="form-group">
-      <input type="submit" class="button" value="Search"/>
-    </div>
+        <div class="form-group">
+            <input type="submit" class="button" value="Search"/>
+        </div>
 
-  </form>
+    </form>
 
-  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllBusinessUsers">
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllBusinessUsers">
 
-    @CSRF.formField
+        @CSRF.formField
 
-    <div class="form-group">
-      <input type="submit" class="button" value="Get All Business Users"/>
-    </div>
+        <div class="form-group">
+            <input type="submit" class="button" value="Get All Business Users"/>
+        </div>
 
-  </form>
+    </form>
 
-  <h2>Enrollments</h2>
-  <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery" method="POST">
+    <h2>Eeitt-auth Enrollments</h2>
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.enrollmentQuery" method="POST">
 
-    @CSRF.formField
+        @CSRF.formField
 
-    <div class="form-group">
-      <select id="user" class="drop-down" name="user">
-          <option value="Agent"> Agent</option>
-          <option value="Business"> Business</option>
-      </select>
+        <div class="form-group">
+            <select id="user" class="drop-down" name="user">
+                <option value="Agent"> Agent</option>
+                <option value="Business"> Business</option>
+            </select>
 
-      <select id="criteria" class="drop-down" name="selectsomething" onclick="return changeName();">
-          <option value="groupid"> Group ID</option>
-          <option value="regime"> Regime</option>
-      </select>
-    </div>
+            <select id="criteria" class="drop-down" name="selectsomething" onclick="return changeName();">
+                <option value="groupid"> Group ID</option>
+                <option value="regime"> Regime</option>
+            </select>
+        </div>
 
-    <div class="form-group">
-      <label for="groupid"></label>
-      <input
-              name="groupid"
-              id="groupid"
-              value=""
-              class="form-control form-control--block"
-      />
-    </div>
+        <div class="form-group">
+            <label for="groupid"></label>
+            <input
+            name="groupid"
+            id="groupid"
+            value=""
+            class="form-control form-control--block"
+            />
+        </div>
 
-    <input name="database" class="hidden" value="Enrollments">
+        <input name="database" class="hidden" value="Enrollments">
 
-    <div class="form-group">
-      <input type="submit" class="button" value="Search"/>
-    </div>
+        <div class="form-group">
+            <input type="submit" class="button" value="Search"/>
+        </div>
 
-  </form>
+    </form>
 
     <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgentEnrollments">
 
@@ -114,12 +114,36 @@
 
     <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllAgents">
 
-    @CSRF.formField
+        @CSRF.formField
 
-    <div class="form-group">
-      <input type="submit" class="button" value="Get All Agents"/>
-    </div>
+        <div class="form-group">
+            <input type="submit" class="button" value="Get All Agents"/>
+        </div>
 
-  </form>
+    </form>
+
+    <h2>Tax Enrolments</h2>
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.knownFactsQuery" method="POST">
+
+        @CSRF.formField
+        <div class="form-group">
+            <label for="identifiers">Known facts JSON array:</label>
+            <textarea
+            type="text"
+            name="identifiers"
+            id="identifiers"
+            value=""
+            class="form-control form-control--block"
+            rows="5"
+            ></textarea>
+        </div>
+
+
+        <div class="form-group">
+            <input type="submit" class="button" value="Search"/>
+        </div>
+
+    </form>
 
 }
+

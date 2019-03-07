@@ -1,38 +1,42 @@
 # microservice specific routes
 
-GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
-POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
-POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
-GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
-GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
-POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
-POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
-GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
+GET         /login                                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
+POST        /login                                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+POST        /get-gform                            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
+GET         /get-all-templates                    uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
+GET         /get-all-schema                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
+POST        /save-template                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
+POST        /template                             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
+GET         /gform-analytics                      uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
-GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
-GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
+GET         /delta                                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
+GET         /query                                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
+GET         /get-gform                            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 
-GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
+GET         /logout                               uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
-GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
-GET        /gg-bulk                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
-POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
-POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
-GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
-GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
-GET        /agents-enrollments/all   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgentEnrollments
+GET         /delta                                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
+GET         /query                                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
+GET         /gg-bulk                              uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
+POST        /query/arn                            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
+POST        /query/groupid                        uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
+POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.knownFactsQuery
+GET         /business-users/all                   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
+GET         /agents/all                           uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
+GET         /agents-enrollments/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgentEnrollments
 
 #POST       /bulk/gg/load/knownfacts  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.loadKF
-POST       /bulk/gg/load/assign-enrolment   uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment
-POST       /bulkload/knownfacts      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.load
+POST        /bulk/gg/load/assign-enrolment        uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.assignEnrollment
+POST        /bulkload/knownfacts                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGController.load
 
-POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
-POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
+POST        /delta/agent                          uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
+POST        /delta/business                       uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
 
-POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
-GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
+POST        /delta/known-facts/upsert             uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.upsertKnownFacts
+POST        /delta/known-facts/delete             uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.deleteKnownFacts
 
-GET        /assets/*file            controllers.Assets.at(path = "/public", file)
+POST        /bulk/gg/load/delete                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
+GET         /dashboard                            uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
+
+GET         /assets/*file                         controllers.Assets.at(path = "/public", file)
 
