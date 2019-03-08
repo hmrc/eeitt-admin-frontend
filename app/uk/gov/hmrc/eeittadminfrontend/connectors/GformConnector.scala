@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Play
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.eeittadminfrontend.WSHttp
+import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
@@ -28,8 +28,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 object GformConnector {
 
   private val sc = new ServicesConfig {
-    override protected def mode = Play.current.mode
-    override protected val runModeConfiguration = Play.current.configuration
+    override protected def mode = InjectionDodge.mode
+    override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
   }
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 

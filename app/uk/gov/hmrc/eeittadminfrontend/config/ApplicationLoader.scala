@@ -23,7 +23,7 @@ import net.ceedubs.ficus.Ficus._
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.http._
-import play.api.i18n.{ I18nComponents, I18nSupport, MessagesApi }
+import play.api.i18n._
 import play.api.inject.{ Injector, SimpleInjector }
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.Results.NotImplemented
@@ -33,20 +33,20 @@ import play.core.SourceMapper
 import play.filters.csrf.{ CSRFComponents, CSRFFilter }
 import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
-import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
+import uk.gov.hmrc.crypto.ApplicationCrypto
+import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers._
+import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config._
 import uk.gov.hmrc.play.frontend.bootstrap.ShowErrorPage
+import uk.gov.hmrc.play.frontend.config.ErrorAuditingSettings
 import uk.gov.hmrc.play.frontend.filters._
 import uk.gov.hmrc.play.graphite.GraphiteConfig
 import uk.gov.hmrc.play.health.HealthController
-import uk.gov.hmrc.crypto.ApplicationCrypto
 
 import scala.concurrent.Future
-import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
-import uk.gov.hmrc.play.frontend.config.ErrorAuditingSettings
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
