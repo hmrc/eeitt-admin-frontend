@@ -17,7 +17,7 @@
 @import helper._
 @import uk.gov.hmrc.eeittadminfrontend.controllers._
 @import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
+@import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
 @import uk.gov.hmrc.eeittadminfrontend.connectors._
 @(knownFactsForm: Form[KnownFacts], allocateEnrolment: Form[Enrollment], listOfCredIds: Map[String, User], sc: String)(implicit request : Request[_], appConfig:uk.gov.hmrc.eeittadminfrontend.AppConfig)
 

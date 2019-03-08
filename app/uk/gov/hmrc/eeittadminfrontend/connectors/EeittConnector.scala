@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import play.api.{ Logger, Play }
 import play.api.libs.json.{ Format, JsObject, JsValue }
 import play.api.mvc.Request
-import uk.gov.hmrc.eeittadminfrontend.WSHttp
+import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
@@ -42,8 +42,8 @@ trait EeittConnector[A] extends ServicesConfig {
 object EeittConnector {
 
   private val sc = new ServicesConfig {
-    override protected def mode = Play.current.mode
-    override protected val runModeConfiguration = Play.current.configuration
+    override protected def mode = InjectionDodge.mode
+    override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
   }
   val eeittUrl = s"${sc.baseUrl("eeitt")}/eeitt"
 
@@ -57,8 +57,8 @@ object EeittConnector {
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
 
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
-    override protected def mode = Play.current.mode
-    override protected val runModeConfiguration = Play.current.configuration
+    override protected def mode = InjectionDodge.mode
+    override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
     override def apply(
       a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) =
       if (isLive(request)) {
@@ -105,8 +105,8 @@ object EeittConnector {
   private def getEeittConnector[A](getPath: A => String): EeittConnector[A] =
     new EeittConnector[A] {
 
-      override protected def mode = Play.current.mode
-      override protected val runModeConfiguration = Play.current.configuration
+      override protected def mode = InjectionDodge.mode
+      override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
       override def apply(value: A)(
         implicit hc: HeaderCarrier,
         ec: ExecutionContext,
