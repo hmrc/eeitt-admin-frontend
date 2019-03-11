@@ -36,6 +36,12 @@ object Verifier {
   implicit val format = Json.format[Verifier]
 }
 
+case class Verifiers(verifiers: List[Verifier])
+
+object Verifiers {
+  implicit val format = Json.format[Verifiers]
+}
+
 case class TaxEnrolment(identifiers: List[Identifier], verifiers: List[Verifier])
 
 object TaxEnrolment {
