@@ -40,7 +40,7 @@ object TaxEnrolmentsConnector {
   def upsertKnownFacts(identifiers: List[Identifier], verifiers: List[Verifier])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.PUT[TaxEnrolment, HttpResponse](url(identifiers), TaxEnrolment(identifiers, verifiers))
+    WSHttp.PUT[List[Verifier], HttpResponse](url(identifiers), verifiers)
 
   // ES7
   def deleteKnownFacts(
