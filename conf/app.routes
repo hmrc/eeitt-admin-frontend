@@ -38,5 +38,7 @@ POST        /delta/known-facts/delete             uk.gov.hmrc.eeittadminfrontend
 POST        /bulk/gg/load/delete                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
 GET         /dashboard                            uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
+POST        /delta/enrolment/add                  uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.add
+
 GET         /assets/*file                         controllers.Assets.at(path = "/public", file)
 

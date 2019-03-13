@@ -20,10 +20,12 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.libs.json
 import play.api.libs.json._
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector, UserDetailsConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -57,6 +59,22 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
           Future.successful(BadRequest(err.toString))
       }
     }
+
+  def add = Action.async(parse.json[MigrationData]) { implicit request =>
+    val data: MigrationData = request.body
+
+    println("gothere1231231")
+
+    (for {
+      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+      es6CreateVerifiers <- TaxEnrolmentsConnector.upsertKnownFacts(data.identifiers, data.verifiers)
+      es8AssignEnrolment <- TaxEnrolmentsConnector
+                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+    } yield
+      (
+        Ok
+      )).recover { case e: Exception => BadRequest(e.getMessage) }
+  }
 
   def upsertKnownFacts() =
     Authentication.async { implicit request =>
@@ -109,6 +127,12 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
   val deleteKnownFactsRequestForm: Form[DeleteKnownFactsRequest] = Form(
     mapping("identifiers" -> text)(DeleteKnownFactsRequest.apply)(DeleteKnownFactsRequest.toStrings))
 
+}
+
+case class MigrationData(groupId: String, identifiers: List[Identifier], verifiers: List[Verifier])
+
+object MigrationData {
+  implicit val format: Format[MigrationData] = json.Json.format[MigrationData]
 }
 
 case class UpsertRequest(identifiers: List[Identifier], verifiers: List[Verifier])
