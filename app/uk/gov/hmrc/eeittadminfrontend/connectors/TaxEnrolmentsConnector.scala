@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Play
-import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
@@ -46,4 +45,14 @@ object TaxEnrolmentsConnector {
   def deleteKnownFacts(
     identifiers: List[Identifier])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     WSHttp.DELETE[HttpResponse](url(identifiers))
+
+  // ES8
+  def addEnrolment(groupId: String, userId: String, identifiers: List[Identifier], verifiers: List[Verifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.POST(
+      s"taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
+      TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
+    )
+
 }

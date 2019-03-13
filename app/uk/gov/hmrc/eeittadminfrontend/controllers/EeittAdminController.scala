@@ -17,7 +17,13 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.libs.json
+import play.api.libs.json._
+import play.libs.Json
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.connectors.TaxEnrolmentsConnector
+import uk.gov.hmrc.eeittadminfrontend.connectors.UserDetailsConnector
+import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, Verifier }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -38,4 +44,5 @@ class EeittAdminController(val authConnector: AuthConnector, val messagesApi: Me
   def goToDeltaAutomation = Authentication.async {
     Future.successful(Ok("Delta Automation"))
   }
+
 }

@@ -19,11 +19,13 @@ package uk.gov.hmrc.eeittadminfrontend
 import java.io.File
 
 import org.scalatest.TestSuite
-import org.scalatestplus.play.{ BaseOneAppPerSuite, FakeApplicationFactory }
+import org.scalatestplus.play.{ BaseOneAppPerSuite, BaseOneServerPerSuite, FakeApplicationFactory }
 import play.api.{ Configuration, Environment, Mode }
 
-trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory {
+trait ApplicationComponentsOnePerSuite extends BaseOneServerPerSuite with FakeApplicationFactory {
   this: TestSuite =>
+
+  override lazy val port = 9001
 
   def additionalConfiguration: Map[String, Any] = Map.empty[String, Any]
 

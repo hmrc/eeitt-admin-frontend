@@ -48,20 +48,20 @@
 
     <logger name="uk.gov" level="INFO"/>
 
-    <logger name="application" level="DEBUG"/>
+    <logger name="application" level="INFO"/>
 
-    <logger name="connector" level="TRACE">
+    <logger name="connector" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="org.asynchttpclient.netty.channel.DefaultChannelPool" level="ERROR">
+    <logger name="org.asynchttpclient.netty.channel.DefaultChannelPool" level="INFO">
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="play.core.netty.utils.ServerCookieDecoder" level="ERROR" >
+    <logger name="play.core.netty.utils.ServerCookieDecoder" level="INFO" >
         <appender-ref ref="STDOUT" />
     </logger>
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
