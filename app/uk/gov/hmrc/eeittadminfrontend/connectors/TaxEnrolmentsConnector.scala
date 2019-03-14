@@ -35,6 +35,10 @@ object TaxEnrolmentsConnector {
   private def url(identifiers: List[Identifier]): String =
     s"$taxEnrolmentsBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 
+  // ES3
+  def queryEnrolments(groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.GET(s"taxEnrolmentsBaseUrl/groups/$groupId/enrolments")
+
   // ES6
   def upsertKnownFacts(identifiers: List[Identifier], verifiers: List[Verifier])(
     implicit hc: HeaderCarrier,
@@ -53,6 +57,14 @@ object TaxEnrolmentsConnector {
     WSHttp.POST(
       s"taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
       TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
+    )
+
+  // ES9
+  def deallocateEnrolment(groupId: String, identifiers: List[Identifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.DELETE(
+      s"taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
     )
 
 }

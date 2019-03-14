@@ -22,7 +22,7 @@ import play.api.data.Forms._
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json
 import play.api.libs.json._
-import play.api.mvc.Action
+import play.api.mvc.{ Action, Result }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector, UserDetailsConnector }
@@ -60,10 +60,8 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       }
     }
 
-  def add = Action.async(parse.json[MigrationData]) { implicit request =>
+  def addFactsEnrol = Action.async(parse.json[MigrationData]) { implicit request =>
     val data: MigrationData = request.body
-
-    println("gothere1231231")
 
     (for {
       userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
@@ -74,6 +72,30 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       (
         Ok
       )).recover { case e: Exception => BadRequest(e.getMessage) }
+  }
+
+  def addEnrol = Action.async(parse.json[MigrationData]) { implicit request =>
+    val data: MigrationData = request.body
+
+    (for {
+      userDetails <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+      es8AssignEnrolment <- TaxEnrolmentsConnector
+                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+    } yield
+      (
+        Ok
+      )).recover { case e: Exception => BadRequest(e.getMessage) }
+  }
+
+  def deleteEnrolment = Action.async(parse.json[MigrationDataDeallocate]) { implicit request =>
+    val data: MigrationDataDeallocate = request.body
+
+    TaxEnrolmentsConnector
+      .deallocateEnrolment(data.groupId, data.identifiers)
+      .map { x =>
+        Ok(x.toString)
+      }
+      .recover { case e: Exception => BadRequest(e.getMessage) }
   }
 
   def upsertKnownFacts() =
@@ -133,6 +155,12 @@ case class MigrationData(groupId: String, identifiers: List[Identifier], verifie
 
 object MigrationData {
   implicit val format: Format[MigrationData] = json.Json.format[MigrationData]
+}
+
+case class MigrationDataDeallocate(groupId: String, identifiers: List[Identifier])
+
+object MigrationDataDeallocate {
+  implicit val format: Format[MigrationDataDeallocate] = json.Json.format[MigrationDataDeallocate]
 }
 
 case class UpsertRequest(identifiers: List[Identifier], verifiers: List[Verifier])

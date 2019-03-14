@@ -20,6 +20,7 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
+import play.api.libs.json
 import play.api.libs.json._
 import play.api.libs.streams.Accumulator
 import play.api.mvc.{ Action, BodyParser, Request, RequestHeader }
@@ -110,6 +111,23 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
   val knownFactsForm: Form[TaxEnrolmentRequest] = Form(
     mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
 
+  def queryEnrolments = Action.async(parse.json[MigrationDataQuery]) { implicit request =>
+    val data: MigrationDataQuery = request.body
+
+    TaxEnrolmentsConnector
+      .queryEnrolments(data.groupId)
+      .map { x =>
+        Ok(x.toString)
+      }
+      .recover { case e: Exception => BadRequest(e.getMessage) }
+  }
+
+}
+
+case class MigrationDataQuery(groupId: String)
+
+object MigrationDataQuery {
+  implicit val format: Format[MigrationDataQuery] = json.Json.format[MigrationDataQuery]
 }
 
 case class TaxEnrolmentRequest(request: String)
