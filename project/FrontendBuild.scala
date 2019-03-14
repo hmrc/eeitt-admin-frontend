@@ -25,7 +25,7 @@ object FrontendBuild extends Build with MicroService {
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "org.jsoup" % "jsoup" % "1.11.3" % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope
+    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
+    "com.github.tomakehurst" % "wiremock" % "2.19.0" % scope
   )
-
 }

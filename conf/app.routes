@@ -9,13 +9,15 @@ POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
+POST        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 
 GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
 GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
+POST        /deltaabc                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.abc
+GET        /deltaabc1                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.abcd
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /gg-bulk                  uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.getBulkloadPage
 POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery

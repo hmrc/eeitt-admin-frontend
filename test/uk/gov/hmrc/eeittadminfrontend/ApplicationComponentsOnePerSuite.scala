@@ -22,7 +22,7 @@ import org.scalatest.TestSuite
 import org.scalatestplus.play.{ BaseOneAppPerSuite, FakeApplicationFactory }
 import play.api.{ Configuration, Environment, Mode }
 
-trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory {
+trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory{
   this: TestSuite =>
 
   def additionalConfiguration: Map[String, Any] = Map.empty[String, Any]
