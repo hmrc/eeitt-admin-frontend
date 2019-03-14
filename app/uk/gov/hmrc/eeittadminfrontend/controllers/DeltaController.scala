@@ -60,7 +60,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       }
     }
 
-  def addFactsEnrol = Action.async(parse.json[MigrationData]) { implicit request =>
+  def addFactsEnrol = Authentication.async(parse.json[MigrationData]) { implicit request =>
     val data: MigrationData = request.body
 
     (for {
@@ -74,7 +74,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       )).recover { case e: Exception => BadRequest(e.getMessage) }
   }
 
-  def addEnrol = Action.async(parse.json[MigrationData]) { implicit request =>
+  def addEnrol = Authentication.async(parse.json[MigrationData]) { implicit request =>
     val data: MigrationData = request.body
 
     (for {
@@ -87,7 +87,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       )).recover { case e: Exception => BadRequest(e.getMessage) }
   }
 
-  def deleteEnrolment = Action.async(parse.json[MigrationDataDeallocate]) { implicit request =>
+  def deleteEnrolment = Authentication.async(parse.json[MigrationDataDeallocate]) { implicit request =>
     val data: MigrationDataDeallocate = request.body
 
     TaxEnrolmentsConnector

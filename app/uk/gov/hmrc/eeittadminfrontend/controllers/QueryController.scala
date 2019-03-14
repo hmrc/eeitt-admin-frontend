@@ -111,7 +111,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
   val knownFactsForm: Form[TaxEnrolmentRequest] = Form(
     mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
 
-  def queryEnrolments = Action.async(parse.json[MigrationDataQuery]) { implicit request =>
+  def queryEnrolments = Authentication.async(parse.json[MigrationDataQuery]) { implicit request =>
     val data: MigrationDataQuery = request.body
 
     TaxEnrolmentsConnector
