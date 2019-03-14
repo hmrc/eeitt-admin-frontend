@@ -1,37 +1,40 @@
+/*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
+import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
 import play.api.libs.json.Json
-import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.{Configuration, Environment, Mode}
-import uk.gov.hmrc.eeittadminfrontend.models.{Identifier, Verifier}
-import uk.gov.hmrc.eeittadminfrontend.stubs.UserDetailsStubs
-import uk.gov.hmrc.eeittadminfrontend.{AppConfig, ApplicationComponentsOnePerSuite, TestUsers, WSHttp}
+import play.api.test.FakeRequest
+import play.api.{ Configuration, Environment, Mode }
+import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, Verifier }
+import uk.gov.hmrc.eeittadminfrontend.stubs.{ TaxEnrolmentStubs, UserDetailsStubs }
+import uk.gov.hmrc.eeittadminfrontend.{ AppConfig, ApplicationComponentsOnePerSuite, WSHttp }
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.UnitSpec
 
-class DeltaControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with UserDetailsStubs {
+class DeltaControllerSpec
+    extends UnitSpec with ApplicationComponentsOnePerSuite with UserDetailsStubs with TaxEnrolmentStubs {
 
   override def additionalConfiguration: Map[String, Any] =
-    Map( "feature.basicAuthEnabled" -> false)
-
-  //"basicAuth.whitelist" -> "192.168.1.1",
-
-//  val builder: AhcConfigBuilder = new AhcConfigBuilder()
-//  val ahcBuilder: DefaultAsyncHttpClientConfig.Builder = builder.configure()
-//  val ahcConfig: DefaultAsyncHttpClientConfig = ahcBuilder.build()
-//  implicit val system: ActorSystem = ActorSystem()
-//  implicit val materializer: ActorMaterializer = ActorMaterializer()
-//
-//  val client: AhcWSClient = new AhcWSClient(ahcConfig)
-//
-//  val updateEnrolmentUrl = s"http://localhost:9000/eeitt-admin-frontend/delta/enrolment/add"
-//
-//  def doPost(body: JsValue) = client.url(updateEnrolmentUrl).withHeaders(("token", "someToken")).post(body)
-
-//  println("asdasdas" + applicationStart)
-
-
+    Map(
+      "microservice.services.user-details.port"   -> wireMockPort, //TODO the ports should be different everytime wireMockPort is called...
+      "microservice.services.tax-enrolments.port" -> wireMockPort
+    )
 
   val validDetailsForEnrolment = MigrationData(
     "validGroupId",
@@ -39,29 +42,147 @@ class DeltaControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
     verifiers = List(Verifier("someKey", "someValue")))
 
   "create enrolment for groupId" should {
-    val request = FakeRequest().withJsonBody(Json.toJson(validDetailsForEnrolment))//.withHeaders(CONTENT_TYPE -> JSON)
-    //.withSession("token" -> "someGoogleAuthenticationToken")
-
-    val serverUrl = "http://test.invalid:8000"
-
 
     "200 successfully created enrolment for groupId with identifiers & verifiers provided" in {
-      given202SendEmailReject(validDetailsForEnrolment.groupId)
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
 
-      val a = await(deltaController.abc().apply(request))
-//      println("adssadas" + a.header.headers.get("Location"))
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
 
-      status(a) shouldBe 201
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 200
+    }
 
-//      redirectLocation(a)
-//            given202SendEmailReject(validDetailsForEnrolment.groupId)
-//      await(doPost(Json.toJson(validDetailsForEnrolment))).status shouldBe 200
+    "303 authentication token is missing" in {
+      val request = FakeRequest().withJsonBody(Json.toJson(validDetailsForEnrolment)) //"token" in session is missing
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 303
+      result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
+    }
+
+    "400 body is not a valid json" in {
+      val badBody = "anything that is not a valid json that matches the model"
+      val request =
+        FakeRequest().withJsonBody(Json.toJson(badBody)).withSession("token" -> "someGoogleAuthenticationToken")
+
+      an[BadRequestException] shouldBe thrownBy(await(deltaController.abc().apply(request)))
+    }
+
+    "500 when userDetails returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetails(validDetailsForEnrolment.groupId, 404)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when userDetails returns 400" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetails(validDetailsForEnrolment.groupId, 400)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when userDetails returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetails(validDetailsForEnrolment.groupId, 500)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es6 returns 400" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 400)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es6 returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 404)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es6 returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 500)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es8 returns 400" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 400)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es8 returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 404)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments es8 returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
+      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
+      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 500)
+
+      val result = await(deltaController.abc().apply(request))
+      status(result) shouldBe 500
     }
   }
-
-
-
-
 
   val configuration: Configuration = Configuration.reference
   val mode: Mode.Mode = Mode.Test

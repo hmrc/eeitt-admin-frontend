@@ -51,7 +51,7 @@ object TaxEnrolmentsConnector {
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
     WSHttp.POST(
-      s"taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
+      s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
       TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
     )
 }

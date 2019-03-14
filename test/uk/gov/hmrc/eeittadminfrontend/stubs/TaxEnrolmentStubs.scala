@@ -17,27 +17,24 @@
 package uk.gov.hmrc.eeittadminfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, TaxEnrolment }
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
 
-trait UserDetailsStubs {
+trait TaxEnrolmentStubs {
   me: WireMockSupport =>
 
-  def givenUserDetailsWithResponseBody(groupId: String): Unit =
+  def putes6upsertKnownFacts(identifierInput: List[Identifier], status: Int) =
     stubFor(
-      get(urlEqualTo(s"/group-identifier/$groupId"))
-        .willReturn(okJson("""[
-                      {"gatewayId":"3494280737743238",
-                      "authProviderId":"3494280737743238",
-                      "authProviderType":"GovernmentGateway",
-                      "name":"firstName",
-                      "email":"someEmail@email.com",
-                      "affinityGroup":"Organisation",
-                      "credentialRole":"User",
-                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"}]
-                           """.stripMargin)))
-
-  def givenUserDetails(groupId: String, status: Int): Unit =
-    stubFor(
-      get(urlEqualTo(s"/group-identifier/$groupId"))
+      put(urlEqualTo(pathEs6(identifierInput)))
         .willReturn(aResponse().withStatus(status)))
+
+  def postEs8allocateEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
+    stubFor(
+      post(urlEqualTo(pathEs8(groupId, identifierInput)))
+        .willReturn(aResponse().withStatus(status)))
+
+  private def pathEs6(identifiers: List[Identifier]): String =
+    s"/tax-enrolments/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+  private def pathEs8(groupId: String, identifiers: List[Identifier]): String =
+    s"/tax-enrolments/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 }
