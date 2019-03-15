@@ -30,8 +30,8 @@ class DeltaControllerSpec
 
   override def additionalConfiguration: Map[String, Any] =
     Map(
-      "microservice.services.user-details.port"   -> wireMockPort, //TODO the ports should be different everytime wireMockPort is called...
-      "microservice.services.tax-enrolments.port" -> wireMockPort
+      "microservice.services.user-details.port"          -> wireMockPort, //TODO the ports should be different everytime wireMockPort is called...
+      "microservice.services.enrolment-store-proxy.port" -> wireMockPort
     )
 
   val deltaController = new DeltaController(new FakeAuthConnector)
@@ -120,7 +120,7 @@ class DeltaControllerSpec
       result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
     }
 
-    "500 fail when tax-enrolments returns 404 deallocate enrolment" in {
+    "500 fail when enrolment-store-proxy returns 404 deallocate enrolment" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -131,7 +131,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 fail when tax-enrolments returns 500" in {
+    "500 fail when enrolment-store-proxy returns 500" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -186,7 +186,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments returns 404" in {
+    "500 when enrolment-store-proxy returns 404" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -198,7 +198,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments returns 500" in {
+    "500 when enrolment-store-proxy returns 500" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -275,7 +275,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es6 returns 400" in {
+    "500 when enrolment-store-proxy es6 returns 400" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -288,7 +288,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es6 returns 404" in {
+    "500 when enrolment-store-proxy es6 returns 404" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -301,7 +301,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es6 returns 500" in {
+    "500 when enrolment-store-proxy es6 returns 500" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -314,7 +314,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es8 returns 400" in {
+    "500 when enrolment-store-proxy es8 returns 400" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -327,7 +327,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es8 returns 404" in {
+    "500 when enrolment-store-proxy es8 returns 404" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -340,7 +340,7 @@ class DeltaControllerSpec
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments es8 returns 500" in {
+    "500 when enrolment-store-proxy es8 returns 500" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")

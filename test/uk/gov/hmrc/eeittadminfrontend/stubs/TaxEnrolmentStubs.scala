@@ -65,11 +65,11 @@ trait TaxEnrolmentStubs {
         .willReturn(aResponse().withStatus(status)))
 
   private def pathEs3(groupId: String): String =
-    s"/tax-enrolments/groups/$groupId/enrolments"
+    s"/enrolment-store-proxy/enrolment-store/groups/$groupId/enrolments"
 
   private def pathEs6Es7(identifiers: List[Identifier]): String =
-    s"/tax-enrolments/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+    s"/enrolment-store-proxy/enrolment-store/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 
   private def pathEs8Es9(groupId: String, identifiers: List[Identifier]): String =
-    s"/tax-enrolments/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+    s"/enrolment-store-proxy/enrolment-store/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 }

@@ -32,7 +32,7 @@ object TaxEnrolmentsConnector {
     override protected val runModeConfiguration = Play.current.configuration
   }
 
-  lazy val taxEnrolmentsBaseUrl = s"${sc.baseUrl("tax-enrolments")}/tax-enrolments"
+  lazy val taxEnrolmentsBaseUrl = s"${sc.baseUrl("enrolment-store-proxy")}/enrolment-store-proxy/enrolment-store"
   private def url(identifiers: List[Identifier]): String =
     s"$taxEnrolmentsBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 

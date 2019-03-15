@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with TaxEnrolmentStubs {
 
   override def additionalConfiguration: Map[String, Any] =
-    Map("microservice.services.tax-enrolments.port" -> wireMockPort) //TODO the ports should be different everytime wireMockPort is called...
+    Map("microservice.services.enrolment-store-proxy.port" -> wireMockPort) //TODO the ports should be different everytime wireMockPort is called...
 
   val queryController: QueryController = new QueryController(new FakeAuthConnector, messageApi)
 
@@ -76,7 +76,7 @@ class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
       result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
     }
 
-    "500 when tax-enrolments returns 404 as groupId not found" in {
+    "500 when enrolment-store-proxy returns 404 as groupId not found" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationDataQuery))
         .withSession("token" -> "someGoogleAuthenticationToken")
@@ -87,7 +87,7 @@ class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
       status(result) shouldBe 500
     }
 
-    "500 when tax-enrolments returns 400" in {
+    "500 when enrolment-store-proxy returns 400" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationDataQuery))
         .withSession("token" -> "someGoogleAuthenticationToken")

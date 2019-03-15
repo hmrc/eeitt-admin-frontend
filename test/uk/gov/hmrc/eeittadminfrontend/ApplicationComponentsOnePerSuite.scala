@@ -19,13 +19,13 @@ package uk.gov.hmrc.eeittadminfrontend
 import java.io.File
 
 import org.scalatest.TestSuite
-import org.scalatestplus.play.{ FakeApplicationFactory, OneAppPerSuite }
+import org.scalatestplus.play.{ BaseOneAppPerSuite, FakeApplicationFactory }
 import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
 import play.api.{ Configuration, Environment, Mode }
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
-trait ApplicationComponentsOnePerSuite extends OneAppPerSuite with FakeApplicationFactory with WireMockSupport {
+trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory with WireMockSupport {
   this: TestSuite =>
 
   override def commonStubs(): Unit = ()
