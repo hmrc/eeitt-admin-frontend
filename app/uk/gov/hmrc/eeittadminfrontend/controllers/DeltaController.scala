@@ -21,7 +21,7 @@ import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector, UserDetailsConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector, UserDetailsConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.frontend.auth.Actions
@@ -46,8 +46,8 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-      es6CreateVerifiers <- TaxEnrolmentsConnector.upsertKnownFacts(data.identifiers, data.verifiers)
-      es8AssignEnrolment <- TaxEnrolmentsConnector
+      es6CreateVerifiers <- EnrolmentStoreProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
+      es8AssignEnrolment <- EnrolmentStoreProxyConnector
                              .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield Ok).recover {
       case e: Exception => InternalServerError(e.getMessage)
@@ -62,7 +62,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       userDetails <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-      es8AssignEnrolment <- TaxEnrolmentsConnector
+      es8AssignEnrolment <- EnrolmentStoreProxyConnector
                              .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield (Ok)).recover { case e: Exception => InternalServerError(e.getMessage) }
   }
@@ -73,7 +73,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
     val data: MigrationDataDeallocate =
       body.asOpt[MigrationDataDeallocate].getOrElse(throw new BadRequestException("invalid data provided"))
 
-    TaxEnrolmentsConnector
+    EnrolmentStoreProxyConnector
       .deallocateEnrolment(data.groupId, data.identifiers)
       .map { x =>
         Ok(x.toString)
@@ -89,7 +89,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
         deleteRequest => {
           deleteRequest.request match {
             case Left(r) =>
-              TaxEnrolmentsConnector.deleteKnownFacts(r).map { response =>
+              EnrolmentStoreProxyConnector.deleteKnownFacts(r).map { response =>
                 Ok(response.body)
               }
             case Right(e) => Future.successful(BadRequest(e.getMessage))

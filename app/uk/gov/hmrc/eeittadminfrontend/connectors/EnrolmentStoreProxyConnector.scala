@@ -25,20 +25,20 @@ import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object TaxEnrolmentsConnector {
+object EnrolmentStoreProxyConnector {
 
   private val sc = new ServicesConfig {
     override protected def mode = Play.current.mode
     override protected val runModeConfiguration = Play.current.configuration
   }
 
-  lazy val taxEnrolmentsBaseUrl = s"${sc.baseUrl("enrolment-store-proxy")}/enrolment-store-proxy/enrolment-store"
+  lazy val enrolmentStoreProxyBaseUrl = s"${sc.baseUrl("enrolment-store-proxy")}/enrolment-store-proxy/enrolment-store"
   private def url(identifiers: List[Identifier]): String =
-    s"$taxEnrolmentsBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+    s"$enrolmentStoreProxyBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 
   // ES3
   def queryEnrolments(groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] =
-    WSHttp.GET(s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments").map {
+    WSHttp.GET(s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments").map {
       case response if response.status == 200 => Some(response.json)
       case response if response.status == 204 => None
     }
@@ -59,7 +59,7 @@ object TaxEnrolmentsConnector {
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
     WSHttp.POST(
-      s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
+      s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
       TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
     )
 
@@ -68,6 +68,6 @@ object TaxEnrolmentsConnector {
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
     WSHttp.DELETE(
-      s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+      s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
     )
 }

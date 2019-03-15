@@ -21,12 +21,12 @@ import play.api.mvc.Call
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
 import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, MigrationData, MigrationDataDeallocate, Verifier }
-import uk.gov.hmrc.eeittadminfrontend.stubs.{ TaxEnrolmentStubs, UserDetailsStubs }
+import uk.gov.hmrc.eeittadminfrontend.stubs.{ EnrolmentStoreProxyStubs, UserDetailsStubs }
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.UnitSpec
 
 class DeltaControllerSpec
-    extends UnitSpec with ApplicationComponentsOnePerSuite with UserDetailsStubs with TaxEnrolmentStubs {
+    extends UnitSpec with ApplicationComponentsOnePerSuite with UserDetailsStubs with EnrolmentStoreProxyStubs {
 
   override def additionalConfiguration: Map[String, Any] =
     Map(

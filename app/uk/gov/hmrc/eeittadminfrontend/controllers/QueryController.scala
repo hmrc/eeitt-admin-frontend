@@ -22,7 +22,7 @@ import play.api.libs.json._
 import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -39,7 +39,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     val data: MigrationDataQuery =
       body.asOpt[MigrationDataQuery].getOrElse(throw new BadRequestException("invalid data provided"))
 
-    TaxEnrolmentsConnector
+    EnrolmentStoreProxyConnector
       .queryEnrolments(data.groupId)
       .map {
         case Some(data) => Ok(data)

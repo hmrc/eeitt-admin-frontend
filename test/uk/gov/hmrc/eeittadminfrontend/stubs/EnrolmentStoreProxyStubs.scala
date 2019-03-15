@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, TaxEnrolment }
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
 
-trait TaxEnrolmentStubs {
+trait EnrolmentStoreProxyStubs {
   me: WireMockSupport =>
 
   def get200Es3queryEnrolments(groupId: String): Unit =

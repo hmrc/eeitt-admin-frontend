@@ -20,10 +20,10 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
 import uk.gov.hmrc.eeittadminfrontend.models.MigrationDataQuery
-import uk.gov.hmrc.eeittadminfrontend.stubs.TaxEnrolmentStubs
+import uk.gov.hmrc.eeittadminfrontend.stubs.EnrolmentStoreProxyStubs
 import uk.gov.hmrc.play.test.UnitSpec
 
-class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with TaxEnrolmentStubs {
+class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with EnrolmentStoreProxyStubs {
 
   override def additionalConfiguration: Map[String, Any] =
     Map("microservice.services.enrolment-store-proxy.port" -> wireMockPort) //TODO the ports should be different everytime wireMockPort is called...
