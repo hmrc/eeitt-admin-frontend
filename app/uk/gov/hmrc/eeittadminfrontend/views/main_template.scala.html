@@ -46,7 +46,6 @@
                 <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeltaController.goToDelta">Update Delta</a></li>
                 <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage">G-forms</a></li>
                 <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformAnalytics">Analytics</a></li>
-                @sidebar
             </ul>
             <ul class="nav navbar-nav navbar-right">
             </ul>
@@ -64,10 +63,3 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 @serviceInfoContent = {}
-
-@sidebar = {
-
-    @if(pureconfig.loadConfigOrThrow[uk.gov.hmrc.eeittadminfrontend.controllers.Switch]("feature.GGLoad.switch").value) {
-<li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.BulkGGLoad.getBulkloadPage">Bulk Load GG</a></li>
-    }
-}
