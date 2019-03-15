@@ -64,6 +64,32 @@ trait EnrolmentStoreProxyStubs {
       delete(urlEqualTo(pathEs8Es9(groupId, identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
+  def get200Es20queryKnownFacts: Unit =
+    stubFor(
+      post(urlEqualTo(pathEs20))
+        .willReturn(okJson("""  {
+                             |    "service": "IR-SA",
+                             |    "enrolments": [{
+                             |    "identifiers": [{
+                             |      "key": "UTR",
+                             |      "value": "1234567890"
+                             |    }],
+                             |    "verifiers": [{
+                             |      "key": "NINO",
+                             |      "value": "AB112233D"
+                             |    },
+                             |    {
+                             |      "key": "Postcode",
+                             |      "value": "SW1A 2AA"
+                             |    }]
+                             |  }]
+                             |  }""".stripMargin)))
+
+  def getEs20queryKnownFacts(status: Int): Unit =
+    stubFor(
+      post(urlEqualTo(pathEs20))
+        .willReturn(aResponse().withStatus(status)))
+
   private def pathEs3(groupId: String): String =
     s"/enrolment-store-proxy/enrolment-store/groups/$groupId/enrolments"
 
@@ -72,4 +98,7 @@ trait EnrolmentStoreProxyStubs {
 
   private def pathEs8Es9(groupId: String, identifiers: List[Identifier]): String =
     s"/enrolment-store-proxy/enrolment-store/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+
+  private def pathEs20: String =
+    s"/enrolment-store-proxy/enrolment-store/enrolments"
 }

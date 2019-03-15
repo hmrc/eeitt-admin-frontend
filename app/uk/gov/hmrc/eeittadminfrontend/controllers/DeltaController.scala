@@ -99,6 +99,30 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       .recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
+  def upsertKnownFacts() =
+    Authentication.async { implicit request =>
+      UpsertKnownFactsRequest.upsertKnownFactsRequestForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+          },
+          upsertRequest => {
+            upsertRequest.request match {
+              case Left(upsertReq) =>
+                EnrolmentStoreProxyConnector
+                  .upsertKnownFacts(upsertReq.identifiers, upsertReq.verifiers)
+                  .map { response =>
+                    Ok(response.body)
+                  }
+              case Right(e) =>
+                Future.successful(BadRequest(e.getMessage))
+            }
+          }
+        )
+        .recover { case e: Exception => InternalServerError(e.getMessage) }
+    }
+
   def agent() =
     delta[DeltaAgent]
 

@@ -62,3 +62,42 @@ object DeleteKnownFactsRequest {
   val deleteKnownFactsRequestForm: Form[DeleteKnownFactsRequest] = Form(
     mapping("identifiers" -> text)(DeleteKnownFactsRequest.apply)(DeleteKnownFactsRequest.toStrings))
 }
+
+case class TaxEnrolmentRequest(request: String)
+
+object TaxEnrolmentRequest {
+  val knownFactsForm: Form[TaxEnrolmentRequest] = Form(
+    mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
+}
+
+case class UpsertRequest(identifiers: List[Identifier], verifiers: List[Verifier])
+
+object UpsertRequest {
+  implicit val format: Format[UpsertRequest] = json.Json.format[UpsertRequest]
+}
+
+case class UpsertKnownFactsRequest(request: Either[UpsertRequest, Exception])
+
+object UpsertKnownFactsRequest {
+  def apply(taxEnrolment: String): UpsertKnownFactsRequest = {
+    println("sadsada" + taxEnrolment)
+    try {
+      Json
+        .fromJson[UpsertRequest](Json.parse(taxEnrolment))
+        .fold(
+          invalid => UpsertKnownFactsRequest(Right(new Exception(invalid.toString()))),
+          valid => UpsertKnownFactsRequest(Left(UpsertRequest(valid.identifiers, valid.verifiers)))
+        )
+    } catch {
+      case e: Exception => UpsertKnownFactsRequest(Right(e))
+    }
+  }
+
+  def toStrings(u: UpsertKnownFactsRequest): Option[String] = u.request match {
+    case Left(x)  => Some(Json.toJson(TaxEnrolment(x.identifiers, x.verifiers)).toString())
+    case Right(e) => None
+  }
+
+  val upsertKnownFactsRequestForm: Form[UpsertKnownFactsRequest] = Form(
+    mapping("identifiersverifiers" -> text)(UpsertKnownFactsRequest.apply)(UpsertKnownFactsRequest.toStrings))
+}

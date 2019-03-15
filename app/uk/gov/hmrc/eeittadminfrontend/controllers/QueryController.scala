@@ -48,6 +48,32 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
       .recover { case e: Exception => InternalServerError(e.getMessage) }
   }
 
+  def queryKnownFacts() =
+    Authentication.async { implicit request =>
+      TaxEnrolmentRequest.knownFactsForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))
+          },
+          getRequest => {
+
+            val data = try {
+              Json.fromJson[List[KnownFact]](Json.parse(getRequest.request)).get
+            } catch {
+              case _: Exception => throw new BadRequestException("bad json")
+            }
+
+            EnrolmentStoreProxyConnector
+              .queryKnownFacts(data)
+              .map { y =>
+                Ok(y.toString)
+              }
+          }
+        )
+        .recover { case e: Exception => InternalServerError(e.getMessage) }
+    }
+
   def getAllBusinessUsers() = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token").get} got all etmp business users")
     EeittConnector.getAllBusinessUsers.map(x => Ok(x))

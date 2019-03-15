@@ -70,4 +70,10 @@ object EnrolmentStoreProxyConnector {
     WSHttp.DELETE(
       s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
     )
+
+  // ES20
+  def queryKnownFacts(knownFacts: List[KnownFact])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    WSHttp.POST[ServiceQuery, JsValue](
+      s"$enrolmentStoreProxyBaseUrl/enrolments",
+      ServiceQuery(TaxEnrolment.service, knownFacts))
 }

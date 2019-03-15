@@ -19,8 +19,9 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
-import uk.gov.hmrc.eeittadminfrontend.models.MigrationDataQuery
+import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, MigrationDataQuery }
 import uk.gov.hmrc.eeittadminfrontend.stubs.EnrolmentStoreProxyStubs
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.UnitSpec
 
 class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with EnrolmentStoreProxyStubs {
@@ -31,9 +32,10 @@ class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
   val queryController: QueryController = new QueryController(new FakeAuthConnector, messageApi)
 
   val validGroupId: String = "validGroupId"
-  val validMigrationDataQuery: MigrationDataQuery = MigrationDataQuery(validGroupId)
 
   "queryEnrolments" should {
+    val validMigrationDataQuery: MigrationDataQuery = MigrationDataQuery(validGroupId)
+
     "fetch enrolments" in {
       val request = FakeRequest()
         .withJsonBody(Json.toJson(validMigrationDataQuery))
@@ -97,5 +99,81 @@ class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
       val result = await(queryController.queryEnrolments()(request))
       status(result) shouldBe 500
     }
+  }
+
+  "knownFactsQuery" should {
+    val identifiers = List(Identifier("someKey", "someValue"))
+    "200 successfully retreives knownFacts" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .withSession("token"                          -> "someGoogleAuthenticationToken")
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      get200Es20queryKnownFacts
+
+      val result = await(queryController.queryKnownFacts()(request))
+      status(result) shouldBe 200
+      jsonBodyOf(result) shouldBe Json.parse("""  {
+                "service": "IR-SA",
+                "enrolments": [{
+                "identifiers": [{
+                "key": "UTR",
+                "value": "1234567890"
+              }],
+              "verifiers": [{
+              "key": "NINO",
+              "value": "AB112233D"
+              },
+              {
+                "key": "Postcode",
+                "value": "SW1A 2AA"
+                    }]
+                  }]
+          }""".stripMargin)
+    }
+
+    "400 bad json/data submitted" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("identifiers", "sdaasda"))
+        .withSession("token"                          -> "someGoogleAuthenticationToken")
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      an[BadRequestException] shouldBe thrownBy(await(queryController.queryKnownFacts()(request)))
+    }
+
+    "303 redirect to login when no token found" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      val result = await(queryController.queryKnownFacts()(request))
+      status(result) shouldBe 303
+      result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
+    }
+
+    "500 when es20 returns 400" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .withSession("token"                          -> "someGoogleAuthenticationToken")
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      getEs20queryKnownFacts(400)
+
+      val result = await(queryController.queryKnownFacts()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when es20 returns 500" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .withSession("token"                          -> "someGoogleAuthenticationToken")
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      getEs20queryKnownFacts(500)
+
+      val result = await(queryController.queryKnownFacts()(request))
+      status(result) shouldBe 500
+    }
+
   }
 }
