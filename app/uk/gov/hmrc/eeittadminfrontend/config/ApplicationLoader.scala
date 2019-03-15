@@ -34,7 +34,6 @@ import play.filters.csrf.{ CSRFComponents, CSRFFilter }
 import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
 import uk.gov.hmrc.crypto.ApplicationCrypto
-import uk.gov.hmrc.eeittadminfrontend.connectors.EMACConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
@@ -271,14 +270,11 @@ trait ApplicationModule
   val securedActions = new SecuredActionsImpl(configuration, authConnector)
   val authService = new AuthService()
   val googleService = new GoogleVerifier()
-  val emacConnector = new EMACConnector()
   val authController =
     new AuthController(authConnector, securedActions, authService, googleService)(appConfig, messagesApi)
   val queryController = new QueryController(authConnector, messagesApi)(appConfig)
   val eeittAdminController = new EeittAdminController(authConnector, messagesApi)
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
-  val bulkGGController = new BulkGGLoad(authConnector, emacConnector)(messagesApi, appConfig)
-  val bulkLoad = new BulkGGController(authConnector, emacConnector, messagesApi, actorSystem, materializer)(appConfig)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
@@ -289,8 +285,6 @@ trait ApplicationModule
     gformController,
     queryController,
     deltaController,
-    bulkGGController,
-    bulkLoad,
     eeittAdminController,
     assets
   )
