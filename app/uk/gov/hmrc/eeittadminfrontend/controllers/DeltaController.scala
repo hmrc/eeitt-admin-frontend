@@ -25,7 +25,7 @@ import play.api.libs.json._
 import play.api.mvc.{ Action, Result }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector, UserDetailsConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ ESProxyConnector, EeittConnector, UserDetailsConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -65,8 +65,8 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-      es6CreateVerifiers <- TaxEnrolmentsConnector.upsertKnownFacts(data.identifiers, data.verifiers)
-      es8AssignEnrolment <- TaxEnrolmentsConnector
+      es6CreateVerifiers <- ESProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
+      es8AssignEnrolment <- ESProxyConnector
                              .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield
       (
@@ -79,7 +79,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       userDetails <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-      es8AssignEnrolment <- TaxEnrolmentsConnector
+      es8AssignEnrolment <- ESProxyConnector
                              .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield
       (
@@ -90,7 +90,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
   def deleteEnrolment = Authentication.async(parse.json[MigrationDataDeallocate]) { implicit request =>
     val data: MigrationDataDeallocate = request.body
 
-    TaxEnrolmentsConnector
+    ESProxyConnector
       .deallocateEnrolment(data.groupId, data.identifiers)
       .map { x =>
         Ok(x.toString)
@@ -109,7 +109,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
           upsertRequest => {
             upsertRequest.request match {
               case Left(r) =>
-                TaxEnrolmentsConnector
+                ESProxyConnector
                   .upsertKnownFacts(r.identifiers, r.verifiers)
                   .map { y =>
                     Ok(y.body)
@@ -133,7 +133,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
           deleteRequest => {
             deleteRequest.request match {
               case Left(r) =>
-                TaxEnrolmentsConnector.deleteKnownFacts(r).map { y =>
+                ESProxyConnector.deleteKnownFacts(r).map { y =>
                   Ok(y.body)
                 }
               case Right(e) => Future.successful(BadRequest(e.getMessage))

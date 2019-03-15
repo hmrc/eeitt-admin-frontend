@@ -32,12 +32,47 @@ object ESProxyConnector {
     override protected val runModeConfiguration = Play.current.configuration
   }
 
-  lazy val esProxyBaseUrl = s"${sc.baseUrl("enrolment-store-proxy")}/enrolment-store-proxy"
+  lazy val esProxyBaseUrl = s"${sc.baseUrl("enrolment-store-proxy")}/enrolment-store-proxy/enrolment-store"
+
+  private def knownFactsUrl(identifiers: List[Identifier]): String =
+    s"$esProxyBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+
+  private def groupUrl(groupId: String): String =
+    s"$esProxyBaseUrl/enrolments/$groupId/enrolments"
+
+  private def enrolmentUrl(groupId: String, identifiers: List[Identifier]) =
+    s"${groupUrl(groupId)}/${TaxEnrolment.enrolmentKey(identifiers)}"
+
+  // ES3
+  def queryEnrolments(groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.GET(groupUrl(groupId))
+
+  // ES6
+  def upsertKnownFacts(identifiers: List[Identifier], verifiers: List[Verifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.PUT[Verifiers, HttpResponse](knownFactsUrl(identifiers), Verifiers(verifiers))
+
+  // ES7
+  def deleteKnownFacts(
+    identifiers: List[Identifier])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.DELETE[HttpResponse](knownFactsUrl(identifiers))
+
+  // ES8
+  def addEnrolment(groupId: String, userId: String, identifiers: List[Identifier], verifiers: List[Verifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp
+      .POST(enrolmentUrl(groupId, identifiers), TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment"))
+
+  // ES9
+  def deallocateEnrolment(groupId: String, identifiers: List[Identifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.DELETE(enrolmentUrl(groupId, identifiers))
 
   // ES20
   def queryKnownFacts(knownFacts: List[KnownFact])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp
-      .POST[ServiceQuery, JsValue](
-        s"$esProxyBaseUrl/enrolment-store/enrolments",
-        ServiceQuery(TaxEnrolment.service, knownFacts))
+      .POST[ServiceQuery, JsValue](s"$esProxyBaseUrl/enrolments", ServiceQuery(TaxEnrolment.service, knownFacts))
 }

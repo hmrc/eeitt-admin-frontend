@@ -26,7 +26,7 @@ import play.api.libs.streams.Accumulator
 import play.api.mvc.{ Action, BodyParser, Request, RequestHeader }
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ ESProxyConnector, EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ ESProxyConnector, EeittConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -114,7 +114,7 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
   def queryEnrolments = Authentication.async(parse.json[MigrationDataQuery]) { implicit request =>
     val data: MigrationDataQuery = request.body
 
-    TaxEnrolmentsConnector
+    ESProxyConnector
       .queryEnrolments(data.groupId)
       .map { x =>
         Ok(x.toString)
