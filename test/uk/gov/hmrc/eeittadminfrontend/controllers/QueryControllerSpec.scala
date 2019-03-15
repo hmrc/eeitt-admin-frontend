@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with EnrolmentStoreProxyStubs {
 
   override def additionalConfiguration: Map[String, Any] =
-    Map("microservice.services.enrolment-store-proxy.port" -> wireMockPort) //TODO the ports should be different everytime wireMockPort is called...
+    Map("microservice.services.enrolment-store-proxy.port" -> wireMockPort)
 
   val queryController: QueryController = new QueryController(new FakeAuthConnector, messageApi)
 

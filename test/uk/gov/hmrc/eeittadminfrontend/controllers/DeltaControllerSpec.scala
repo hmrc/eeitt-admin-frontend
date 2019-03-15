@@ -30,7 +30,7 @@ class DeltaControllerSpec
 
   override def additionalConfiguration: Map[String, Any] =
     Map(
-      "microservice.services.user-details.port"          -> wireMockPort, //TODO the ports should be different everytime wireMockPort is called...
+      "microservice.services.user-details.port"          -> wireMockPort,
       "microservice.services.enrolment-store-proxy.port" -> wireMockPort
     )
 
