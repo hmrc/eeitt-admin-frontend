@@ -108,25 +108,11 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
 
   val securedActions = new SecuredActionsImpl(fakeApplication.configuration, null)
 
-  val appConfig = new AppConfig {
-    val analyticsToken: String = ""
-    val analyticsHost: String = ""
-    val reportAProblemPartialUrl: String = ""
-    val reportAProblemNonJSUrl: String = ""
-  }
-
-  val configuration: Configuration = Configuration.reference
-  val mode: Mode.Mode = Mode.Test
-  val env: Environment = Environment.simple(mode = mode)
-  val langs = new DefaultLangs(configuration)
-  val messageApi = new DefaultMessagesApi(env, configuration, langs)
-
   val authController = new AuthController(
     new FakeAuthConnector(),
     securedActions,
     new FakeAuthService,
     new FakeGoogleVerifier)(appConfig, messageApi)
-
   class FakeAuthService extends AuthService {
     override def checkUser(email: Email): Validated[LoginError, Unit] =
       if (email.value == "test@test.com") ().valid else LoginError("Test Error").invalid
@@ -140,12 +126,5 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
       } else {
         "invalidtest@test.com"
       }
-  }
-
-  class FakeAuthConnector extends AuthConnector {
-
-    override val serviceUrl: String = ""
-
-    override val http = WSHttp
   }
 }

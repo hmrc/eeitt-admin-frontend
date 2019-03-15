@@ -19,12 +19,12 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
-import play.api.libs.streams.Accumulator
-import play.api.mvc.{ Action, BodyParser, Request, RequestHeader }
+import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ Arn, GroupId, Regime, RegistrationNumber }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, TaxEnrolmentsConnector }
+import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
@@ -32,6 +32,21 @@ import scala.concurrent.Future
 
 class QueryController(val authConnector: AuthConnector, val messagesApi: MessagesApi)(implicit appConfig: AppConfig)
     extends FrontendController {
+
+  def queryEnrolments = Authentication.async { implicit request =>
+    val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
+
+    val data: MigrationDataQuery =
+      body.asOpt[MigrationDataQuery].getOrElse(throw new BadRequestException("invalid data provided"))
+
+    TaxEnrolmentsConnector
+      .queryEnrolments(data.groupId)
+      .map {
+        case Some(data) => Ok(data)
+        case None       => NoContent
+      }
+      .recover { case e: Exception => InternalServerError(e.getMessage) }
+  }
 
   def getAllBusinessUsers() = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token").get} got all etmp business users")
@@ -85,5 +100,4 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
           }
       }
     }
-
 }

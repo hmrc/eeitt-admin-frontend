@@ -30,10 +30,13 @@ POST       /bulkload/knownfacts      uk.gov.hmrc.eeittadminfrontend.controllers.
 
 POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
 POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
-POST       /delta/enrolment/add      uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.abc
 
 POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
-GET        /assets/*file            controllers.Assets.at(path = "/public", file)
+POST        /delta/enrolment/add-enrol            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addFactsEnrol
+POST        /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addEnrol
+DELETE      /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.deleteEnrolment
+GET         /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryEnrolments
 
+GET        /assets/*file            controllers.Assets.at(path = "/public", file)

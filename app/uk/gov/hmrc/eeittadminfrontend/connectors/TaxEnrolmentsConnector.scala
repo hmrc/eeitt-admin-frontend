@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Play
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
@@ -34,6 +35,13 @@ object TaxEnrolmentsConnector {
   lazy val taxEnrolmentsBaseUrl = s"${sc.baseUrl("tax-enrolments")}/tax-enrolments"
   private def url(identifiers: List[Identifier]): String =
     s"$taxEnrolmentsBaseUrl/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+
+  // ES3
+  def queryEnrolments(groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[JsValue]] =
+    WSHttp.GET(s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments").map {
+      case response if response.status == 200 => Some(response.json)
+      case response if response.status == 204 => None
+    }
 
   // ES6
   def upsertKnownFacts(identifiers: List[Identifier], verifiers: List[Verifier])(
@@ -53,5 +61,13 @@ object TaxEnrolmentsConnector {
     WSHttp.POST(
       s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
       TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
+    )
+
+  // ES9
+  def deallocateEnrolment(groupId: String, identifiers: List[Identifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.DELETE(
+      s"$taxEnrolmentsBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
     )
 }

@@ -20,8 +20,10 @@ import java.io.File
 
 import org.scalatest.TestSuite
 import org.scalatestplus.play.{ FakeApplicationFactory, OneAppPerSuite }
+import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
 import play.api.{ Configuration, Environment, Mode }
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 trait ApplicationComponentsOnePerSuite extends OneAppPerSuite with FakeApplicationFactory with WireMockSupport {
   this: TestSuite =>
@@ -32,6 +34,8 @@ trait ApplicationComponentsOnePerSuite extends OneAppPerSuite with FakeApplicati
 
   private lazy val config = Configuration.from(additionalConfiguration)
 
+  protected implicit val materializer = app.materializer
+
   override lazy val fakeApplication =
     new ApplicationLoader().load(context.copy(initialConfiguration = context.initialConfiguration ++ config))
 
@@ -39,5 +43,23 @@ trait ApplicationComponentsOnePerSuite extends OneAppPerSuite with FakeApplicati
     val classLoader = play.api.ApplicationLoader.getClass.getClassLoader
     val env = new Environment(new File("."), classLoader, Mode.Test)
     play.api.ApplicationLoader.createContext(env)
+  }
+
+  val configuration: Configuration = Configuration.reference
+  val mode: Mode.Mode = Mode.Test
+  val env: Environment = Environment.simple(mode = mode)
+  val langs = new DefaultLangs(configuration)
+
+  implicit val messageApi = new DefaultMessagesApi(env, configuration, langs)
+  implicit val appConfig = new AppConfig {
+    val analyticsToken: String = ""
+    val analyticsHost: String = ""
+    val reportAProblemPartialUrl: String = ""
+    val reportAProblemNonJSUrl: String = ""
+  }
+
+  class FakeAuthConnector extends AuthConnector {
+    override val serviceUrl: String = ""
+    override val http = WSHttp
   }
 }

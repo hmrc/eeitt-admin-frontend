@@ -16,15 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
 import play.api.libs.json.Json
+import play.api.mvc.Call
 import play.api.test.FakeRequest
-import play.api.{ Configuration, Environment, Mode }
-import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, Verifier }
+import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
+import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, MigrationData, MigrationDataDeallocate, Verifier }
 import uk.gov.hmrc.eeittadminfrontend.stubs.{ TaxEnrolmentStubs, UserDetailsStubs }
-import uk.gov.hmrc.eeittadminfrontend.{ AppConfig, ApplicationComponentsOnePerSuite, WSHttp }
 import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.UnitSpec
 
 class DeltaControllerSpec
@@ -36,30 +34,202 @@ class DeltaControllerSpec
       "microservice.services.tax-enrolments.port" -> wireMockPort
     )
 
-  val validDetailsForEnrolment = MigrationData(
-    "validGroupId",
-    identifiers = List(Identifier("someKey", "someValue")),
-    verifiers = List(Verifier("someKey", "someValue")))
+  val deltaController = new DeltaController(new FakeAuthConnector)
 
-  "create enrolment for groupId" should {
+  val validGroupId = "validGroupId"
+  val identifiers = List(Identifier("someKey", "someValue"))
+  val verifiers = List(Verifier("someKey", "someValue"))
+
+  val validMigrationData = MigrationData(validGroupId, identifiers, verifiers)
+  val validMigrationDataDeallocate = MigrationDataDeallocate(validGroupId, identifiers)
+
+  "deleteKnownFacts" should {
+    "200 successfully remove knownFacts" in {
+      val request = FakeRequest()
+        .withSession("token" -> "someGoogleAuthenticationToken")
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      deleteEs7DeallocateEnrolment(identifiers, 204)
+
+      val result = await(deltaController.deleteKnownFacts()(request))
+      status(result) shouldBe 200
+    }
+
+    "303 unauthorised" in {
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("csrfToken", "someCsrfToken"), ("identifiers", Json.toJson(identifiers).toString()))
+
+      val result = await(deltaController.deleteKnownFacts()(request))
+      status(result) shouldBe 303
+      result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
+    }
+
+    "400 bad input" in {
+      val request = FakeRequest()
+        .withSession("token"                          -> "someGoogleAuthenticationToken")
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      val result = await(deltaController.deleteKnownFacts()(request))
+      status(result) shouldBe 400
+    }
+
+    "500 request to delete knownFacts fails due to 404" in {
+      val request = FakeRequest()
+        .withSession("token" -> "someGoogleAuthenticationToken")
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      deleteEs7DeallocateEnrolment(identifiers, 404)
+
+      val result = await(deltaController.deleteKnownFacts()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 request to delete knownFacts fails due to 500" in {
+      val request = FakeRequest()
+        .withSession("token" -> "someGoogleAuthenticationToken")
+        .withFormUrlEncodedBody(("identifiers", Json.toJson(identifiers).toString()))
+        .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+
+      deleteEs7DeallocateEnrolment(identifiers, 500)
+
+      val result = await(deltaController.deleteKnownFacts()(request))
+      status(result) shouldBe 500
+    }
+  }
+
+  "deleteEnrolment" should {
+    "200 successfully deallocate enrolment" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      postEs9deallocateEnrolment(validGroupId, identifiers, 204)
+
+      val result = await(deltaController.deleteEnrolment().apply(request))
+      status(result) shouldBe 200
+    }
+
+    "303 unauthorised" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+
+      val result = await(deltaController.deleteEnrolment().apply(request))
+      status(result) shouldBe 303
+      result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
+    }
+
+    "500 fail when tax-enrolments returns 404 deallocate enrolment" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      postEs9deallocateEnrolment(validGroupId, identifiers, 404)
+
+      val result = await(deltaController.deleteEnrolment().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 fail when tax-enrolments returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      postEs9deallocateEnrolment(validGroupId, identifiers, 500)
+
+      val result = await(deltaController.deleteEnrolment().apply(request))
+      status(result) shouldBe 500
+    }
+  }
+
+  "addEnrol get prerequisite data from user-details & assign enrolment" should {
+    "200 successfully assign enrolment" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 201)
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 200
+    }
+
+    "303 user unauthorised" in {
+      val request = FakeRequest().withJsonBody(Json.toJson(validMigrationData))
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 303
+      result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
+    }
+
+    "500 when user-details returns 404 failing to obtain user-details" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetails(validMigrationData.groupId, 404)
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when user-details returns 500 failing to obtain user-details" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetails(validMigrationData.groupId, 500)
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 404)
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when tax-enrolments returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 500)
+
+      val result = await(deltaController.addEnrol().apply(request))
+      status(result) shouldBe 500
+    }
+  }
+
+  "addFactsEnrol get prerequisite data from user-details, es6 add known-facts, es8 allocate enrolment" should {
 
     "200 successfully created enrolment for groupId with identifiers & verifiers provided" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 204)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 201)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 200
     }
 
     "303 authentication token is missing" in {
-      val request = FakeRequest().withJsonBody(Json.toJson(validDetailsForEnrolment)) //"token" in session is missing
+      val request = FakeRequest().withJsonBody(Json.toJson(validMigrationData)) //"token" in session is missing
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 303
       result.header.headers.get("Location") shouldBe Some("/eeitt-admin-frontend/login")
     }
@@ -69,138 +239,120 @@ class DeltaControllerSpec
       val request =
         FakeRequest().withJsonBody(Json.toJson(badBody)).withSession("token" -> "someGoogleAuthenticationToken")
 
-      an[BadRequestException] shouldBe thrownBy(await(deltaController.abc().apply(request)))
+      an[BadRequestException] shouldBe thrownBy(await(deltaController.addFactsEnrol().apply(request)))
     }
 
     "500 when userDetails returns 404" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetails(validDetailsForEnrolment.groupId, 404)
+      givenUserDetails(validMigrationData.groupId, 404)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when userDetails returns 400" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetails(validDetailsForEnrolment.groupId, 400)
+      givenUserDetails(validMigrationData.groupId, 400)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when userDetails returns 500" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetails(validDetailsForEnrolment.groupId, 500)
+      givenUserDetails(validMigrationData.groupId, 500)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es6 returns 400" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 400)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 400)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 201)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es6 returns 404" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 404)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 404)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 201)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es6 returns 500" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 500)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 201)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 500)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 201)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es8 returns 400" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 400)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 204)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 400)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es8 returns 404" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 404)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 204)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 404)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
 
     "500 when tax-enrolments es8 returns 500" in {
       val request = FakeRequest()
-        .withJsonBody(Json.toJson(validDetailsForEnrolment))
+        .withJsonBody(Json.toJson(validMigrationData))
         .withSession("token" -> "someGoogleAuthenticationToken")
 
-      givenUserDetailsWithResponseBody(validDetailsForEnrolment.groupId)
-      putes6upsertKnownFacts(validDetailsForEnrolment.identifiers, 204)
-      postEs8allocateEnrolment(validDetailsForEnrolment.groupId, validDetailsForEnrolment.identifiers, 500)
+      givenUserDetailsWithResponseBody(validMigrationData.groupId)
+      putEs6upsertKnownFacts(validMigrationData.identifiers, 204)
+      postEs8allocateEnrolment(validMigrationData.groupId, validMigrationData.identifiers, 500)
 
-      val result = await(deltaController.abc().apply(request))
+      val result = await(deltaController.addFactsEnrol().apply(request))
       status(result) shouldBe 500
     }
   }
 
-  val configuration: Configuration = Configuration.reference
-  val mode: Mode.Mode = Mode.Test
-  val env: Environment = Environment.simple(mode = mode)
-  val langs = new DefaultLangs(configuration)
-
-  implicit val messageApi = new DefaultMessagesApi(env, configuration, langs)
-  implicit val appConfig = new AppConfig {
-    val analyticsToken: String = ""
-    val analyticsHost: String = ""
-    val reportAProblemPartialUrl: String = ""
-    val reportAProblemNonJSUrl: String = ""
-  }
-
-  class FakeAuthConnector extends AuthConnector {
-    override val serviceUrl: String = ""
-    override val http = WSHttp
-  }
-
-  val deltaController = new DeltaController(new FakeAuthConnector)
+  def testAuthorised(action: Call): Unit = {}
 }

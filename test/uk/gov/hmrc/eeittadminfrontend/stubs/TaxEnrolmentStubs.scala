@@ -23,18 +23,53 @@ import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
 trait TaxEnrolmentStubs {
   me: WireMockSupport =>
 
-  def putes6upsertKnownFacts(identifierInput: List[Identifier], status: Int) =
+  def get200Es3queryEnrolments(groupId: String): Unit =
     stubFor(
-      put(urlEqualTo(pathEs6(identifierInput)))
+      get(urlEqualTo(pathEs3(groupId)))
+        .willReturn(okJson("""{
+                             |    "service":"IR-SA",
+                             |    "enrolmentDate":"2018-10-05 14:42:00",
+                             |    "status":"Activated",
+                             |    "friendlyName":"Onizukas Self Assessment",
+                             |    "identifiers": [
+                             |          {
+                             |            "key": "UTR",
+                             |            "value": "1713501890"
+                             |          }
+                             |    ]
+                             |}""".stripMargin)))
+
+  def getEs3queryEnrolments(groupId: String, status: Int) =
+    stubFor(
+      get(urlEqualTo(pathEs3(groupId)))
+        .willReturn(aResponse().withStatus(status)))
+
+  def deleteEs7DeallocateEnrolment(identifiers: List[Identifier], status: Int) =
+    stubFor(
+      delete(urlEqualTo(pathEs6Es7(identifiers)))
+        .willReturn(aResponse().withStatus(status)))
+
+  def putEs6upsertKnownFacts(identifierInput: List[Identifier], status: Int) =
+    stubFor(
+      put(urlEqualTo(pathEs6Es7(identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
   def postEs8allocateEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
     stubFor(
-      post(urlEqualTo(pathEs8(groupId, identifierInput)))
+      post(urlEqualTo(pathEs8Es9(groupId, identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
-  private def pathEs6(identifiers: List[Identifier]): String =
+  def postEs9deallocateEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
+    stubFor(
+      delete(urlEqualTo(pathEs8Es9(groupId, identifierInput)))
+        .willReturn(aResponse().withStatus(status)))
+
+  private def pathEs3(groupId: String): String =
+    s"/tax-enrolments/groups/$groupId/enrolments"
+
+  private def pathEs6Es7(identifiers: List[Identifier]): String =
     s"/tax-enrolments/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
-  private def pathEs8(groupId: String, identifiers: List[Identifier]): String =
+
+  private def pathEs8Es9(groupId: String, identifiers: List[Identifier]): String =
     s"/tax-enrolments/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 }
