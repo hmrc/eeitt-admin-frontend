@@ -19,11 +19,11 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
-import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.connectors.EeittConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ DeltaAgent, DeltaBusiness, ETMPAgent, ETMPBusiness }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector, UserDetailsConnector }
+import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -37,6 +37,91 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
     Logger.info(s"${request.session.get("token")} went to Deltas Page")
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
+
+  def addFactsEnrol = Authentication.async { implicit request =>
+    val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
+
+    val data: MigrationData =
+      body.asOpt[MigrationData].getOrElse(throw new BadRequestException("invalid data provided"))
+
+    (for {
+      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+      es6CreateVerifiers <- EnrolmentStoreProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
+      es8AssignEnrolment <- EnrolmentStoreProxyConnector
+                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+    } yield Ok).recover {
+      case e: Exception => InternalServerError(e.getMessage)
+    }
+  }
+
+  def addEnrol = Authentication.async { implicit request =>
+    val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
+
+    val data: MigrationData =
+      body.asOpt[MigrationData].getOrElse(throw new BadRequestException("invalid data provided"))
+
+    (for {
+      userDetails <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+      es8AssignEnrolment <- EnrolmentStoreProxyConnector
+                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+    } yield (Ok)).recover { case e: Exception => InternalServerError(e.getMessage) }
+  }
+
+  def deleteEnrolment = Authentication.async { implicit request =>
+    val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
+
+    val data: MigrationDataDeallocate =
+      body.asOpt[MigrationDataDeallocate].getOrElse(throw new BadRequestException("invalid data provided"))
+
+    EnrolmentStoreProxyConnector
+      .deallocateEnrolment(data.groupId, data.identifiers)
+      .map { x =>
+        Ok(x.toString)
+      }
+      .recover { case e: Exception => InternalServerError(e.getMessage) }
+  }
+
+  def deleteKnownFacts() = Authentication.async { implicit request =>
+    DeleteKnownFactsRequest.deleteKnownFactsRequestForm
+      .bindFromRequest()
+      .fold(
+        formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.delta())),
+        deleteRequest => {
+          deleteRequest.request match {
+            case Left(r) =>
+              EnrolmentStoreProxyConnector.deleteKnownFacts(r).map { response =>
+                Ok(response.body)
+              }
+            case Right(e) => Future.successful(BadRequest(e.getMessage))
+          }
+        }
+      )
+      .recover { case e: Exception => InternalServerError(e.getMessage) }
+  }
+
+  def upsertKnownFacts() =
+    Authentication.async { implicit request =>
+      UpsertKnownFactsRequest.upsertKnownFactsRequestForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
+          },
+          upsertRequest => {
+            upsertRequest.request match {
+              case Left(upsertReq) =>
+                EnrolmentStoreProxyConnector
+                  .upsertKnownFacts(upsertReq.identifiers, upsertReq.verifiers)
+                  .map { response =>
+                    Ok(response.body)
+                  }
+              case Right(e) =>
+                Future.successful(BadRequest(e.getMessage))
+            }
+          }
+        )
+        .recover { case e: Exception => InternalServerError(e.getMessage) }
+    }
 
   def agent() =
     delta[DeltaAgent]
@@ -56,5 +141,4 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
           Future.successful(BadRequest(err.toString))
       }
     }
-
 }

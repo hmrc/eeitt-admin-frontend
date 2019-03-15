@@ -9,7 +9,7 @@ POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
+POST        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
 GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 
@@ -34,5 +34,12 @@ POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /bulk/gg/load/delete      uk.gov.hmrc.eeittadminfrontend.controllers.BulkGGLoad.deleteEndPoint
 GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
 
-GET        /assets/*file            controllers.Assets.at(path = "/public", file)
+POST        /delta/known-facts/upsert             uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.upsertKnownFacts
+POST        /delta/enrolment/add-enrol            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addFactsEnrol
+POST        /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addEnrol
+DELETE      /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.deleteEnrolment
 
+GET         /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryEnrolments
+POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryKnownFacts
+
+GET        /assets/*file            controllers.Assets.at(path = "/public", file)
