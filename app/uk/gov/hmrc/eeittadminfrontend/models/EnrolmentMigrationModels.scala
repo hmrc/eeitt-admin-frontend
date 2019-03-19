@@ -70,6 +70,14 @@ object TaxEnrolmentRequest {
     mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
 }
 
+case class AllEnrolmentRequest(regimeId: String)
+
+object AllEnrolmentRequest {
+  val allEnrolmentsForm: Form[AllEnrolmentRequest] = Form(
+    mapping("regimeId" -> text)(AllEnrolmentRequest.apply)(AllEnrolmentRequest.unapply)
+  )
+}
+
 case class UpsertRequest(identifiers: List[Identifier], verifiers: List[Verifier])
 
 object UpsertRequest {
