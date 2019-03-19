@@ -22,6 +22,8 @@ POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
 GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
 GET        /agents-enrollments/all   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgentEnrollments
+GET        /agents-enrollments/all-enrolments   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllEnrollmentAgents
+GET        /business-users/all-enrolments  uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllEnrollments
 
 POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
 POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business

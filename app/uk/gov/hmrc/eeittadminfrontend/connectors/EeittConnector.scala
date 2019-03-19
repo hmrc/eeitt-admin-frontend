@@ -56,6 +56,12 @@ object EeittConnector {
   def getAllAgentEnrollments(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](eeittUrl + "/agents-all")
 
+  def getAllEnrolmentsAgents(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    WSHttp.GET[JsValue](eeittUrl + "/agent-enrollment-all")
+
+  def getAllEnrolments(regimeID: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    WSHttp.GET[JsValue](eeittUrl + "/business-user/regime/" + regimeID)
+
   private def postEEITTConnector[A <: Deltas: Format](): EeittConnector[A] = new EeittConnector[A] {
     override protected def mode = InjectionDodge.mode
     override protected val runModeConfiguration = InjectionDodge.runModeConfiguration

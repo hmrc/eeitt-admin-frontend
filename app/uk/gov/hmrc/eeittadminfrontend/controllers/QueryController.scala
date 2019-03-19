@@ -89,6 +89,25 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     EeittConnector.getAllAgentEnrollments.map(x => Ok(x))
   }
 
+  def getAllEnrollmentAgents() = Authentication.async { implicit request =>
+    Logger.info(s"${request.session.get("token").get} got all enrolmengts agent")
+    EeittConnector.getAllEnrolmentsAgents.map(x => Ok(x))
+  }
+
+  def getAllEnrollments() = Authentication.async { implicit request =>
+    AllEnrolmentRequest.allEnrolmentsForm
+      .bindFromRequest()
+      .fold(
+        formWithErrors => {
+          Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))
+        },
+        getRequest => {
+          Logger.info(s"${request.session.get("token").get} got all enrollments for ${getRequest.regimeId}")
+          EeittConnector.getAllEnrolments(getRequest.regimeId).map(x => Ok(x))
+        }
+      )
+  }
+
   def goToQuery = Authentication.async { implicit request =>
     Logger.info(s"${request.session.get("token")} went to Query Page")
     Future

@@ -120,6 +120,41 @@
       <input type="submit" class="button" value="Get All Agents"/>
     </div>
 
+
   </form>
+
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllEnrollmentAgents">
+
+        @CSRF.formField
+
+        <div class="form-group">
+            <input type="submit" class="button" value="Get All Enrolment Agents"/>
+        </div>
+
+
+    </form>
+
+    <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.getAllEnrollments">
+
+        @CSRF.formField
+
+        <div class="form-group">
+            <input
+            name="regimeId"
+            id="regimeId"
+            value=""
+            class="form-control form-control--block"
+            />
+        </div>
+
+
+        <div class="form-group">
+            <input type="submit" class="button" value="Get All Enrolment"/>
+        </div>
+
+
+    </form>
+
+
 
 }
