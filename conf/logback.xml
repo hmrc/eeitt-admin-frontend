@@ -58,7 +58,7 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="play.core.netty.utils.ServerCookieDecoder" level="ERROR" >
+    <logger name="play.core.netty.utils.ServerCookieDecoder" level="INFO" >
         <appender-ref ref="STDOUT" />
     </logger>
     <root level="DEBUG">
