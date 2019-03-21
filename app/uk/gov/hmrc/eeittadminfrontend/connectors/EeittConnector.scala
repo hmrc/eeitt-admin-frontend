@@ -31,7 +31,7 @@ trait EeittConnector[A] extends ServicesConfig {
   val httpGet: HttpGet = WSHttp
   val httpPost: HttpPost = WSHttp
 
-  val eeittUrl: String = baseUrl("eeitt") + "/eeitt"
+  lazy val eeittUrl: String = baseUrl("eeitt") + "/eeitt"
 
   def apply(a: A)(
     implicit hc: HeaderCarrier,
