@@ -24,7 +24,7 @@ trait UserDetailsStubs {
 
   def givenUserDetailsWithResponseBody(groupId: String): Unit =
     stubFor(
-      get(urlEqualTo(s"/group-identifier/$groupId"))
+      get(urlEqualTo(s"/user-details/group-identifier/$groupId"))
         .willReturn(okJson("""[
                       {"gatewayId":"3494280737743238",
                       "authProviderId":"3494280737743238",
@@ -38,6 +38,6 @@ trait UserDetailsStubs {
 
   def givenUserDetails(groupId: String, status: Int): Unit =
     stubFor(
-      get(urlEqualTo(s"/group-identifier/$groupId"))
+      get(urlEqualTo(s"/user-details/group-identifier/$groupId"))
         .willReturn(aResponse().withStatus(status)))
 }
