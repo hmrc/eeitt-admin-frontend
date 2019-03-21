@@ -4,6 +4,7 @@ GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
 POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
 GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
+GET        /reload-templates         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
 GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
 POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate

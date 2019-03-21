@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import play.api.Play
-import play.api.libs.json.JsValue
+import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -33,17 +32,40 @@ object GformConnector {
   }
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
-  def getGformsTemplate(formTypeId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    WSHttp.GET[JsValue](gformUrl + s"/formtemplates/$formTypeId")
+  def getGformsTemplate(
+    formTemplateId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
+    WSHttp
+      .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
+      .map { response =>
+        if (response.status == 200) Right(response.json) else Left(response.body.toString)
+      }
+      .recover {
+        case ex =>
+          Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
+      }
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    WSHttp.GET[JsValue](gformUrl + "/formtemplates")
+    WSHttp.GET[JsArray](gformUrl + "/formtemplates")
 
   def getAllSchema(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsValue](gformUrl + "/schemas")
 
-  def saveTemplate(gformTemplate: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.POST[JsValue, HttpResponse](gformUrl + "/formtemplates", gformTemplate)
+  def saveTemplate(
+    gformTemplate: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
+    WSHttp
+      .doPost[JsValue](gformUrl + "/formtemplates", gformTemplate, List.empty[(String, String)])
+      .map { response =>
+        if (response.status == 204) { // Results.NoContent
+          Right(())
+        } else {
+          Left(response.json.toString)
+        }
+      }
+      .recover {
+        case ex =>
+          val formTemplateId = (gformTemplate \ "_id")
+          Left(s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage)
+      }
 
   def deleteTemplate(
     formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =

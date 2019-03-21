@@ -16,7 +16,8 @@ object FrontendBuild extends Build with MicroService {
     "com.google.gdata" % "core" % "1.47.1",
     "com.google.apis" % "google-api-services-oauth2" % "v2-rev141-1.25.0",
     "org.typelevel" %% "cats-core" % "1.6.0",
-    "com.google.api-client" % "google-api-client" % "1.28.0"
+    "com.google.api-client" % "google-api-client" % "1.28.0",
+    "org.julienrf" %% "play-json-derived-codecs" % "3.3"
   )
 
   def test(scope: String = "test") = Seq(
