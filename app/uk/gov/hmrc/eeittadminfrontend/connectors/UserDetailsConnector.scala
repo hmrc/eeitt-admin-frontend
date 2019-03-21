@@ -32,7 +32,7 @@ object UserDetailsConnector {
 
   def userIdbyGroupId(groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] =
     WSHttp
-      .GET[HttpResponse](s"${sc.baseUrl("user-details")}/group-identifier/$groupId")
+      .GET[HttpResponse](s"${sc.baseUrl("user-details")}/user-details/group-identifier/$groupId")
       .map { response =>
         (response.json.as[JsArray].head.get \ "gatewayId").as[String]
       }
