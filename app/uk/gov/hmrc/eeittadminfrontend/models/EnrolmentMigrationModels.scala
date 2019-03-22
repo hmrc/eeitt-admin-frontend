@@ -109,3 +109,9 @@ object UpsertKnownFactsRequest {
   val upsertKnownFactsRequestForm: Form[UpsertKnownFactsRequest] = Form(
     mapping("identifiersverifiers" -> text)(UpsertKnownFactsRequest.apply)(UpsertKnownFactsRequest.toStrings))
 }
+
+case class UserDetailsData(credentialRole: String, gatewayId: String)
+
+object UserDetailsData {
+  implicit val format: Format[UserDetailsData] = json.Json.format[UserDetailsData]
+}
