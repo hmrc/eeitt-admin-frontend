@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import play.api.Play
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.UserDetailsData
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse, InternalServerException }
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
