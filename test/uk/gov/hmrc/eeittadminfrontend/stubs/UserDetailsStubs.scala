@@ -26,14 +26,22 @@ trait UserDetailsStubs {
     stubFor(
       get(urlEqualTo(s"/user-details/group-identifier/$groupId"))
         .willReturn(okJson("""[
-                      {"gatewayId":"3494280737743238",
+                      {"gatewayId":"3494280737743231",
                       "authProviderId":"3494280737743238",
                       "authProviderType":"GovernmentGateway",
                       "name":"firstName",
                       "email":"someEmail@email.com",
                       "affinityGroup":"Organisation",
-                      "credentialRole":"User",
-                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"}]
+                      "credentialRole":"Assistant",
+                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"},
+                      {"gatewayId":"3494280737743238",
+                             |                      "authProviderId":"3494280737743238",
+                             |                      "authProviderType":"GovernmentGateway",
+                             |                      "name":"firstName",
+                             |                      "email":"someEmail@email.com",
+                             |                      "affinityGroup":"Organisation",
+                             |                      "credentialRole":"User",
+                             |                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"}]
                            """.stripMargin)))
 
   def givenUserDetails(groupId: String, status: Int): Unit =

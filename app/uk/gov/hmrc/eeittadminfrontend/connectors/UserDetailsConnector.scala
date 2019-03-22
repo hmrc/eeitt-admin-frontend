@@ -17,8 +17,8 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.Play
-import play.api.libs.json.{ JsArray, JsValue, Json }
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
+import uk.gov.hmrc.eeittadminfrontend.models.UserDetailsData
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.config.ServicesConfig
 
@@ -34,6 +34,7 @@ object UserDetailsConnector {
     WSHttp
       .GET[HttpResponse](s"${sc.baseUrl("user-details")}/user-details/group-identifier/$groupId")
       .map { response =>
-        (response.json.as[JsArray].head.get \ "gatewayId").as[String]
+        val a = response.json.as[List[UserDetailsData]].filterNot(_.credentialRole != "User")
+        a.head.gatewayId
       }
 }

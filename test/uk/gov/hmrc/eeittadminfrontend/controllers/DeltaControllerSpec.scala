@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.libs.json.{ JsArray, Json }
+import play.api.libs.json.Json
 import play.api.mvc.Call
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
