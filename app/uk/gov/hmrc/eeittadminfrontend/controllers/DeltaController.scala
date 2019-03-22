@@ -46,9 +46,9 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       es6CreateVerifiers <- EnrolmentStoreProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
-      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-      es8AssignEnrolment <- EnrolmentStoreProxyConnector
-                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+//      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+//      es8AssignEnrolment <- EnrolmentStoreProxyConnector
+//                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield Ok)
       .recover {
         case known: FailedDependencyException => NotImplemented
