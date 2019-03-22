@@ -20,7 +20,7 @@ import play.api.Play
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http.{ FailedDependencyException, HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -47,7 +47,12 @@ object EnrolmentStoreProxyConnector {
   def upsertKnownFacts(identifiers: List[Identifier], verifiers: List[Verifier])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.PUT[Verifiers, HttpResponse](url(identifiers), Verifiers(verifiers))
+    WSHttp
+      .PUT[Verifiers, HttpResponse](url(identifiers), Verifiers(verifiers))
+      .recover {
+        case e =>
+          throw new FailedDependencyException("adding known facts has failed, it is a requirement for an enrolment")
+      }
 
   // ES7
   def deleteKnownFacts(
@@ -58,10 +63,11 @@ object EnrolmentStoreProxyConnector {
   def addEnrolment(groupId: String, userId: String, identifiers: List[Identifier], verifiers: List[Verifier])(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.POST(
-      s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
-      TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
-    )
+    WSHttp
+      .POST(
+        s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
+        TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
+      )
 
   // ES9
   def deallocateEnrolment(groupId: String, identifiers: List[Identifier])(

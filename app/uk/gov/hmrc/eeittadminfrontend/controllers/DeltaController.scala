@@ -23,7 +23,7 @@ import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector, UserDetailsConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.http.{ BadRequestException, FailedDependencyException }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -45,13 +45,15 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
       body.asOpt[MigrationData].getOrElse(throw new BadRequestException("invalid data provided"))
 
     (for {
-      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
       es6CreateVerifiers <- EnrolmentStoreProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
+      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
       es8AssignEnrolment <- EnrolmentStoreProxyConnector
                              .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
-    } yield Ok).recover {
-      case e: Exception => InternalServerError(e.getMessage)
-    }
+    } yield Ok)
+      .recover {
+        case known: FailedDependencyException => NotImplemented
+        case e: Exception                     => InternalServerError(e.getMessage)
+      }
   }
 
   def addEnrol = Authentication.async { implicit request =>
