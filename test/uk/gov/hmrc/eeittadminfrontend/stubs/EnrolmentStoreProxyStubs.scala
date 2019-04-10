@@ -17,10 +17,11 @@
 package uk.gov.hmrc.eeittadminfrontend.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import org.scalatest.concurrent.Eventually
 import uk.gov.hmrc.eeittadminfrontend.models.{ Identifier, TaxEnrolment }
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
 
-trait EnrolmentStoreProxyStubs {
+trait EnrolmentStoreProxyStubs extends Eventually {
   me: WireMockSupport =>
 
   def get200Es3queryEnrolments(groupId: String): Unit =
@@ -54,7 +55,7 @@ trait EnrolmentStoreProxyStubs {
       put(urlEqualTo(pathEs6Es7(identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
-  def postEs8allocateEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
+  def postEs8addEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
     stubFor(
       post(urlEqualTo(pathEs8Es9(groupId, identifierInput)))
         .willReturn(aResponse().withStatus(status)))
@@ -62,6 +63,11 @@ trait EnrolmentStoreProxyStubs {
   def postEs9deallocateEnrolment(groupId: String, identifierInput: List[Identifier], status: Int): Unit =
     stubFor(
       delete(urlEqualTo(pathEs8Es9(groupId, identifierInput)))
+        .willReturn(aResponse().withStatus(status)))
+
+  def postEs11allocateEnrolment(userId: String, identifierInput: List[Identifier], status: Int): Unit =
+    stubFor(
+      post(urlEqualTo(pathEs11(userId, identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
   def get200Es20queryKnownFacts: Unit =
@@ -99,6 +105,14 @@ trait EnrolmentStoreProxyStubs {
   private def pathEs8Es9(groupId: String, identifiers: List[Identifier]): String =
     s"/enrolment-store-proxy/enrolment-store/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
 
+  private def pathEs11(userId: String, identifiers: List[Identifier]): String =
+    s"/enrolment-store-proxy/enrolment-store/users/$userId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
+
   private def pathEs20: String =
     s"/enrolment-store-proxy/enrolment-store/enrolments"
+
+  def verifyEs11Called(count: Int, userId: String, identifiers: List[Identifier]): Unit =
+    eventually {
+      verify(count, postRequestedFor(urlPathEqualTo(pathEs11(userId, identifiers))))
+    }
 }

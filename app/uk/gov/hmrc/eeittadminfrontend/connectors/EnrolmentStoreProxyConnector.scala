@@ -77,6 +77,16 @@ object EnrolmentStoreProxyConnector {
       s"$enrolmentStoreProxyBaseUrl/groups/$groupId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}"
     )
 
+  // ES11
+  def allocateEnrolmentForUser(userId: String, identifiers: List[Identifier], verifiers: List[Verifier])(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp
+      .POST(
+        s"$enrolmentStoreProxyBaseUrl/users/$userId/enrolments/${TaxEnrolment.enrolmentKey(identifiers)}",
+        TaxEnrolmentPayload(verifiers, "principal", userId, "gform-enrolment")
+      )
+
   // ES20
   def queryKnownFacts(knownFacts: List[KnownFact])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.POST[ServiceQuery, JsValue](

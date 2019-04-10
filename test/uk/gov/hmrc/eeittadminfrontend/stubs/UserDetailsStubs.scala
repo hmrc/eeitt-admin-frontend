@@ -34,13 +34,21 @@ trait UserDetailsStubs {
                       "affinityGroup":"Organisation",
                       "credentialRole":"Assistant",
                       "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"},
-                      {"gatewayId":"3494280737743238",
+                                                    {"gatewayId":"3494280737743238",
                              |                      "authProviderId":"3494280737743238",
                              |                      "authProviderType":"GovernmentGateway",
                              |                      "name":"firstName",
                              |                      "email":"someEmail@email.com",
                              |                      "affinityGroup":"Organisation",
                              |                      "credentialRole":"User",
+                             |                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"},
+                        {"gatewayId":"3494280737743211",
+                             |                      "authProviderId":"3494280737743211",
+                             |                      "authProviderType":"GovernmentGateway",
+                             |                      "name":"firstName",
+                             |                      "email":"someEmail@email.com",
+                             |                      "affinityGroup":"Organisation",
+                             |                      "credentialRole":"Assistant",
                              |                      "groupIdentifier":"5822AFAC-B986-423B-B6B5-2FBC5A8627BE"}]
                            """.stripMargin)))
 

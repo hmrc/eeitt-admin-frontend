@@ -38,6 +38,25 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
 
+  def allocateEnrolmentToUsers = Authentication.async { implicit request =>
+    val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
+
+    val data: MigrationData =
+      body.asOpt[MigrationData].getOrElse(throw new BadRequestException("invalid data provided"))
+
+    (for {
+      userIds: List[String] <- UserDetailsConnector.userIdsByGroupIdNotHeadAdmin(data.groupId)
+      assignPerUserId <- Future.sequence(userIds.map { id =>
+                          EnrolmentStoreProxyConnector.allocateEnrolmentForUser(id, data.identifiers, data.verifiers)
+                        })
+
+    } yield Ok).recover {
+      case e: Exception =>
+        InternalServerError(
+          e.getMessage + "if es11 called, it would be executed for all obtained userIds except for user where credentialRole == User")
+    }
+  }
+
   def addFactsEnrol = Authentication.async { implicit request =>
     val body = request.body.asJson.getOrElse(throw new BadRequestException("bad json"))
 
@@ -46,9 +65,9 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
 
     (for {
       es6CreateVerifiers <- EnrolmentStoreProxyConnector.upsertKnownFacts(data.identifiers, data.verifiers)
-//      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
-//      es8AssignEnrolment <- EnrolmentStoreProxyConnector
-//                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
+      userDetails        <- UserDetailsConnector.userIdbyGroupId(data.groupId)
+      es8AssignEnrolment <- EnrolmentStoreProxyConnector
+                             .addEnrolment(data.groupId, userDetails, data.identifiers, data.verifiers)
     } yield Ok)
       .recover {
         case known: FailedDependencyException => NotImplemented

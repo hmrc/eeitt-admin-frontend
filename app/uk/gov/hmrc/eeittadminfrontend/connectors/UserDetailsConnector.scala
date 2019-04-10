@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import play.api.Play
 import uk.gov.hmrc.eeittadminfrontend.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.UserDetailsData
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse, InternalServerException }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -36,5 +36,17 @@ object UserDetailsConnector {
       .map { response =>
         val a = response.json.as[List[UserDetailsData]].filterNot(_.credentialRole != "User")
         a.head.gatewayId
+      }
+
+  def userIdsByGroupIdNotHeadAdmin(
+    groupId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[String]] =
+    WSHttp
+      .GET[HttpResponse](s"${sc.baseUrl("user-details")}/user-details/group-identifier/$groupId")
+      .map { response =>
+        val a = response.json.as[List[UserDetailsData]]
+
+        val alreadyDoneAdmin = a.filterNot(_.credentialRole != "User")
+
+        a.filterNot(_.gatewayId == alreadyDoneAdmin.head.gatewayId).map(_.gatewayId)
       }
 }
