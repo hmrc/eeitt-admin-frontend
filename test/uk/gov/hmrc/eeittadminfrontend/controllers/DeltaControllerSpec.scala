@@ -16,13 +16,18 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import play.api.libs.json.Json
+import java.io.FileWriter
+
+import play.api.libs.json.{ Json, OFormat }
+import play.api.mvc.Call
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeittadminfrontend.ApplicationComponentsOnePerSuite
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.stubs.{EnrolmentStoreProxyStubs, UserDetailsStubs}
+import uk.gov.hmrc.eeittadminfrontend.stubs.{ EnrolmentStoreProxyStubs, UserDetailsStubs }
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.io.Source
 
 class DeltaControllerSpec
     extends UnitSpec with ApplicationComponentsOnePerSuite with UserDetailsStubs with EnrolmentStoreProxyStubs {
@@ -198,7 +203,7 @@ class DeltaControllerSpec
         .withSession("token" -> "someGoogleAuthenticationToken")
 
       givenUserDetailsWithResponseBody(validGroupId)
-      postEs8allocateEnrolment(validGroupId, identifiers, 201)
+      postEs8addEnrolment(validGroupId, identifiers, 201)
 
       val result = await(deltaController.addEnrol()(request))
       status(result) shouldBe 200
@@ -240,7 +245,7 @@ class DeltaControllerSpec
         .withSession("token" -> "someGoogleAuthenticationToken")
 
       givenUserDetailsWithResponseBody(validGroupId)
-      postEs8allocateEnrolment(validGroupId, identifiers, 404)
+      postEs8addEnrolment(validGroupId, identifiers, 404)
 
       val result = await(deltaController.addEnrol()(request))
       status(result) shouldBe 500
@@ -252,7 +257,7 @@ class DeltaControllerSpec
         .withSession("token" -> "someGoogleAuthenticationToken")
 
       givenUserDetailsWithResponseBody(validGroupId)
-      postEs8allocateEnrolment(validGroupId, identifiers, 500)
+      postEs8addEnrolment(validGroupId, identifiers, 500)
 
       val result = await(deltaController.addEnrol()(request))
       status(result) shouldBe 500
@@ -268,7 +273,7 @@ class DeltaControllerSpec
 
       givenUserDetailsWithResponseBody(validGroupId)
       putEs6upsertKnownFacts(identifiers, 204)
-      postEs8allocateEnrolment(validGroupId, identifiers, 201)
+      postEs8addEnrolment(validGroupId, identifiers, 201)
 
       val result = await(deltaController.addFactsEnrol()(request))
       status(result) shouldBe 200
@@ -301,41 +306,41 @@ class DeltaControllerSpec
       an[BadRequestException] shouldBe thrownBy(await(deltaController.addFactsEnrol()(request)))
     }
 
-//    "500 when userDetails returns 404" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      givenUserDetails(validGroupId, 404)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
-//
-//    "500 when userDetails returns 400" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      givenUserDetails(validGroupId, 400)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
-//
-//    "500 when userDetails returns 500" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      givenUserDetails(validGroupId, 500)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
+    "500 when userDetails returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      putEs6upsertKnownFacts(identifiers, 204)
+      givenUserDetails(validGroupId, 404)
+
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when userDetails returns 400" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      putEs6upsertKnownFacts(identifiers, 204)
+      givenUserDetails(validGroupId, 400)
+
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when userDetails returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      putEs6upsertKnownFacts(identifiers, 204)
+      givenUserDetails(validGroupId, 500)
+
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
 
     "500 when enrolment-store-proxy es6 returns 400" in {
       val request = FakeRequest()
@@ -344,7 +349,7 @@ class DeltaControllerSpec
 
       givenUserDetailsWithResponseBody(validGroupId)
       putEs6upsertKnownFacts(identifiers, 400)
-      postEs8allocateEnrolment(validGroupId, identifiers, 201)
+      postEs8addEnrolment(validGroupId, identifiers, 201)
 
       val result = await(deltaController.addFactsEnrol()(request))
       status(result) shouldBe 501
@@ -357,7 +362,7 @@ class DeltaControllerSpec
 
       givenUserDetailsWithResponseBody(validGroupId)
       putEs6upsertKnownFacts(identifiers, 404)
-      postEs8allocateEnrolment(validGroupId, identifiers, 201)
+      postEs8addEnrolment(validGroupId, identifiers, 201)
 
       val result = await(deltaController.addFactsEnrol()(request))
       status(result) shouldBe 501
@@ -370,49 +375,119 @@ class DeltaControllerSpec
 
       givenUserDetailsWithResponseBody(validGroupId)
       putEs6upsertKnownFacts(identifiers, 500)
-      postEs8allocateEnrolment(validGroupId, identifiers, 201)
+      postEs8addEnrolment(validGroupId, identifiers, 201)
 
       val result = await(deltaController.addFactsEnrol()(request))
       status(result) shouldBe 501
     }
 
-//    "500 when enrolment-store-proxy es8 returns 400" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      givenUserDetailsWithResponseBody(validGroupId)
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      postEs8allocateEnrolment(validGroupId, identifiers, 400)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
+    "500 when enrolment-store-proxy es8 returns 400" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
 
-//    "500 when enrolment-store-proxy es8 returns 404" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      givenUserDetailsWithResponseBody(validGroupId)
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      postEs8allocateEnrolment(validGroupId, identifiers, 404)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
+      givenUserDetailsWithResponseBody(validGroupId)
+      putEs6upsertKnownFacts(identifiers, 204)
+      postEs8addEnrolment(validGroupId, identifiers, 400)
 
-//    "500 when enrolment-store-proxy es8 returns 500" in {
-//      val request = FakeRequest()
-//        .withJsonBody(Json.toJson(validMigrationData))
-//        .withSession("token" -> "someGoogleAuthenticationToken")
-//
-//      givenUserDetailsWithResponseBody(validGroupId)
-//      putEs6upsertKnownFacts(identifiers, 204)
-//      postEs8allocateEnrolment(validGroupId, identifiers, 500)
-//
-//      val result = await(deltaController.addFactsEnrol()(request))
-//      status(result) shouldBe 500
-//    }
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when enrolment-store-proxy es8 returns 404" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      putEs6upsertKnownFacts(identifiers, 204)
+      postEs8addEnrolment(validGroupId, identifiers, 404)
+
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
+
+    "500 when enrolment-store-proxy es8 returns 500" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      putEs6upsertKnownFacts(identifiers, 204)
+      postEs8addEnrolment(validGroupId, identifiers, 500)
+
+      val result = await(deltaController.addFactsEnrol()(request))
+      status(result) shouldBe 500
+    }
+  }
+
+  "allocateEnrolment to all users in groupId except userIds.head where credentialRole == User/Admin" should {
+    val userId1 = "3494280737743231"
+    val userId2 = "3494280737743211"
+
+    "successfully allocate enrolment to all users" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      postEs11allocateEnrolment(userId1, identifiers, 201)
+      postEs11allocateEnrolment(userId2, identifiers, 201)
+
+      val result = await(deltaController.allocateEnrolmentToUsers()(request))
+      status(result) shouldBe 200
+
+      verifyEs11Called(1, userId1, identifiers)
+      verifyEs11Called(1, userId2, identifiers)
+      verifyEs11Called(0, "3494280737743238", identifiers) // normally all userIds should be completed, but this is used for manual task where prior to this all credentialRole "User" should be complete
+    }
+
+    "allocate enrolment to second userId" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      postEs11allocateEnrolment(userId1, identifiers, 500)
+      postEs11allocateEnrolment(userId2, identifiers, 201)
+
+      val result = await(deltaController.allocateEnrolmentToUsers()(request))
+      status(result) shouldBe 500
+
+      verifyEs11Called(1, userId1, identifiers)
+      verifyEs11Called(1, userId2, identifiers)
+    }
+
+    "allocate enrolment to first userId" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      postEs11allocateEnrolment(userId1, identifiers, 201)
+      postEs11allocateEnrolment(userId2, identifiers, 500)
+
+      val result = await(deltaController.allocateEnrolmentToUsers()(request))
+      status(result) shouldBe 500
+
+      verifyEs11Called(1, userId1, identifiers)
+      verifyEs11Called(1, userId2, identifiers)
+    }
+
+    "fail both userIds" in {
+      val request = FakeRequest()
+        .withJsonBody(Json.toJson(validMigrationData))
+        .withSession("token" -> "someGoogleAuthenticationToken")
+
+      givenUserDetailsWithResponseBody(validGroupId)
+      postEs11allocateEnrolment(userId1, identifiers, 500)
+      postEs11allocateEnrolment(userId2, identifiers, 500)
+
+      val result = await(deltaController.allocateEnrolmentToUsers()(request))
+      status(result) shouldBe 500
+
+      verifyEs11Called(1, userId1, identifiers)
+      verifyEs11Called(1, userId2, identifiers)
+    }
   }
 }

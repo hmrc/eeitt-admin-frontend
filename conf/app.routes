@@ -33,6 +33,7 @@ GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.
 
 POST        /delta/known-facts/upsert             uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.upsertKnownFacts
 POST        /delta/enrolment/add-enrol            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addFactsEnrol
+POST        /delta/enrolment/enrolments-for-userids            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.allocateEnrolmentToUsers
 POST        /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addEnrol
 DELETE      /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.deleteEnrolment
 
