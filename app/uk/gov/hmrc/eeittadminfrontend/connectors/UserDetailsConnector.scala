@@ -43,10 +43,10 @@ object UserDetailsConnector {
     WSHttp
       .GET[HttpResponse](s"${sc.baseUrl("user-details")}/user-details/group-identifier/$groupId")
       .map { response =>
-        val a = response.json.as[List[UserDetailsData]]
+        val a: List[UserDetailsData] = response.json.as[List[UserDetailsData]]
 
-        val alreadyDoneAdmin = a.filterNot(_.credentialRole != "User")
+        val alreadyDoneAdmin = a.filterNot(!_.credentialRole.equals("User"))
 
-        a.filterNot(_.gatewayId == alreadyDoneAdmin.head.gatewayId).map(_.gatewayId)
+        a.filterNot(_.gatewayId.equals(alreadyDoneAdmin.head.gatewayId)).map(_.gatewayId)
       }
 }
