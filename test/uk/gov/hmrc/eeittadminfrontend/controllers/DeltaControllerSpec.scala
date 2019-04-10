@@ -490,6 +490,4 @@ class DeltaControllerSpec
       verifyEs11Called(1, userId2, identifiers)
     }
   }
-
-  def testAuthorised(action: Call): Unit = {}
 }
