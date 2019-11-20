@@ -30,5 +30,9 @@ class AuthService {
   lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicAuth").users.split(":")
 
   def checkUser(email: Email): Validated[LoginError, Unit] =
-    if (validUserList.contains(email.value)) ().valid else LoginError("Unauthorised User").invalid
+    if (validUserList.contains(email.value)) ().valid
+    else {
+      Logger.error(s"""Attemp to log with ${email.value}. Only ${validUserList.mkString(",")} allowed.""")
+      LoginError("Unauthorised User").invalid
+    }
 }

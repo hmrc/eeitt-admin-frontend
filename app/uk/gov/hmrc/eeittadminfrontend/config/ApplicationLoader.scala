@@ -197,8 +197,6 @@ trait ApplicationModule
 
   Logger.info(s"Starting microservice : $appName : in mode : ${environment.mode}")
 
-  val validUsers: List[String] = appNameConfiguration.getString("basicAuth.users").getOrElse("NoUSER").split(":").toList
-
   if (environment.mode != Mode.Test) {
     new Graphite(configuration).onStart(configurationApp)
   }
