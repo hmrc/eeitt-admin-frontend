@@ -25,6 +25,8 @@
 @(form: Form[GformId])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Gform"){
 
+<a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getBlob">Download all templates in a zip</a>
+
 <form action=@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType method="POST">
     <h2>Find a Gform Template</h2>
     @CSRF.formField

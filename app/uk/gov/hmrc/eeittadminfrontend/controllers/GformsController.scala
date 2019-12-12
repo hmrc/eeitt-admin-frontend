@@ -16,14 +16,20 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
+import java.util.Locale
 import java.util.Base64
+import java.util.zip.{ ZipEntry, ZipOutputStream }
+import akka.stream.scaladsl.StreamConverters
+import java.time.{ Instant, ZoneId }
+import java.time.format.DateTimeFormatter
 
 import julienrf.json.derived
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.libs.json.{ Json, OFormat }
+import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -59,6 +65,60 @@ case object NoTempatesToRefresh extends RefreshResult
 
 class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
     extends FrontendController with Actions with I18nSupport {
+
+  private def fileByteData(fileList: Seq[(FormTypeId, JsValue)]): ByteArrayInputStream = {
+
+    val baos = new ByteArrayOutputStream()
+    val zos = new ZipOutputStream(new BufferedOutputStream(baos))
+
+    try {
+      fileList.map {
+        case (formTemplateId, formTemplate) => {
+          zos.putNextEntry(new ZipEntry(formTemplateId.value + ".json"))
+          zos.write(Json.prettyPrint(formTemplate).getBytes())
+          zos.closeEntry()
+        }
+      }
+    } finally {
+      zos.close()
+    }
+
+    new ByteArrayInputStream(baos.toByteArray)
+  }
+
+  def getBlob = Authentication.async { implicit request =>
+    val blobFuture: Future[Seq[(FormTypeId, JsValue)]] =
+      GformConnector.getAllGformsTemplates.flatMap {
+        case JsArray(templates) =>
+          val formTemplateIds = templates.collect {
+            case JsString(template) if !template.startsWith("specimen-") => FormTypeId(template)
+          }
+          Future.traverse(formTemplateIds) { formTemplateId =>
+            GformConnector
+              .getGformsTemplate(formTemplateId)
+              .map {
+                case Right(formTemplate) => (formTemplateId, formTemplate)
+                case Left(error)         => (formTemplateId, JsString(error))
+              }
+          }
+        case _ => Future.successful(Seq.empty)
+      }
+    blobFuture.map { blob =>
+      val now = Instant.now()
+      Ok.chunked(StreamConverters.fromInputStream(() => fileByteData(blob)))
+        .withHeaders(
+          CONTENT_TYPE        -> "application/zip",
+          CONTENT_DISPOSITION -> s"""attachment; filename = "gform-prod-blob-${formatInstant(now)}.zip""""
+        )
+    }
+  }
+
+  private val dtf = DateTimeFormatter
+    .ofPattern("dd-MM-yyyy-HH:mm:ss")
+    .withLocale(Locale.UK)
+    .withZone(ZoneId.of("Europe/London"))
+
+  private def formatInstant(instant: Instant): String = dtf.format(instant)
 
   def getGformByFormType = Authentication.async { implicit request =>
     gFormForm

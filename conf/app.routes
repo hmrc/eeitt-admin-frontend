@@ -2,6 +2,7 @@
 
 GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+GET        /get-blob                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
 POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
 GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
 GET        /reload-templates         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
