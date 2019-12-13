@@ -87,6 +87,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   def getBlob = Authentication.async { implicit request =>
+    Logger.info(s" ${request.session.get("token").get} ask for all templates as a zip blob")
     val blobFuture: Future[Seq[(FormTypeId, JsValue)]] =
       GformConnector.getAllGformsTemplates.flatMap {
         case JsArray(templates) =>

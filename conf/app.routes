@@ -41,4 +41,8 @@ DELETE      /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend
 GET         /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryEnrolments
 POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryKnownFacts
 
+GET         /file-upload            uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
+POST        /file-upload/find       uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
+POST        /file-upload/delete     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.deleteEnvelope
+
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)

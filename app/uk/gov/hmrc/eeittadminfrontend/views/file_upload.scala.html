@@ -1,0 +1,62 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.AppConfig
+@import helper._
+@import play.api.i18n.Messages.Implicits._
+@import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
+@import views.html.helper.CSRF
+@import uk.gov.hmrc.eeittadminfrontend.models.GformId
+@import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
+@import uk.gov.hmrc.eeittadminfrontend.models.EnvelopeIdForm
+
+@(form: Form[EnvelopeIdForm])(implicit request : Request[_], appConfig: AppConfig)
+@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "File upload"){
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.findEnvelope" method="POST">
+    <h2>Find an envelope</h2>
+    @CSRF.formField
+  <div class="form-group">
+    <label for="value">Envelope ID:</label>
+    <fieldset class="form-field-group">
+        <input
+                name="envelopeId.value"
+                id="value"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+  </div>
+  <input type="submit" class="button" value="Search"/>
+</form>
+
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.deleteEnvelope" method="POST">
+    <h2>Delete an envelope</h2>
+    @CSRF.formField
+    <p>Envelope ID:</p>
+    <fieldset class="form-field-group">
+        <input
+                name="envelopeId.value"
+                id="templateValue"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+    <input type="submit" class="button" value="Delete (warning, it cannot be undone!)"/>
+</form>
+}

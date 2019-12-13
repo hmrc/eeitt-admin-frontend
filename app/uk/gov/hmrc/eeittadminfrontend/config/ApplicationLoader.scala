@@ -275,6 +275,8 @@ trait ApplicationModule
   val gformController = new GformsController(authConnector)(appConfig, messagesApi)
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
+  val fileUploadController = new FileUploadController(authConnector)(appConfig, messagesApi)
+
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
   val appRoutes = new _root_.app.Routes(
@@ -284,6 +286,7 @@ trait ApplicationModule
     queryController,
     deltaController,
     eeittAdminController,
+    fileUploadController,
     assets
   )
 
