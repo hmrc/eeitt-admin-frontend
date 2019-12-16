@@ -44,8 +44,8 @@
   <input type="submit" class="button" value="Search"/>
 </form>
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.deleteEnvelope" method="POST">
-    <h2>Delete an envelope</h2>
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope" method="POST">
+    <h2>Archive an envelope</h2>
     @CSRF.formField
     <p>Envelope ID:</p>
     <fieldset class="form-field-group">
@@ -57,6 +57,6 @@
         />
         </label>
     </fieldset>
-    <input type="submit" class="button" value="Delete (warning, it cannot be undone!)"/>
+    <input type="submit" class="button" value="Archive (warning, it cannot be undone and envelope must be in Routed state!)"/>
 </form>
 }

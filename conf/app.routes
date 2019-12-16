@@ -43,6 +43,6 @@ POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend
 
 GET         /file-upload            uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find       uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
-POST        /file-upload/delete     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.deleteEnvelope
+POST        /file-upload/archive    uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.archiveEnvelope
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)

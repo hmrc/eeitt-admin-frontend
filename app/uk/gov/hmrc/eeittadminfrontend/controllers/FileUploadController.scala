@@ -60,7 +60,7 @@ class FileUploadController(val authConnector: AuthConnector)(
         }
       )
   }
-  def deleteEnvelope() = Authentication.async { implicit request =>
+  def archiveEnvelope() = Authentication.async { implicit request =>
     envelopeIdForm
       .bindFromRequest()
       .fold(
@@ -69,7 +69,7 @@ class FileUploadController(val authConnector: AuthConnector)(
         },
         envelopeId => {
           Logger.info(s" ${request.session.get("token").get} Delete envelopeId ${envelopeId.envelopeId}")
-          FileUploadConnector.deleteEnvelopeId(envelopeId.envelopeId).map {
+          FileUploadConnector.archiveEnvelopeId(envelopeId.envelopeId).map {
             case Right(payload) => Ok(payload)
             case Left(error)    => BadRequest(error)
           }

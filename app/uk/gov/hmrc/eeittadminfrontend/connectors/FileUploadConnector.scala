@@ -47,23 +47,23 @@ object FileUploadConnector {
       }
   }
 
-  def deleteEnvelopeId(envelopeId: EnvelopeId)(
+  def archiveEnvelopeId(envelopeId: EnvelopeId)(
     implicit headerCarrier: HeaderCarrier,
     ec: ExecutionContext): Future[Either[String, String]] = {
 
-    val url = fileUploadUrl + s"/file-upload/envelopes/${envelopeId.value}"
+    val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
 
     WSHttp
       .DELETE[HttpResponse](url)
       .map { response =>
         val success =
-          s"Envelope $envelopeId deleted successfully. Status: ${response.status}, body: ${response.body.toString}"
+          s"Envelope $envelopeId archived successfully. Status: ${response.status}, body: ${response.body.toString}"
         Logger.info(success)
         Right(success)
       }
       .recover {
         case ex =>
-          Left(s"Unknown problem when trying to delete envelopeId $envelopeId: " + ex.getMessage)
+          Left(s"Unknown problem when trying to archive envelopeId $envelopeId: " + ex.getMessage)
       }
   }
 }
