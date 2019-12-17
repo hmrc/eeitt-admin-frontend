@@ -22,6 +22,7 @@ import play.api.libs.json._
 import play.api.mvc.Action
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.BadRequestException
@@ -75,22 +76,22 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
     }
 
   def getAllBusinessUsers() = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} got all etmp business users")
+    Logger.info(s"${request.userLogin} got all etmp business users")
     EeittConnector.getAllBusinessUsers.map(x => Ok(x))
   }
 
   def getAllAgents() = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} got all etmp agents")
+    Logger.info(s"${request.userLogin} got all etmp agents")
     EeittConnector.getAllAgents.map(x => Ok(x))
   }
 
   def getAllAgentEnrollments() = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} got all agent enrollments")
+    Logger.info(s"${request.userLogin} got all agent enrollments")
     EeittConnector.getAllAgentEnrollments.map(x => Ok(x))
   }
 
   def getAllEnrollmentAgents() = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} got all enrolmengts agent")
+    Logger.info(s"${request.userLogin} got all enrolmengts agent")
     EeittConnector.getAllEnrolmentsAgents.map(x => Ok(x))
   }
 
@@ -102,14 +103,14 @@ class QueryController(val authConnector: AuthConnector, val messagesApi: Message
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.query_page()))
         },
         getRequest => {
-          Logger.info(s"${request.session.get("token").get} got all enrollments for ${getRequest.regimeId}")
+          Logger.info(s"${request.userLogin} got all enrollments for ${getRequest.regimeId}")
           EeittConnector.getAllEnrolments(getRequest.regimeId).map(x => Ok(x))
         }
       )
   }
 
   def goToQuery = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token")} went to Query Page")
+    Logger.info(s"${request.userLogin} went to Query Page")
     Future
       .successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.query_page())) //uk.gov.hmrc.eeittadminfrontend.views.html.()))
   }

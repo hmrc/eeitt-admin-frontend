@@ -21,6 +21,7 @@ import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ EeittConnector, EnrolmentStoreProxyConnector, UserDetailsConnector }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.http.{ BadRequestException, FailedDependencyException }
@@ -34,7 +35,7 @@ class DeltaController(val authConnector: AuthConnector)(implicit appConfig: AppC
     extends FrontendController with Actions with I18nSupport {
 
   def goToDelta = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token")} went to Deltas Page")
+    Logger.info(s"${request.userLogin} went to Deltas Page")
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.delta()))
   }
 

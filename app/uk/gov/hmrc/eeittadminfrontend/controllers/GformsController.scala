@@ -32,6 +32,7 @@ import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
@@ -87,7 +88,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   def getBlob = Authentication.async { implicit request =>
-    Logger.info(s" ${request.session.get("token").get} ask for all templates as a zip blob")
+    Logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
     val blobFuture: Future[Seq[(FormTypeId, JsValue)]] =
       GformConnector.getAllGformsTemplates.flatMap {
         case JsArray(templates) =>
@@ -129,7 +130,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformIdAndVersion => {
-          Logger.info(s" ${request.session.get("token").get} Queried for ${gformIdAndVersion.formTypeId}")
+          Logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTypeId}")
           GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId).map {
             case Left(ex) =>
               Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTypeId}. Reason: $ex")
@@ -146,19 +147,19 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         "UTF-8"))
     GformConnector.saveTemplate(template).map { x =>
       {
-        Logger.info(s" ${request.session.get("token").get} saved ID: ${template \ "_id"} }")
+        Logger.info(s"${request.userLogin} saved ID: ${template \ "_id"} }")
         Ok("Saved")
       }
     }
   }
 
   def getAllTemplates = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} Queried for all form templates")
+    Logger.info(s"${request.userLogin} Queried for all form templates")
     GformConnector.getAllGformsTemplates.map(x => Ok(x))
   }
 
   def reloadTemplates = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} Reload all form templates")
+    Logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
       maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.asOpt[List[FormTypeId]])
@@ -188,7 +189,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     }
 
   def getAllSchema = Authentication.async { implicit request =>
-    Logger.info(s"${request.session.get("token").get} Queried for all form Schema")
+    Logger.info(s"${request.userLogin} Queried for all form Schema")
     GformConnector.getAllSchema.map(x => Ok(x))
   }
 
@@ -200,7 +201,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformId => {
-          Logger.info(s" ${request.session.get("token").get} deleted ${gformId.formTypeId} ")
+          Logger.info(s"${request.userLogin} deleted ${gformId.formTypeId} ")
           GformConnector.deleteTemplate(gformId.formTypeId).map(res => Ok)
         }
       )

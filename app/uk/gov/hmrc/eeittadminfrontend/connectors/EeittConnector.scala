@@ -19,6 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import play.api.{ Logger, Play }
 import play.api.libs.json.{ Format, JsObject, JsValue }
 import play.api.mvc.Request
+import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser
 import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -36,7 +37,7 @@ trait EeittConnector[A] extends ServicesConfig {
   def apply(a: A)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext,
-    request: Request[Map[String, Seq[String]]]): Future[List[Response]]
+    request: RequestWithUser[Map[String, Seq[String]]]): Future[List[Response]]
 }
 
 object EeittConnector {
@@ -66,17 +67,17 @@ object EeittConnector {
     override protected def mode = InjectionDodge.mode
     override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
     override def apply(
-      a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[Map[String, Seq[String]]]) =
+      a: A)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: RequestWithUser[Map[String, Seq[String]]]) =
       if (isLive(request)) {
-        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Live")
+        Logger.info(s"${request.userLogin} Pushed ${a.url}'s ${a.value} to Live")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/live/" + a.url, a.value).map(List(_))
       } else {
-        Logger.info(s"${request.session.get("token")} Pushed ${a.url}'s ${a.value} to Dry-run")
+        Logger.info(s"${request.userLogin} Pushed ${a.url}'s ${a.value} to Dry-run")
         httpPost.POSTString[DeltaResponse](eeittUrl + "/etmp-data/dry-run/" + a.url, a.value).map(List(_))
       }
   }
 
-  private def isLive(implicit request: Request[Map[String, Seq[String]]]): Boolean = {
+  private def isLive(implicit request: RequestWithUser[Map[String, Seq[String]]]): Boolean = {
     val isLive = request.body.getOrElse("isLive", Seq("DRY-RUN"))
     Logger.debug(isLive.toString)
     isLive.contains("LIVE")
@@ -116,7 +117,7 @@ object EeittConnector {
       override def apply(value: A)(
         implicit hc: HeaderCarrier,
         ec: ExecutionContext,
-        request: Request[Map[String, Seq[String]]]): Future[List[Response]] = {
+        request: RequestWithUser[Map[String, Seq[String]]]): Future[List[Response]] = {
         def call[B](a: String, b: B): Future[List[Response]] =
           b match {
             case ETMP =>
@@ -130,16 +131,16 @@ object EeittConnector {
 
         value match {
           case RegistrationNumber(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
+            Logger.info(s"${request.userLogin} Queried for $x RegNumber in $y Database")
             call(x, y)
           case Arn(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for $x Arn in $y Database")
+            Logger.info(s"${request.userLogin} Queried for $x Arn in $y Database")
             call(x, y)
           case GroupId(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for $x GroupId in $y Database")
+            Logger.info(s"${request.userLogin} Queried for $x GroupId in $y Database")
             call(x, y)
           case Regime(x, y) =>
-            Logger.info(s" ${request.session.get("token").get} Queried for $x RegNumber in $y Database")
+            Logger.info(s"${request.userLogin} Queried for $x RegNumber in $y Database")
             call(x, y)
           case _ =>
             Logger.error("No Database nor User detected")

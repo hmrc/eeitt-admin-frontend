@@ -21,11 +21,14 @@ import play.api.data.Form
 import play.api.data.Forms.{ mapping, text }
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.Json
+import play.api.mvc.Result
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ EnvelopeId, EnvelopeIdForm }
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -44,36 +47,31 @@ class FileUploadController(val authConnector: AuthConnector)(
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm)))
   }
 
-  def findEnvelope() = Authentication.async { implicit request =>
-    envelopeIdForm
-      .bindFromRequest()
-      .fold(
-        formWithErrors => {
-          Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm)))
-        },
-        envelopeId => {
-          Logger.info(s" ${request.session.get("token").get} Queried for envelopeId ${envelopeId.envelopeId}")
-          FileUploadConnector.getEnvelopeById(envelopeId.envelopeId).map {
-            case Right(payload) => Ok(Json.prettyPrint(payload))
-            case Left(error)    => BadRequest(error)
-          }
-        }
-      )
+  private def WithUserLogin(f: (EnvelopeId, String) => HeaderCarrier => Future[Result]) = Authentication.async {
+    implicit request =>
+      envelopeIdForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm)))
+          },
+          envelopeId => f(envelopeId.envelopeId, request.userLogin)(hc)
+        )
   }
-  def archiveEnvelope() = Authentication.async { implicit request =>
-    envelopeIdForm
-      .bindFromRequest()
-      .fold(
-        formWithErrors => {
-          Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm)))
-        },
-        envelopeId => {
-          Logger.info(s" ${request.session.get("token").get} Delete envelopeId ${envelopeId.envelopeId}")
-          FileUploadConnector.archiveEnvelopeId(envelopeId.envelopeId).map {
-            case Right(payload) => Ok(payload)
-            case Left(error)    => BadRequest(error)
-          }
-        }
-      )
+
+  def findEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
+    Logger.info(s"$userLogin Queried for envelopeId $envelopeId")
+    FileUploadConnector.getEnvelopeById(envelopeId).map {
+      case Right(payload) => Ok(Json.prettyPrint(payload))
+      case Left(error)    => BadRequest(error)
+    }
+  }
+
+  def archiveEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
+    Logger.info(s"$userLogin Delete envelopeId $envelopeId")
+    FileUploadConnector.archiveEnvelopeId(envelopeId).map {
+      case Right(payload) => Ok(payload)
+      case Left(error)    => BadRequest(error)
+    }
   }
 }
