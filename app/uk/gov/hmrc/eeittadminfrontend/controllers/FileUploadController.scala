@@ -16,12 +16,18 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import akka.NotUsed
+import akka.util.ByteString
+import akka.stream.scaladsl.{ Source, StreamConverters }
+import java.io.ByteArrayInputStream
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, text }
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import play.api.libs.streams.Streams
+import play.api.libs.iteratee.Enumerator
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
@@ -65,6 +71,26 @@ class FileUploadController(val authConnector: AuthConnector)(
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)
     }
+  }
+
+  def downloadEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
+    Logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
+    FileUploadConnector.downloadEnvelopeId(envelopeId).map {
+      case Right(payload) =>
+        val source: Source[ByteString, NotUsed] =
+          Source.fromPublisher(Streams.enumeratorToPublisher(Enumerator(payload)))
+        Ok.chunked(source)
+          .withHeaders(
+            CONTENT_TYPE        -> "application/zip",
+            CONTENT_DISPOSITION -> s"""attachment; filename = "${envelopeId.value}.zip""""
+          )
+      case Left(error) => BadRequest(error)
+    }
+  }
+
+  def downloadEnvelopePost() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
+    Future.successful(
+      Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelope(envelopeId)))
   }
 
   def archiveEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import akka.util.ByteString
 import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.EnvelopeId
@@ -44,6 +45,21 @@ object FileUploadConnector {
       .recover {
         case ex =>
           Left(s"Unknown problem when trying to retrieve envelopeId $envelopeId: " + ex.getMessage)
+      }
+  }
+
+  def downloadEnvelopeId(
+    envelopeId: EnvelopeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, ByteString]] = {
+    val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
+    WSHttp
+      .buildRequest(url)
+      .get
+      .map { response =>
+        if (response.status == 200) Right(response.bodyAsBytes) else Left(response.body.toString)
+      }
+      .recover {
+        case ex =>
+          Left(s"Unknown problem when trying to download an envelopeId $envelopeId: " + ex.getMessage)
       }
   }
 

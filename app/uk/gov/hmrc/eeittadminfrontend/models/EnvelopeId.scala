@@ -16,6 +16,12 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
+import play.api.libs.json.Format
+
 case class EnvelopeId(value: String) extends AnyVal
+
+object EnvelopeId {
+  implicit val format: Format[EnvelopeId] = ValueClassFormatter.format(EnvelopeId.apply)(_.value)
+}
 
 case class EnvelopeIdForm(envelopeId: EnvelopeId)

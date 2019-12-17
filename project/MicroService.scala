@@ -37,7 +37,8 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       routesImport ++= Seq(
         "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
-        "uk.gov.hmrc.eeittadminfrontend.models.FormTypeId"
+        "uk.gov.hmrc.eeittadminfrontend.models.FormTypeId",
+        "uk.gov.hmrc.eeittadminfrontend.models.EnvelopeId"
       ))
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)

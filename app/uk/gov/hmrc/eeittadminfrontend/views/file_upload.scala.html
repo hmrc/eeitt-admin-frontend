@@ -44,6 +44,24 @@
   <input type="submit" class="button" value="Search"/>
 </form>
 
+<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelopePost" method="POST">
+    <h2>Download an envelope</h2>
+    @CSRF.formField
+  <div class="form-group">
+    <label for="value">Envelope ID:</label>
+    <fieldset class="form-field-group">
+        <input
+                name="envelopeId.value"
+                id="value"
+                value=""
+                class="form-control form-control--block"
+        />
+        </label>
+    </fieldset>
+  </div>
+  <input type="submit" class="button" value="Download"/>
+</form>
+
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope" method="POST">
     <h2>Archive an envelope</h2>
     @CSRF.formField
