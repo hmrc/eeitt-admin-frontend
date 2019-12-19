@@ -20,8 +20,8 @@ import play.api.libs.json.{ Json, Reads }
 
 case class Constraints(
   maxItems: Int,
-  maxSize: Long,
-  maxSizePerItem: Long
+  maxSize: String,
+  maxSizePerItem: String
 )
 
 object Constraints {
