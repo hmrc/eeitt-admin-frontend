@@ -19,9 +19,8 @@
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
 @import views.html.helper.CSRF
-@import uk.gov.hmrc.eeittadminfrontend.models.GformId
-@import uk.gov.hmrc.eeittadminfrontend.models.GformTemplate
-@import uk.gov.hmrc.eeittadminfrontend.models.EnvelopeIdForm
+@import uk.gov.hmrc.eeittadminfrontend.models.{GformId, GformTemplate}
+@import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeIdForm
 
 @(form: Form[EnvelopeIdForm])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "File upload"){

@@ -44,6 +44,9 @@ object GformConnector {
           Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
       }
 
+  def getAllSubmissons(formTemplateId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext) =
+    WSHttp.GET[JsArray](gformUrl + s"/submissionDetails/all/${formTemplateId.value}")
+
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     WSHttp.GET[JsArray](gformUrl + "/formtemplates")
 

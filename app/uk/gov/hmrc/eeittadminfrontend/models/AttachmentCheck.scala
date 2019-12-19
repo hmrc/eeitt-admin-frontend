@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.Format
+import play.api.libs.json.JsValue
 
-case class EnvelopeId(value: String) extends AnyVal
-
-object EnvelopeId {
-  implicit val format: Format[EnvelopeId] = ValueClassFormatter.format(EnvelopeId.apply)(_.value)
+trait AttachmentCheck extends Product with Serializable
+object AttachmentCheck {
+  case object CountOk extends AttachmentCheck
+  case class CountDoesNotMatch(envelopeCount: Int) extends AttachmentCheck
+  case object EnvelopeDoesNotExists extends AttachmentCheck
+  case object CannotParseEnvelope extends AttachmentCheck
 }
-
-case class EnvelopeIdForm(envelopeId: EnvelopeId)

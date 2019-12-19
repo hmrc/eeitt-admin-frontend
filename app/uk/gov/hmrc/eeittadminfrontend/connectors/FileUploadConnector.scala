@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import akka.util.ByteString
 import play.api.Logger
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }

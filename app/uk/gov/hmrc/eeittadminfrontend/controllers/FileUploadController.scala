@@ -33,7 +33,7 @@ import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ EnvelopeId, EnvelopeIdForm }
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -67,6 +67,13 @@ class FileUploadController(val authConnector: AuthConnector)(
 
   def findEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
     Logger.info(s"$userLogin Queried for envelopeId $envelopeId")
+    FileUploadConnector.getEnvelopeById(envelopeId).map {
+      case Right(payload) => Ok(Json.prettyPrint(payload))
+      case Left(error)    => BadRequest(error)
+    }
+  }
+
+  def showEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
     FileUploadConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)

@@ -43,8 +43,12 @@ POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
+GET         /file-upload/find/:envelopeId    uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.showEnvelope(envelopeId: EnvelopeId)
 GET         /file-upload/dowload/:envelopeId uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.downloadEnvelope(envelopeId: EnvelopeId)
 POST        /file-upload/dowload             uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.downloadEnvelopePost
 POST        /file-upload/archive             uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.archiveEnvelope
+
+GET         /submissions                     uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submissions
+GET         /submission/:formTemplateId      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submission(formTemplateId: FormTypeId)
 
 GET        /assets/*file            controllers.Assets.at(path = "/public", file)

@@ -276,6 +276,7 @@ trait ApplicationModule
 
   val deltaController = new DeltaController(authConnector)(appConfig, messagesApi)
   val fileUploadController = new FileUploadController(authConnector)(appConfig, messagesApi)
+  val submissionController = new SubmissionController(authConnector)(appConfig, messagesApi)
 
   lazy val assets = new _root_.controllers.Assets(httpErrorHandler)
 
@@ -287,6 +288,7 @@ trait ApplicationModule
     deltaController,
     eeittAdminController,
     fileUploadController,
+    submissionController,
     assets
   )
 
