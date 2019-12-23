@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import java.time.LocalDateTime
+import java.time.{ LocalDateTime, ZoneId }
 import play.api.Logger
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json.{ JsArray, JsString }
@@ -50,7 +50,7 @@ class SubmissionController(val authConnector: AuthConnector)(
   }
 
   implicit val localDateTimeOrdering: Ordering[LocalDateTime] =
-    Ordering.fromLessThan((ldt1, ldt2) => (ldt1 compareTo ldt2) == -1)
+    Ordering.by(_.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli())
 
   def submission(formTemplateId: FormTypeId) = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} looking at submissions for " + formTemplateId)
