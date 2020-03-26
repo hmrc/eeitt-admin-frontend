@@ -18,15 +18,15 @@ package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.json._
 
-case class FormTypeId(value: String) extends AnyVal {
+case class FormTemplateId(value: String) extends AnyVal {
   override def toString = value
 }
 
-object FormTypeId {
-  implicit val format: Format[FormTypeId] = ValueClassFormatter.format(FormTypeId.apply)(_.value)
+object FormTemplateId {
+  implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
 }
 
-case class GformId(formTypeId: FormTypeId)
+case class GformId(formTemplateId: FormTemplateId)
 
 case class GformTemplate(template: JsValue)
 

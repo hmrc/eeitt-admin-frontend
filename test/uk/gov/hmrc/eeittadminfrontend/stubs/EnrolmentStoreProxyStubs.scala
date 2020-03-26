@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ trait EnrolmentStoreProxyStubs extends Eventually {
       post(urlEqualTo(pathEs11(userId, identifierInput)))
         .willReturn(aResponse().withStatus(status)))
 
-  def get200Es20queryKnownFacts: Unit =
+  def get200Es20queryKnownFacts(): Unit =
     stubFor(
       post(urlEqualTo(pathEs20))
         .willReturn(okJson("""  {

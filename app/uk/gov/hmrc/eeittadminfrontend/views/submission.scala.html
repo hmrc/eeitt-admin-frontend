@@ -17,11 +17,11 @@
 @import uk.gov.hmrc.eeittadminfrontend.AppConfig
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
-@import uk.gov.hmrc.eeittadminfrontend.models.{AttachmentCheck, FormTypeId, Submission}
+@import uk.gov.hmrc.eeittadminfrontend.models.{AttachmentCheck, FormTemplateId, Submission}
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{Envelope, EnvelopeId}
 @import uk.gov.hmrc.eeittadminfrontend.views._
 
-@(formTemplateId: FormTypeId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit request : Request[_], appConfig: AppConfig)
+@(formTemplateId: FormTemplateId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Submissions for @{formTemplateId.value}"){
 
     <h2>Submissions for form @{formTemplateId.value}</h2>

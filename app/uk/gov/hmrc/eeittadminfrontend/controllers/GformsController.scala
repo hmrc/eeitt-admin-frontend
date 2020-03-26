@@ -34,7 +34,7 @@ import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTypeId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -43,8 +43,8 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.Future
 
 sealed trait RefreshTemplateResult extends Product with Serializable
-case class RefreshSuccesful(formTemplateId: FormTypeId) extends RefreshTemplateResult
-case class RefreshError(formTemplateId: FormTypeId, errorMessage: String) extends RefreshTemplateResult
+case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
+case class RefreshError(formTemplateId: FormTemplateId, errorMessage: String) extends RefreshTemplateResult
 
 object RefreshTemplateResult {
   implicit val format: OFormat[RefreshTemplateResult] = derived.oformat
@@ -67,7 +67,7 @@ case object NoTempatesToRefresh extends RefreshResult
 class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
     extends FrontendController with Actions with I18nSupport {
 
-  private def fileByteData(fileList: Seq[(FormTypeId, JsValue)]): ByteArrayInputStream = {
+  private def fileByteData(fileList: Seq[(FormTemplateId, JsValue)]): ByteArrayInputStream = {
 
     val baos = new ByteArrayOutputStream()
     val zos = new ZipOutputStream(new BufferedOutputStream(baos))
@@ -89,11 +89,11 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
 
   def getBlob = Authentication.async { implicit request =>
     Logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
-    val blobFuture: Future[Seq[(FormTypeId, JsValue)]] =
+    val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
       GformConnector.getAllGformsTemplates.flatMap {
         case JsArray(templates) =>
           val formTemplateIds = templates.collect {
-            case JsString(template) if !template.startsWith("specimen-") => FormTypeId(template)
+            case JsString(template) if !template.startsWith("specimen-") => FormTemplateId(template)
           }
           Future.traverse(formTemplateIds) { formTemplateId =>
             GformConnector
@@ -130,10 +130,10 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformIdAndVersion => {
-          Logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTypeId}")
-          GformConnector.getGformsTemplate(gformIdAndVersion.formTypeId).map {
+          Logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTemplateId}")
+          GformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
             case Left(ex) =>
-              Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTypeId}. Reason: $ex")
+              Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTemplateId}. Reason: $ex")
             case Right(r) => Ok(Json.prettyPrint(r))
           }
         }
@@ -162,12 +162,13 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     Logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
-      maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.asOpt[List[FormTypeId]])
+      maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.asOpt[List[FormTemplateId]])
       res              <- fetchAndSave(maybeTemplateIds)
     } yield Ok(Json.toJson(res))
   }
 
-  def fetchAndSave(maybeFormTemplateIds: Option[List[FormTypeId]])(implicit hc: HeaderCarrier): Future[RefreshResult] =
+  def fetchAndSave(maybeFormTemplateIds: Option[List[FormTemplateId]])(
+    implicit hc: HeaderCarrier): Future[RefreshResult] =
     maybeFormTemplateIds match {
       case None => Future.successful(NoTempatesToRefresh)
       case Some(formTemplateIds) =>
@@ -201,8 +202,8 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformId => {
-          Logger.info(s"${request.userLogin} deleted ${gformId.formTypeId} ")
-          GformConnector.deleteTemplate(gformId.formTypeId).map(res => Ok)
+          Logger.info(s"${request.userLogin} deleted ${gformId.formTemplateId} ")
+          GformConnector.deleteTemplate(gformId.formTemplateId).map(res => Ok)
         }
       )
   }
@@ -216,7 +217,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   }
 
   val gFormForm: Form[GformId] = Form(
-    mapping("formTypeId" -> mapping("value" -> text)(FormTypeId.apply)(FormTypeId.unapply))(GformId.apply)(
+    mapping("formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply))(GformId.apply)(
       GformId.unapply)
   )
 }

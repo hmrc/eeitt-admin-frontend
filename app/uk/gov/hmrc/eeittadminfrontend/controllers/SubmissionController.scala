@@ -25,7 +25,7 @@ import uk.gov.hmrc.eeittadminfrontend.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.config.Authentication
 import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTypeId, Submission }
+import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Submission }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ Envelope, EnvelopeId }
 import uk.gov.hmrc.play.frontend.auth.Actions
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -40,8 +40,8 @@ class SubmissionController(val authConnector: AuthConnector)(
     GformConnector.getAllGformsTemplates.map { templates =>
       templates match {
         case JsArray(formTemplateIds) =>
-          val ftIds: Seq[FormTypeId] = formTemplateIds.collect {
-            case JsString(id) if !id.startsWith("specimen-") => FormTypeId(id)
+          val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
+            case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
           }
           Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submissions(ftIds.sortBy(_.value)))
         case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
@@ -52,7 +52,7 @@ class SubmissionController(val authConnector: AuthConnector)(
   implicit val localDateTimeOrdering: Ordering[LocalDateTime] =
     Ordering.by(_.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli())
 
-  def submission(formTemplateId: FormTypeId) = Authentication.async { implicit request =>
+  def submission(formTemplateId: FormTemplateId) = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} looking at submissions for " + formTemplateId)
     GformConnector.getAllSubmissons(formTemplateId).flatMap {
       case jsonSubmissions =>

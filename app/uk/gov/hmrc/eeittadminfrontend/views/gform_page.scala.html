@@ -31,10 +31,10 @@
     <h2>Find a Gform Template</h2>
     @CSRF.formField
   <div class="form-group">
-    <label for="value">Form Type ID:</label>
+    <label for="value">Form Template ID:</label>
     <fieldset class="form-field-group">
         <input
-                name="formTypeId.value"
+                name="formTemplateId.value"
                 id="value"
                 value=""
                 class="form-control form-control--block"
@@ -48,10 +48,10 @@
 <form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate" method="POST">
     <h2>Delete A template</h2>
     @CSRF.formField
-    <p>Form Type ID:</p>
+    <p>Form Template ID:</p>
     <fieldset class="form-field-group">
         <input
-                name="formTypeId.value"
+                name="formTemplateId.value"
                 id="templateValue"
                 value=""
                 class="form-control form-control--block"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ class QueryControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite
         .withSession("token"                          -> "someGoogleAuthenticationToken")
         .copyFakeRequest(tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
 
-      get200Es20queryKnownFacts
+      get200Es20queryKnownFacts()
 
       val result = await(queryController.queryKnownFacts()(request))
       status(result) shouldBe 200

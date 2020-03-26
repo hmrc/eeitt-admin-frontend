@@ -17,9 +17,9 @@
 @import uk.gov.hmrc.eeittadminfrontend.AppConfig
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
-@import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
+@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-@(formTemplateIds: Seq[FormTypeId])(implicit request : Request[_], appConfig: AppConfig)
+@(formTemplateIds: Seq[FormTemplateId])(implicit request : Request[_], appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Submissions "){
 
     <h2>Form templates</h2>

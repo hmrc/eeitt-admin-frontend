@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
-import uk.gov.hmrc.eeittadminfrontend.models.FormTypeId
+import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
@@ -33,7 +33,7 @@ object GformConnector {
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
-    formTemplateId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
+    formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
     WSHttp
       .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
       .map { response =>
@@ -44,7 +44,7 @@ object GformConnector {
           Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
       }
 
-  def getAllSubmissons(formTemplateId: FormTypeId)(implicit hc: HeaderCarrier, ec: ExecutionContext) =
+  def getAllSubmissons(formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext) =
     WSHttp.GET[JsArray](gformUrl + s"/submissionDetails/all/${formTemplateId.value}")
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
@@ -71,6 +71,6 @@ object GformConnector {
       }
 
   def deleteTemplate(
-    formTypeId: FormTypeId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTypeId")
+    formTemplateId: FormTemplateId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
 }
