@@ -35,6 +35,7 @@ import play.filters.headers.SecurityHeadersFilter
 import play.twirl.api.Html
 import uk.gov.hmrc.crypto.ApplicationCrypto
 import uk.gov.hmrc.eeittadminfrontend.controllers._
+import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -294,7 +295,9 @@ trait ApplicationModule
 
   val prodRoutes = new prod.Routes(httpErrorHandler, appRoutes, healthRoutes, templateRoutes, metricsController)
 
-  val testRoutes = new testOnlyDoNotUseInAppConf.Routes(httpErrorHandler, prodRoutes)
+  val testOnlyController = new TestOnlyController()
+
+  val testRoutes = new testOnlyDoNotUseInAppConf.Routes(httpErrorHandler, prodRoutes, testOnlyController)
 
   val testOnly = configuration.getString("application.router").contains("testOnlyDoNotUseInAppConf.Routes")
 

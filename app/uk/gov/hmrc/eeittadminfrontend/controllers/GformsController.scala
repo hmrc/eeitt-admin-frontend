@@ -30,8 +30,9 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
+import play.api.mvc.AnyContent
 import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.config.Authentication
+import uk.gov.hmrc.eeittadminfrontend.config.{ Authentication, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformId }
@@ -162,30 +163,30 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     Logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
-      maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.asOpt[List[FormTemplateId]])
-      res              <- fetchAndSave(maybeTemplateIds)
+      maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
+      res              <- fetchAndSave(maybeTemplateIds.filterNot(_.value.startsWith("specimen-")))
     } yield Ok(Json.toJson(res))
   }
 
-  def fetchAndSave(maybeFormTemplateIds: Option[List[FormTemplateId]])(
-    implicit hc: HeaderCarrier): Future[RefreshResult] =
-    maybeFormTemplateIds match {
-      case None => Future.successful(NoTempatesToRefresh)
-      case Some(formTemplateIds) =>
-        formTemplateIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) {
-          case (resultsAcc, formTemplateId) =>
-            for {
-              results         <- resultsAcc
-              templateOrError <- GformConnector.getGformsTemplate(formTemplateId)
-              res <- templateOrError match {
-                      case Left(error)     => Future.successful(Left(error))
-                      case Right(template) => GformConnector.saveTemplate(template)
-                    }
-            } yield
-              res match {
-                case Left(error) => results.addResult(RefreshError(formTemplateId, error))
-                case Right(())   => results.addResult(RefreshSuccesful(formTemplateId))
-              }
+  def fetchAndSave(formTemplateIds: List[FormTemplateId])(
+    implicit hc: HeaderCarrier,
+    request: RequestWithUser[AnyContent]): Future[RefreshResult] =
+    formTemplateIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) {
+      case (resultsAcc, formTemplateId) =>
+        Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId")
+        for {
+          results         <- resultsAcc
+          templateOrError <- GformConnector.getGformsTemplate(formTemplateId)
+          res <- templateOrError match {
+                  case Left(error)     => Future.successful(Left(error))
+                  case Right(template) => GformConnector.saveTemplate(template)
+                }
+        } yield {
+          Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId finished: " + res)
+          res match {
+            case Left(error) => results.addResult(RefreshError(formTemplateId, error))
+            case Right(())   => results.addResult(RefreshSuccesful(formTemplateId))
+          }
         }
     }
 
