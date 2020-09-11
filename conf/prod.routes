@@ -1,6 +1,6 @@
 # Add all the application routes to the app.routes file
-->         /eeitt-admin-frontend              app.Routes
-->         /                          health.Routes
-->     	   /template                  template.Routes
-
-GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
+->         /submissions                  app.Routes
+->         /eeitt-admin-frontend         app.Routes
+GET        /ping/ping                    uk.gov.hmrc.play.health.HealthController.ping
+GET        /admin/details                uk.gov.hmrc.play.health.HealthController.details
+GET        /admin/metrics                com.kenshoo.play.metrics.MetricsController.metrics

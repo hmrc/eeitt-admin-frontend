@@ -14,31 +14,47 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend
+package uk.gov.hmrc.eeittadminfrontend.config
 
 import play.api.Configuration
-import play.api.Play.{ configuration, current }
-import uk.gov.hmrc.play.config.ServicesConfig
 
 trait AppConfig {
+  def appName: String
   def analyticsToken: String
   def analyticsHost: String
   def reportAProblemPartialUrl: String
   def reportAProblemNonJSUrl: String
+  def optimizelyUrl: Option[String]
+  def footerCookiesUrl: String
+  def footerPrivacyPolicyUrl: String
+  def footerTermsConditionsUrl: String
+  def footerHelpUrl: String
 }
 
 class FrontendAppConfig(configuration: Configuration) extends AppConfig {
 
   private def loadConfig(key: String) =
-    configuration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+    configuration.getOptional[String](key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
 
-  private val contactHost = configuration.getString(s"contact-frontend.host").getOrElse("")
+  private val contactHost = configuration.getOptional[String](s"contact-frontend.host").getOrElse("")
   private val contactFormServiceIdentifier = "MyService"
 
+  override lazy val appName = loadConfig("appName")
   override lazy val analyticsToken = loadConfig(s"google-analytics.token")
   override lazy val analyticsHost = loadConfig(s"google-analytics.host")
   override lazy val reportAProblemPartialUrl =
     s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl =
     s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
+
+  override def optimizelyUrl =
+    for {
+      url       <- configuration.getOptional[String]("optimizely.url")
+      projectId <- configuration.getOptional[String]("optimizely.projectId")
+    } yield s"$url$projectId.js"
+
+  override lazy val footerCookiesUrl = loadConfig(s"footer-cookies-url")
+  override lazy val footerPrivacyPolicyUrl = loadConfig(s"footer-privacy-policy-url")
+  override lazy val footerTermsConditionsUrl = loadConfig(s"footer-terms-conditions-url")
+  override lazy val footerHelpUrl = loadConfig(s"footer-help-url")
 }

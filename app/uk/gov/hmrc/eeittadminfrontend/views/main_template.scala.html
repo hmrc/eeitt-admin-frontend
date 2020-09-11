@@ -14,54 +14,34 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.AppConfig
-@import pureconfig.generic.auto._
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 
 @(title: String,
-  sidebarLinks: Option[Html] = None,
+  tab: String,
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
-  scriptElem: Option[Html] = None)(content: Html)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+  scriptElem: Option[Html] = None)(mainContent: Html)(implicit messages: Messages, appConfig: AppConfig)
 
-@import uk.gov.hmrc.play.views.html.layouts
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+@analyticsScripts = {
+  <script src='@routes.Assets.versioned("javascripts/base64.min.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/eeitt-admin.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/moment.min.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/Chart.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/analytics.js")'></script>
+  <script src='https://apis.google.com/js/client:platform.js'></script>
+}
 
-<nav role="navigation" class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid" >
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
-            <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage" class="navbar-brand">EEITT</a>
-        </div>
-        <!-- Collection of nav links and other content for toggling -->
-        <div id="navbarCollapse" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery">Query</a></li>
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeltaController.goToDelta">Update Delta</a></li>
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage">G-forms</a></li>
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.fileUpload">File Upload</a></li>
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submissions">Submissions</a></li>
-                <li><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformAnalytics">Analytics</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-            </ul>
-        </div>
+@pageTitle = @{
+  title + " - EEITT Admin"
+}
 
-    </div>
-
-</nav>
-<br>
-<br>
-<br>
-<br>
-@content
-<hr style="height:30pt; visibility:hidden;" />
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-@serviceInfoContent = {}
+@govuk_wrapper(
+  title = pageTitle,
+  tab = tab,
+  mainClass = mainClass,
+  bodyClasses = bodyClasses,
+  contentHeader = contentHeader,
+  mainContent = mainContent,
+  scriptElem = Some(analyticsScripts)
+)

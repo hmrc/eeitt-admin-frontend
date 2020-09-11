@@ -20,25 +20,24 @@ import cats.data.Validated.{ Invalid, Valid }
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{ I18nSupport, MessagesApi }
-import play.api.mvc.{ Action, AnyContent }
-import uk.gov.hmrc.eeittadminfrontend.AppConfig
+import play.api.i18n.I18nSupport
+import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents }
+import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ ClientID, SecuredActions }
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier }
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-
+import uk.gov.hmrc.eeittadminfrontend.services.AuthService
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import pureconfig.generic.auto._
+import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+
 import scala.concurrent.Future
 
 class AuthController(
   val authConnector: AuthConnector,
   sa: SecuredActions,
   authService: AuthService,
-  googleService: GoogleVerifier)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
-    extends FrontendController with Actions with I18nSupport {
+  messagesControllerComponents: MessagesControllerComponents)(implicit appConfig: AppConfig)
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
 
@@ -67,7 +66,7 @@ class AuthController(
           case Valid(()) =>
             Logger.info(s"${email.value} Logged in")
             Future.successful(
-              Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.QueryController.goToQuery())
+              Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
                 .withSession(request.session + ("token", email.value)))
           case Invalid(err) =>
             Future.successful(Unauthorized(s"Failed ${err.error}"))

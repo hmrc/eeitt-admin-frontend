@@ -14,66 +14,70 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.AppConfig
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import helper._
 @import play.api.i18n.Messages.Implicits._
-@import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
-@import views.html.helper.CSRF
 @import uk.gov.hmrc.eeittadminfrontend.models.{GformId, GformTemplate}
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeIdForm
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@(form: Form[EnvelopeIdForm])(implicit request : Request[_], appConfig: AppConfig)
-@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "File upload"){
+@(form: Form[EnvelopeIdForm])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.findEnvelope" method="POST">
-    <h2>Find an envelope</h2>
-    @CSRF.formField
-  <div class="form-group">
-    <label for="value">Envelope ID:</label>
-    <fieldset class="form-field-group">
-        <input
-                name="envelopeId.value"
-                id="value"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
-  </div>
-  <input type="submit" class="button" value="Search"/>
-</form>
+@formWithCSRF = @{new formWithCSRF()}
+@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
+@govukTextarea = @{new govukTextarea(new govukErrorMessage(), new govukHint(), new govukLabel())}
+@govukButton = @{new govukButton()}
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelopePost" method="POST">
-    <h2>Download an envelope</h2>
-    @CSRF.formField
-  <div class="form-group">
-    <label for="value">Envelope ID:</label>
-    <fieldset class="form-field-group">
-        <input
-                name="envelopeId.value"
-                id="value"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
-  </div>
-  <input type="submit" class="button" value="Download"/>
-</form>
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "File upload", tab = "file-upload") {
 
-<form action="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope" method="POST">
-    <h2>Archive an envelope</h2>
-    @CSRF.formField
-    <p>Envelope ID:</p>
-    <fieldset class="form-field-group">
-        <input
-                name="envelopeId.value"
-                id="templateValue"
-                value=""
-                class="form-control form-control--block"
-        />
-        </label>
-    </fieldset>
-    <input type="submit" class="button" value="Archive (warning, it cannot be undone and envelope must be in Routed state!)"/>
-</form>
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.findEnvelope) {
+    <h2 class="govuk-heading-m">Find an envelope</h2>
+    @govukInput(Input(
+        id = "value",
+        name = "envelopeId.value",
+        label = Label(
+            isPageHeading = true,
+            classes = "govuk-label--s",
+            content = Text("Envelope ID:")
+        )
+    ))
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Search")
+    ))
+}
+
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelopePost) {
+    <h2 class="govuk-heading-m">Download an envelope</h2>
+    @govukInput(Input(
+        id = "value",
+        name = "envelopeId.value",
+        label = Label(
+        isPageHeading = true,
+        classes = "govuk-label--s",
+        content = Text("Envelope ID:")
+        )
+    ))
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Download")
+    ))
+}
+
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope) {
+    <h2 class="govuk-heading-m">Archive an envelope</h2>
+    @govukInput(Input(
+        id = "value",
+        name = "envelopeId.value",
+        label = Label(
+        isPageHeading = true,
+        classes = "govuk-label--s",
+        content = Text("Envelope ID:")
+        )
+    ))
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Archive (warning, it cannot be undone and envelope must be in Routed state!)")
+    ))
+}
 }

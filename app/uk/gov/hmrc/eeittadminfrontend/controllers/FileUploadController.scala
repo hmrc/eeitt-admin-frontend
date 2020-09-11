@@ -14,35 +14,29 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.controllers
+package uk.gov.hmrc.eeittadminfrontend
+package controllers
 
-import akka.NotUsed
-import akka.util.ByteString
-import akka.stream.scaladsl.{ Source, StreamConverters }
-import java.io.ByteArrayInputStream
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, text }
-import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc.Result
-import play.api.libs.streams.Streams
-import play.api.libs.iteratee.Enumerator
-import scala.concurrent.Future
-import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.config.Authentication
-import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
+import play.api.mvc.{ MessagesControllerComponents, Result }
+import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
+import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication }
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-class FileUploadController(val authConnector: AuthConnector)(
-  implicit appConfig: AppConfig,
-  val messagesApi: MessagesApi)
-    extends FrontendController with Actions with I18nSupport {
+import scala.concurrent.{ ExecutionContext, Future }
+
+class FileUploadController(
+  val authConnector: AuthConnector,
+  fileUploadConnector: FileUploadConnector,
+  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private val envelopeIdForm: Form[EnvelopeIdForm] = Form(
     mapping("envelopeId" -> mapping("value" -> text)(EnvelopeId.apply)(EnvelopeId.unapply))(EnvelopeIdForm.apply)(
@@ -50,7 +44,7 @@ class FileUploadController(val authConnector: AuthConnector)(
   )
 
   def fileUpload() = Authentication.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm)))
+    Future.successful(Ok(views.html.file_upload(envelopeIdForm)))
   }
 
   private def WithUserLogin(f: (EnvelopeId, String) => HeaderCarrier => Future[Result]) = Authentication.async {
@@ -67,14 +61,14 @@ class FileUploadController(val authConnector: AuthConnector)(
 
   def findEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
     Logger.info(s"$userLogin Queried for envelopeId $envelopeId")
-    FileUploadConnector.getEnvelopeById(envelopeId).map {
+    fileUploadConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)
     }
   }
 
   def showEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
-    FileUploadConnector.getEnvelopeById(envelopeId).map {
+    fileUploadConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)
     }
@@ -82,10 +76,8 @@ class FileUploadController(val authConnector: AuthConnector)(
 
   def downloadEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
-    FileUploadConnector.downloadEnvelopeId(envelopeId).map {
-      case Right(payload) =>
-        val source: Source[ByteString, NotUsed] =
-          Source.fromPublisher(Streams.enumeratorToPublisher(Enumerator(payload)))
+    fileUploadConnector.downloadEnvelopeId(envelopeId).map {
+      case Right(source) =>
         Ok.chunked(source)
           .withHeaders(
             CONTENT_TYPE        -> "application/zip",
@@ -102,7 +94,7 @@ class FileUploadController(val authConnector: AuthConnector)(
 
   def archiveEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
     Logger.info(s"$userLogin Delete envelopeId $envelopeId")
-    FileUploadConnector.archiveEnvelopeId(envelopeId).map {
+    fileUploadConnector.archiveEnvelopeId(envelopeId).map {
       case Right(payload) => Ok(payload)
       case Left(error)    => BadRequest(error)
     }

@@ -22,8 +22,10 @@ import org.scalatest.TestSuite
 import org.scalatestplus.play.{ BaseOneAppPerSuite, FakeApplicationFactory }
 import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
 import play.api.{ Configuration, Environment, Mode }
+import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
+import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 import uk.gov.hmrc.eeittadminfrontend.support.WireMockSupport
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.bootstrap.config.RunMode
 
 trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeApplicationFactory with WireMockSupport {
   this: TestSuite =>
@@ -32,12 +34,13 @@ trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeAppli
 
   def additionalConfiguration: Map[String, Any] = Map.empty[String, Any]
 
-  private lazy val config = Configuration.from(additionalConfiguration)
+  private lazy val additionalConfig = Configuration.from(additionalConfiguration)
 
   protected implicit val materializer = app.materializer
 
-  override lazy val fakeApplication =
-    new ApplicationLoader().load(context.copy(initialConfiguration = context.initialConfiguration ++ config))
+  protected lazy val initialConfig = context.initialConfiguration ++ additionalConfig
+
+  override def fakeApplication = new ApplicationLoader().load(context.copy(initialConfiguration = initialConfig))
 
   def context: play.api.ApplicationLoader.Context = {
     val classLoader = play.api.ApplicationLoader.getClass.getClassLoader
@@ -46,20 +49,23 @@ trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeAppli
   }
 
   val configuration: Configuration = Configuration.reference
-  val mode: Mode.Mode = Mode.Test
+  val mode: Mode = Mode.Test
   val env: Environment = Environment.simple(mode = mode)
-  val langs = new DefaultLangs(configuration)
+  val langs = new DefaultLangs()
 
-  implicit val messageApi = new DefaultMessagesApi(env, configuration, langs)
+  implicit val messageApi = new DefaultMessagesApi()
   implicit val appConfig = new AppConfig {
+    val appName: String = ""
     val analyticsToken: String = ""
     val analyticsHost: String = ""
     val reportAProblemPartialUrl: String = ""
     val reportAProblemNonJSUrl: String = ""
+    val optimizelyUrl: Option[String] = None
+    val footerCookiesUrl: String = ""
+    val footerPrivacyPolicyUrl: String = ""
+    val footerTermsConditionsUrl: String = ""
+    val footerHelpUrl: String = ""
   }
 
-  class FakeAuthConnector extends AuthConnector {
-    override val serviceUrl: String = ""
-    override val http = WSHttp
-  }
+  class FakeAuthConnector extends AuthConnector("", null, new RunMode(configuration, mode), configuration)
 }

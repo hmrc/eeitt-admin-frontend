@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend
+package uk.gov.hmrc.eeittadminfrontend.akka
 
 import akka.actor.ActorSystem
-import play.api.{ Configuration, Play }
+import akka.stream.Materializer
 
-object InjectionDodge {
-  implicit def current = Play.current
-  def actorSystem: ActorSystem = current.actorSystem
-  def configuration: Configuration = current.configuration
-  def mode = current.mode
-  def appNameConfiguration: Configuration = current.configuration
-  val runModeConfiguration = current.configuration
-}
+class AkkaModule(
+  val materializer: Materializer,
+  val actorSystem: ActorSystem
+)

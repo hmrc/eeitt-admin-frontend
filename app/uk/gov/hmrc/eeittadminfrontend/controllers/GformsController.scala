@@ -17,31 +17,27 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
-import java.util.Locale
-import java.util.Base64
-import java.util.zip.{ ZipEntry, ZipOutputStream }
-import akka.stream.scaladsl.StreamConverters
-import java.time.{ Instant, ZoneId }
 import java.time.format.DateTimeFormatter
+import java.time.{ Instant, ZoneId }
+import java.util.Locale
+import java.util.zip.{ ZipEntry, ZipOutputStream }
 
+import akka.stream.scaladsl.StreamConverters
 import julienrf.json.derived
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{ I18nSupport, MessagesApi }
+import play.api.i18n.I18nSupport
 import play.api.libs.json._
-import play.api.mvc.AnyContent
-import uk.gov.hmrc.eeittadminfrontend.AppConfig
-import uk.gov.hmrc.eeittadminfrontend.config.{ Authentication, RequestWithUser }
-import uk.gov.hmrc.eeittadminfrontend.config.RequestWithUser._
+import play.api.mvc.{ AnyContent, MessagesControllerComponents }
+import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
+import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 sealed trait RefreshTemplateResult extends Product with Serializable
 case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
@@ -65,8 +61,11 @@ object RefreshTemplateResults {
 }
 case object NoTempatesToRefresh extends RefreshResult
 
-class GformsController(val authConnector: AuthConnector)(implicit appConfig: AppConfig, val messagesApi: MessagesApi)
-    extends FrontendController with Actions with I18nSupport {
+class GformsController(
+  val authConnector: AuthConnector,
+  gformConnector: GformConnector,
+  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private def fileByteData(fileList: Seq[(FormTemplateId, JsValue)]): ByteArrayInputStream = {
 
@@ -74,7 +73,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
     val zos = new ZipOutputStream(new BufferedOutputStream(baos))
 
     try {
-      fileList.map {
+      fileList.foreach {
         case (formTemplateId, formTemplate) => {
           zos.putNextEntry(new ZipEntry(formTemplateId.value + ".json"))
           zos.write(Json.prettyPrint(formTemplate).getBytes())
@@ -91,13 +90,13 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
   def getBlob = Authentication.async { implicit request =>
     Logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
     val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
-      GformConnector.getAllGformsTemplates.flatMap {
+      gformConnector.getAllGformsTemplates.flatMap {
         case JsArray(templates) =>
           val formTemplateIds = templates.collect {
             case JsString(template) if !template.startsWith("specimen-") => FormTemplateId(template)
           }
           Future.traverse(formTemplateIds) { formTemplateId =>
-            GformConnector
+            gformConnector
               .getGformsTemplate(formTemplateId)
               .map {
                 case Right(formTemplate) => (formTemplateId, formTemplate)
@@ -132,7 +131,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         },
         gformIdAndVersion => {
           Logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTemplateId}")
-          GformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
+          gformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
             case Left(ex) =>
               Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTemplateId}. Reason: $ex")
             case Right(r) => Ok(Json.prettyPrint(r))
@@ -146,7 +145,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
       new String(
         org.apache.commons.codec.binary.Base64.decodeBase64(request.body.dataParts("template").mkString),
         "UTF-8"))
-    GformConnector.saveTemplate(template).map { x =>
+    gformConnector.saveTemplate(template).map { x =>
       {
         Logger.info(s"${request.userLogin} saved ID: ${template \ "_id"} }")
         Ok("Saved")
@@ -156,14 +155,14 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
 
   def getAllTemplates = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} Queried for all form templates")
-    GformConnector.getAllGformsTemplates.map(x => Ok(x))
+    gformConnector.getAllGformsTemplates.map(x => Ok(x))
   }
 
   def reloadTemplates = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
-      maybeTemplateIds <- GformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
+      maybeTemplateIds <- gformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
       res              <- fetchAndSave(maybeTemplateIds.filterNot(_.value.startsWith("specimen-")))
     } yield Ok(Json.toJson(res))
   }
@@ -176,10 +175,10 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId")
         for {
           results         <- resultsAcc
-          templateOrError <- GformConnector.getGformsTemplate(formTemplateId)
+          templateOrError <- gformConnector.getGformsTemplate(formTemplateId)
           res <- templateOrError match {
                   case Left(error)     => Future.successful(Left(error))
-                  case Right(template) => GformConnector.saveTemplate(template)
+                  case Right(template) => gformConnector.saveTemplate(template)
                 }
         } yield {
           Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId finished: " + res)
@@ -192,7 +191,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
 
   def getAllSchema = Authentication.async { implicit request =>
     Logger.info(s"${request.userLogin} Queried for all form Schema")
-    GformConnector.getAllSchema.map(x => Ok(x))
+    gformConnector.getAllSchema.map(x => Ok(x))
   }
 
   def deleteGformTemplate = Authentication.async { implicit request =>
@@ -204,7 +203,7 @@ class GformsController(val authConnector: AuthConnector)(implicit appConfig: App
         },
         gformId => {
           Logger.info(s"${request.userLogin} deleted ${gformId.formTemplateId} ")
-          GformConnector.deleteTemplate(gformId.formTemplateId).map(res => Ok)
+          gformConnector.deleteTemplate(gformId.formTemplateId).map(res => Ok)
         }
       )
   }

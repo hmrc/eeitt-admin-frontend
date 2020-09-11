@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.testonly
+package uk.gov.hmrc.eeittadminfrontend.auth
 
-import com.typesafe.config.{ ConfigFactory, ConfigRenderOptions }
-import play.api.libs.json.{ JsValue, Json }
-import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import play.api.{ Configuration, Mode }
+import uk.gov.hmrc.auth.core.PlayAuthConnector
+import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
+import uk.gov.hmrc.play.bootstrap.config.{ RunMode, ServicesConfig }
 
-class TestOnlyController(messagesControllerComponents: MessagesControllerComponents)
-    extends FrontendController(messagesControllerComponents) {
-
-  def config() = Action { r =>
-    val result: JsValue = Json.parse(ConfigFactory.load().root().render(ConfigRenderOptions.concise()))
-    Ok(result)
-  }
-
+class AuthConnector(baseUrl: String, wsHttp: WSHttp, mode: RunMode, configuration: Configuration)
+    extends ServicesConfig(configuration, mode) with PlayAuthConnector {
+  val serviceUrl = baseUrl
+  lazy val http = wsHttp
 }

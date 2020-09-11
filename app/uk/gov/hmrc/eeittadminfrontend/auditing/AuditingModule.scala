@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.testonly
+package uk.gov.hmrc.eeittadminfrontend.auditing
 
-import com.typesafe.config.{ ConfigFactory, ConfigRenderOptions }
-import play.api.libs.json.{ JsValue, Json }
-import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.audit.DefaultAuditConnector
 
-class TestOnlyController(messagesControllerComponents: MessagesControllerComponents)
-    extends FrontendController(messagesControllerComponents) {
+import scala.concurrent.ExecutionContext
 
-  def config() = Action { r =>
-    val result: JsValue = Json.parse(ConfigFactory.load().root().render(ConfigRenderOptions.concise()))
-    Ok(result)
-  }
+class AuditingModule(configModule: ConfigModule)(
+  implicit ec: ExecutionContext
+) {
+  self =>
 
+  lazy val auditConnector: AuditConnector =
+    new DefaultAuditConnector(configModule.auditingConfig)
+
+  val httpAuditingService: HttpAuditingService =
+    new HttpAuditingService(configModule.frontendAppConfig.appName, auditConnector)
 }

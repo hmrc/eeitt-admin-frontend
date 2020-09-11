@@ -18,7 +18,6 @@ package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.Logger
 import play.api.libs.json._
-import uk.gov.hmrc.play.frontend.auth.TaxRegime
 
 trait Response
 

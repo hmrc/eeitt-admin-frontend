@@ -16,17 +16,15 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers.auth
 
-import play.api.mvc.Result
+import play.api.mvc.{ RequestHeader, Result }
 import play.api.{ Configuration, Logger }
-import play.api.mvc.RequestHeader
+import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.infrastructure._
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 import scala.concurrent.Future
 import scala.util.Try
 
-trait SecuredActions extends Actions {
+trait SecuredActions {
 
   def whiteListing(r: => Future[Result])(implicit request: RequestHeader): Future[Result]
 
@@ -43,10 +41,8 @@ object WhiteListingConf {
 
   def apply(config: Configuration): BasicAuthConfiguration = {
 
-    def getWhitelist(config: Configuration): Option[List[Address]] = {
-
-      val whitelist = config.getString("basicAuth.whitelist")
-      config.getString("basicAuth.whitelist").map {
+    def getWhitelist(config: Configuration): Option[List[Address]] =
+      config.getOptional[String]("basicAuth.whitelist").map {
         _.split(",").map(a => Address(a)).toList
       } match {
         case None =>
@@ -58,10 +54,9 @@ object WhiteListingConf {
             s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
           Some(x)
       }
-    }
 
     config
-      .getString("feature.basicAuthEnabled")
+      .getOptional[String]("feature.basicAuthEnabled")
       .flatMap(flag => Try(flag.toBoolean).toOption) match {
       case Some(true)  => WhiteListingEnabled(getWhitelist(config))
       case Some(false) => WhiteListingIsDisabled

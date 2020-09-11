@@ -16,28 +16,24 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object FileUploadConnector {
-
-  private val sc = new ServicesConfig {
-    override protected def mode = InjectionDodge.mode
-    override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
-  }
+class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   val fileUploadUrl = sc.baseUrl("file-upload")
 
   def getEnvelopeById(
     envelopeId: EnvelopeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
     val url = fileUploadUrl + s"/file-upload/envelopes/${envelopeId.value}"
-    WSHttp
+    wsHttp
       .doGet(url)
       .map { response =>
         if (response.status == 200) Right(response.json) else Left(response.body.toString)
@@ -48,14 +44,15 @@ object FileUploadConnector {
       }
   }
 
-  def downloadEnvelopeId(
-    envelopeId: EnvelopeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, ByteString]] = {
+  def downloadEnvelopeId(envelopeId: EnvelopeId)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
-    WSHttp
+    wsHttp
       .buildRequest(url)
       .get
       .map { response =>
-        if (response.status == 200) Right(response.bodyAsBytes) else Left(response.body.toString)
+        if (response.status == 200) Right(response.bodyAsSource) else Left(response.body)
       }
       .recover {
         case ex =>
@@ -69,11 +66,11 @@ object FileUploadConnector {
 
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
 
-    WSHttp
+    wsHttp
       .DELETE[HttpResponse](url)
       .map { response =>
         val success =
-          s"Envelope $envelopeId archived successfully. Status: ${response.status}, body: ${response.body.toString}"
+          s"Envelope $envelopeId archived successfully. Status: ${response.status}, body: ${response.body}"
         Logger.info(success)
         Right(success)
       }

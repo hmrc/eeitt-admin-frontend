@@ -14,17 +14,16 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.AppConfig
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import play.api.i18n.Messages.Implicits._
-@import uk.gov.hmrc.eeittadminfrontend.InjectionDodge.current
 @import uk.gov.hmrc.eeittadminfrontend.models.{AttachmentCheck, FormTemplateId, Submission}
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{Envelope, EnvelopeId}
 @import uk.gov.hmrc.eeittadminfrontend.views._
 
-@(formTemplateId: FormTemplateId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit request : Request[_], appConfig: AppConfig)
-@uk.gov.hmrc.eeittadminfrontend.views.html.analytics_template(title = "Submissions for @{formTemplateId.value}"){
+@(formTemplateId: FormTemplateId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Submissions for @{formTemplateId.value}", tab = "submissions"){
 
-    <h2>Submissions for form @{formTemplateId.value}</h2>
+    <h2 class="govuk-heading-m">Submissions for form @{formTemplateId.value}</h2>
 
     <table class="govuk-table stats-table">
       <thead class="govuk-table__head">
@@ -35,7 +34,7 @@
           <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
           <th class="govuk-table__header" scope="col" title="Status of the envelope">Status</th>
           <th class="govuk-table__header" scope="col" title="Total size of the envelope">Size</th>
-	  <th class="govuk-table__header" scope="col" title="Number of files in the envelope">Envelope Count</th>
+          <th class="govuk-table__header" scope="col" title="Number of files in the envelope">Envelope Count</th>
           <th class="govuk-table__header" scope="col">Check</th>
         </tr>
       </thead>
@@ -46,7 +45,7 @@
                @{submission.submissionRef}
             </td>
             <td class="govuk-table__cell">
-              <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.showEnvelope(EnvelopeId(submission.envelopeId))">@{submission.envelopeId}</a>
+              <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.showEnvelope(EnvelopeId(submission.envelopeId))" class="govuk-link">@{submission.envelopeId}</a>
             </td>
             <td class="govuk-table__cell">
                @{submission.attachment_count}
@@ -65,13 +64,13 @@
             </td>
             <td class="govuk-table__cell">
                @{
-	         check match {
-	           case AttachmentCheck.CountOk => "OK"
-	           case AttachmentCheck.CountDoesNotMatch(envelopeCount) => envelopeCount + " files in envelope"
-		   case AttachmentCheck.EnvelopeDoesNotExists => "Envelope does not exists"
-		   case AttachmentCheck.CannotParseEnvelope => "Cannot parse the envelope"
-	         }
-	       }
+                 check match {
+                   case AttachmentCheck.CountOk => "OK"
+                   case AttachmentCheck.CountDoesNotMatch(envelopeCount) => envelopeCount + " files in envelope"
+                   case AttachmentCheck.EnvelopeDoesNotExists => "Envelope does not exists"
+                   case AttachmentCheck.CannotParseEnvelope => "Cannot parse the envelope"
+                 }
+	           }
             </td>
           </tr>
         }
