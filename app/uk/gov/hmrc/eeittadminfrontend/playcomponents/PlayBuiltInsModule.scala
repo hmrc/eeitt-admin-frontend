@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.testonly
+package uk.gov.hmrc.eeittadminfrontend.playcomponents
 
-import com.typesafe.config.{ ConfigFactory, ConfigRenderOptions }
-import play.api.libs.json.{ JsValue, Json }
-import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import play.api._
+import play.api.i18n.{ I18nSupport, Langs, MessagesApi }
 
-class TestOnlyController(messagesControllerComponents: MessagesControllerComponents)
-    extends FrontendController(messagesControllerComponents) {
+class PlayBuiltInsModule(
+  val builtInComponents: BuiltInComponents
+) { self =>
 
-  def config() = Action { r =>
-    val result: JsValue = Json.parse(ConfigFactory.load().root().render(ConfigRenderOptions.concise()))
-    Ok(result)
+  val langs: Langs = builtInComponents.langs
+
+  val messagesApi: MessagesApi = builtInComponents.messagesApi
+
+  val i18nSupport: I18nSupport = new I18nSupport {
+    override def messagesApi: MessagesApi = self.messagesApi
   }
-
 }

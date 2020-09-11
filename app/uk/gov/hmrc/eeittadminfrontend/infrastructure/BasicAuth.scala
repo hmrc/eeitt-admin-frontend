@@ -16,10 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.infrastructure
 
-import com.google.common.base.Charsets
-import com.google.common.io.BaseEncoding
 import play.api.Logger
-import play.api.http.HeaderNames
 import play.api.mvc.Results.Status
 import play.api.mvc.{ RequestHeader, Result }
 
@@ -30,9 +27,8 @@ trait BasicAuth {
   def whitelistPassed(address: Option[Address]): Boolean
 
   def apply(block: => Future[Result])(implicit request: RequestHeader) = {
-    val maybeCredentials = request.headers.get(HeaderNames.AUTHORIZATION)
     val trueClient = "True-Client-IP"
-    val maybeSource = request.headers.get(trueClient).map(Address(_))
+    val maybeSource = request.headers.get(trueClient).map(Address)
     val forwardedFor = request.headers.get("x-forwarded-for").getOrElse("none")
     Logger.info(s"""Remote address ${request.remoteAddress}, x-forwarded-for $forwardedFor, True-Client-IP ${maybeSource
       .getOrElse("none")}""")

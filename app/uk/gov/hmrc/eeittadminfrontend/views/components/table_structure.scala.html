@@ -14,7 +14,9 @@
  * limitations under the License.
  *@
 
-@(id: String, bodyId: String, caption: String, columns: List[String])(implicit request : Request[_], appConfig: uk.gov.hmrc.eeittadminfrontend.AppConfig)
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+
+@(id: String, bodyId: String, caption: String, columns: List[String])(implicit request : Request[_], appConfig: AppConfig)
 
 <table id="@{id}" class="govuk-table stats-table @{bodyId}">
   <caption id="errors-header" class="govuk-table__caption govuk-!-font-size-24">@caption</caption>

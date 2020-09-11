@@ -1,7 +1,12 @@
 # microservice specific routes
 
+->            /govuk-frontend    govuk.Routes
+->            /hmrc-frontend     hmrcfrontend.Routes
+
 GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
 POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
+
 GET        /get-blob                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
 POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
 GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
@@ -10,36 +15,7 @@ GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
-
-POST        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToDelta
-GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
 GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
-
-GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
-
-GET        /delta                    uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.goToDelta
-GET        /query                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.goToQuery
-POST       /query/arn                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.UidQuery
-POST       /query/groupid            uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.enrollmentQuery
-GET        /business-users/all       uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllBusinessUsers
-GET        /agents/all               uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgents
-GET        /agents-enrollments/all   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllAgentEnrollments
-GET        /agents-enrollments/all-enrolments   uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllEnrollmentAgents
-GET        /business-users/all-enrolments  uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.getAllEnrollments
-
-POST       /delta/agent              uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.agent
-POST       /delta/business           uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.business
-
-GET        /dashboard                uk.gov.hmrc.eeittadminfrontend.controllers.EeittAdminController.index
-
-POST        /delta/known-facts/upsert             uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.upsertKnownFacts
-POST        /delta/enrolment/add-enrol            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addFactsEnrol
-POST        /delta/enrolment/enrolments-for-userids            uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.allocateEnrolmentToUsers
-POST        /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.addEnrol
-DELETE      /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.DeltaController.deleteEnrolment
-
-GET         /delta/enrolment/enrol                uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryEnrolments
-POST        /query/known-facts                    uk.gov.hmrc.eeittadminfrontend.controllers.QueryController.queryKnownFacts
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
@@ -51,4 +27,4 @@ POST        /file-upload/archive             uk.gov.hmrc.eeittadminfrontend.cont
 GET         /submissions                     uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submissions
 GET         /submission/:formTemplateId      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submission(formTemplateId: FormTemplateId)
 
-GET        /assets/*file            controllers.Assets.at(path = "/public", file)
+GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

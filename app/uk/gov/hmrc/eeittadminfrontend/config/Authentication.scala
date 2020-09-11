@@ -16,26 +16,26 @@
 
 package uk.gov.hmrc.eeittadminfrontend.config
 
+import play.api.Play
 import play.api.mvc.Results._
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
-case class RequestWithUser[A](request: Request[A], userLogin: String) {
-  def body = request.body
-  def session = request.session
-  def headers = request.headers
-}
+case class RequestWithUser[A](request: Request[A], userLogin: String) extends WrappedRequest[A](request)
 
 object RequestWithUser {
   implicit def asRequest[A](implicit rwu: RequestWithUser[A]): Request[A] = rwu.request
 }
 
-object Authentication extends ActionBuilder[RequestWithUser] {
+object Authentication extends ActionBuilder[RequestWithUser, AnyContent] {
+
+  override def executionContext: ExecutionContext = Play.current.actorSystem.dispatcher
+  override def parser: BodyParser[AnyContent] = BodyParsers.parse.default
 
   private def username(request: RequestHeader): Option[String] = request.session.get("token")
 
-  def onUnauthorised(request: RequestHeader) =
+  def onUnauthorised =
     Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage())
 
   override def invokeBlock[A](request: Request[A], block: RequestWithUser[A] => Future[Result]): Future[Result] =
@@ -43,5 +43,5 @@ object Authentication extends ActionBuilder[RequestWithUser] {
       .map { login =>
         block(RequestWithUser(request, login))
       }
-      .getOrElse(Future.successful(onUnauthorised(request)))
+      .getOrElse(Future.successful(onUnauthorised))
 }

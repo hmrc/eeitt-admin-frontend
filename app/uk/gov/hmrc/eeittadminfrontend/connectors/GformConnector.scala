@@ -17,24 +17,20 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.{ InjectionDodge, WSHttp }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object GformConnector {
+class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
-  private val sc = new ServicesConfig {
-    override protected def mode = InjectionDodge.mode
-    override protected val runModeConfiguration = InjectionDodge.runModeConfiguration
-  }
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
     formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
-    WSHttp
+    wsHttp
       .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
       .map { response =>
         if (response.status == 200) Right(response.json) else Left(response.body.toString)
@@ -45,17 +41,17 @@ object GformConnector {
       }
 
   def getAllSubmissons(formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext) =
-    WSHttp.GET[JsArray](gformUrl + s"/submissionDetails/all/${formTemplateId.value}")
+    wsHttp.GET[JsArray](gformUrl + s"/submissionDetails/all/${formTemplateId.value}")
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    WSHttp.GET[JsArray](gformUrl + "/formtemplates")
+    wsHttp.GET[JsArray](gformUrl + "/formtemplates")
 
   def getAllSchema(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    WSHttp.GET[JsValue](gformUrl + "/schemas")
+    wsHttp.GET[JsValue](gformUrl + "/schemas")
 
   def saveTemplate(
     gformTemplate: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
-    WSHttp
+    wsHttp
       .doPost[JsValue](gformUrl + "/formtemplates", gformTemplate, List.empty[(String, String)])
       .map { response =>
         if (response.status == 204) { // Results.NoContent
@@ -72,5 +68,5 @@ object GformConnector {
 
   def deleteTemplate(
     formTemplateId: FormTemplateId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    WSHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
+    wsHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
 }

@@ -17,23 +17,17 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.Validated
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import cats.syntax.all._
 import org.scalatest.concurrent.ScalaFutures
 import play.api.http.Status
-import play.api.i18n.{ DefaultLangs, DefaultMessagesApi }
-import play.api.mvc.{ Action, AnyContent, AnyContentAsEmpty, Result }
+import play.api.mvc.{ AnyContentAsEmpty, Headers, Result }
 import play.api.test.{ FakeHeaders, FakeRequest }
-import play.api.{ Configuration, Environment, Mode }
 import uk.gov.hmrc.eeittadminfrontend._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GoogleVerifier, GoogleVerifierHelper }
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.eeittadminfrontend.services.AuthService
+import uk.gov.hmrc.play.bootstrap.tools.Stubs.stubMessagesControllerComponents
 import uk.gov.hmrc.play.test.UnitSpec
-import cats.data._
-import cats.syntax.all._
-
-import scala.concurrent.{ ExecutionContext, Future }
 
 class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with ScalaFutures {
 
@@ -45,14 +39,13 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
   "auth controller " should {
 
     "allow access when given a valid email" in {
-      val fakeRequest = new FakeRequest(
-        "POST",
-        "/eeittadminfrontend/login",
-        FakeHeaders(),
-        TestUsers.validUser(),
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
-        override lazy val host: String = serverUrl
-      }.withHeaders("True-Client-IP" -> "192.168.1.1")
+      val fakeRequest = FakeRequest(
+        method = "POST",
+        uri = serverUrl + "/eeittadminfrontend/login",
+        headers = Headers("True-Client-IP" -> "192.168.1.1"),
+        body = TestUsers.validUser(),
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+      )
 
       val result: Result = authController.checkCredentials()(fakeRequest).futureValue
 
@@ -60,14 +53,13 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "deny access when given an invalid email" in {
-      val fakeRequest = new FakeRequest(
-        "POST",
-        "/eeittadminfrontend/login",
-        FakeHeaders(),
-        TestUsers.invalidUser(),
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
-        override lazy val host: String = serverUrl
-      }.withHeaders("True-Client-IP" -> "192.168.1.1")
+      val fakeRequest = FakeRequest(
+        method = "POST",
+        uri = serverUrl + "/eeittadminfrontend/login",
+        headers = Headers("True-Client-IP" -> "192.168.1.1"),
+        body = TestUsers.invalidUser(),
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+      )
 
       val result: Result = authController.checkCredentials()(fakeRequest).futureValue
 
@@ -75,14 +67,12 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "return FORBIDDEN when whiteListing is missing" in {
-      val fakeRequest = new FakeRequest(
-        "GET",
-        "/eeittadminfrontend/login",
-        FakeHeaders(),
-        AnyContentAsEmpty,
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
-        override lazy val host: String = serverUrl
-      }
+      val fakeRequest = FakeRequest(
+        method = "POST",
+        uri = serverUrl + "/eeittadminfrontend/login",
+        headers = FakeHeaders(),
+        body = AnyContentAsEmpty,
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
 
       val result: Result = authController.loginPage()(fakeRequest).futureValue
 
@@ -90,14 +80,13 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
     }
 
     "return FORBIDDEN when whiteListing is incorrect" in {
-      val fakeRequest = new FakeRequest(
-        "GET",
-        "/eeittadminfrontend/login",
-        FakeHeaders(),
-        AnyContentAsEmpty,
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")) {
-        override lazy val host: String = serverUrl
-      }.withHeaders("True-Client-IP" -> "192.168.1.2")
+      val fakeRequest = FakeRequest(
+        method = "POST",
+        uri = serverUrl + "/eeittadminfrontend/login",
+        headers = Headers("True-Client-IP" -> "192.168.1.2"),
+        body = AnyContentAsEmpty,
+        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+      )
 
       val result: Result = authController.loginPage()(fakeRequest).futureValue
 
@@ -106,25 +95,15 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
 
   }
 
-  val securedActions = new SecuredActionsImpl(fakeApplication.configuration, null)
+  val securedActions = new SecuredActionsImpl(initialConfig, null)
 
   val authController = new AuthController(
     new FakeAuthConnector(),
     securedActions,
     new FakeAuthService,
-    new FakeGoogleVerifier)(appConfig, messageApi)
+    stubMessagesControllerComponents())(appConfig)
   class FakeAuthService extends AuthService {
     override def checkUser(email: Email): Validated[LoginError, Unit] =
       if (email.value == "test@test.com") ().valid else LoginError("Test Error").invalid
-  }
-
-  class FakeGoogleVerifier extends GoogleVerifier {
-
-    override def apply(string: String) =
-      if (string == "test@test.com") {
-        "test@test.com"
-      } else {
-        "invalidtest@test.com"
-      }
   }
 }

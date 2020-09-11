@@ -1,21 +1,18 @@
 import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport.scalafmtOnCompile
 import sbt.Keys._
-import sbt.Tests.{Group, SubProcess}
 import sbt._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import play.sbt.routes.RoutesKeys.routesImport
+import play.twirl.sbt.Import.TwirlKeys
 
 trait MicroService {
 
   import uk.gov.hmrc._
   import DefaultBuildSettings._
-  import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt, SbtAutoBuildPlugin}
+  import uk.gov.hmrc.SbtAutoBuildPlugin
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
   import uk.gov.hmrc.versioning.SbtGitVersioning
-  import play.sbt.routes.RoutesKeys.routesGenerator
   import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
-
-  import TestPhases._
 
   val appName: String
 
@@ -23,9 +20,13 @@ trait MicroService {
   lazy val plugins: Seq[Plugins] = Seq.empty
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
-
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*)
+    .enablePlugins(Seq(
+      play.sbt.PlayScala,
+      SbtAutoBuildPlugin,
+      SbtGitVersioning,
+      SbtDistributablesPlugin,
+      SbtArtifactory) ++ plugins: _*)
     .settings(majorVersion := 1)
     .settings(playSettings: _*)
     .settings(scalaSettings: _*)
@@ -39,25 +40,21 @@ trait MicroService {
         "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
         "uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId",
         "uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId"
-      ))
-    .configs(IntegrationTest)
-    .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
-    .settings(
-      Keys.fork in IntegrationTest := false,
-      unmanagedSourceDirectories in IntegrationTest := Seq("it").map(d => baseDirectory.value / d),
-      addTestReportOption(IntegrationTest, "int-test-reports"),
-      testGrouping in IntegrationTest := oneForkedJvmPerTest2((definedTests in IntegrationTest).value),
-      parallelExecution in IntegrationTest := false)
-    // Uncomment this when you have problems resolving de.threedimensions#metrics-play_2.11;2.5.13
+      )
+    )
     .settings(resolvers ++= Seq(
-      Resolver.jcenterRepo
+      Resolver.bintrayRepo("jetbrains", "markdown"),
+      Resolver.jcenterRepo,
+      "bintray-djspiewak-maven" at "https://dl.bintray.com/djspiewak/maven",
+      "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
+      "bintray" at "https://dl.bintray.com/webjars/maven"
     ))
-}
-
-private object TestPhases {
-
-  def oneForkedJvmPerTest2(tests: Seq[TestDefinition]) =
-    tests map {
-      test => new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
-    }
+    .settings(TwirlKeys.templateImports ++= Seq(
+      "play.twirl.api.Html",
+      "play.twirl.api.HtmlFormat",
+      "uk.gov.hmrc.eeittadminfrontend.models._",
+      "uk.gov.hmrc.govukfrontend.views.html.components._",
+      "uk.gov.hmrc.govukfrontend.views.html.helpers._",
+      "uk.gov.hmrc.hmrcfrontend.views.html.components._"
+    ))
 }

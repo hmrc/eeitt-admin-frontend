@@ -10,23 +10,24 @@ object FrontendBuild extends Build with MicroService {
 
   val compile = Seq(
     ws,
-    "uk.gov.hmrc" %% "frontend-bootstrap" % "12.4.0",
-    "uk.gov.hmrc" %% "play-partials" % "6.5.0",
-    "com.github.pureconfig" %% "pureconfig" % "0.10.2",
-    "com.google.gdata" % "core" % "1.47.1",
-    "com.google.apis" % "google-api-services-oauth2" % "v2-rev141-1.25.0",
-    "org.typelevel" %% "cats-core" % "1.6.0",
-    "com.google.api-client" % "google-api-client" % "1.28.0",
-    "org.julienrf" %% "play-json-derived-codecs" % "3.3"
+    "uk.gov.hmrc"           %% "bootstrap-play-26"        % "1.3.0",
+    "uk.gov.hmrc"           %% "play-partials"            % "6.9.0-play-26",
+    "uk.gov.hmrc"           %% "play-frontend-govuk"      % "0.48.0-play-26",
+    "uk.gov.hmrc"           %% "play-frontend-hmrc"       % "0.15.0-play-26",
+    "uk.gov.hmrc"           %% "csp-client"               % "4.2.0-play-26",
+    "com.github.pureconfig" %% "pureconfig"               % "0.10.2",
+    "org.typelevel"         %% "cats-core"                % "1.6.0",
+    "org.julienrf"          %% "play-json-derived-codecs" % "3.3"
   )
 
   def test(scope: String = "test") = Seq(
-    "uk.gov.hmrc" %% "hmrctest" % "3.5.0-play-25" % scope,
-    "org.scalatest" %% "scalatest" % "3.0.5" % scope,
-    "org.pegdown" % "pegdown" % "1.6.0" % scope,
-    "org.jsoup" % "jsoup" % "1.11.3" % scope,
-    "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
-    "com.github.tomakehurst" % "wiremock" % "2.19.0" % scope
+    "uk.gov.hmrc"            %% "bootstrap-play-26"  % "1.3.0"             % Test classifier "tests",
+    "uk.gov.hmrc"            %% "hmrctest"           % "3.5.0-play-26"     % scope,
+    "org.scalatest"          %% "scalatest"          % "3.0.5"             % scope,
+    "org.pegdown"            % "pegdown"             % "1.6.0"             % scope,
+    "org.jsoup"              % "jsoup"               % "1.11.3"            % scope,
+    "com.typesafe.play"      %% "play-test"          % PlayVersion.current % scope,
+    "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.0"             % scope,
+    "com.github.tomakehurst" % "wiremock-jre8"       % "2.26.3"            % scope
   )
 }
