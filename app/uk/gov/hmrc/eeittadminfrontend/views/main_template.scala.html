@@ -24,6 +24,7 @@
   scriptElem: Option[Html] = None)(mainContent: Html)(implicit messages: Messages, appConfig: AppConfig)
 
 @analyticsScripts = {
+  <script src='@routes.Assets.versioned("javascripts/jquery.min.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/base64.min.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/eeitt-admin.js")'></script>
   <script src='@routes.Assets.versioned("javascripts/moment.min.js")'></script>

@@ -1,5 +1,4 @@
 # Add all the application routes to the app.routes file
-->         /submissions                  app.Routes
 ->         /eeitt-admin-frontend         app.Routes
 GET        /ping/ping                    uk.gov.hmrc.play.health.HealthController.ping
 GET        /admin/details                uk.gov.hmrc.play.health.HealthController.details
