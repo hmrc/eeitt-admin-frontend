@@ -22,7 +22,9 @@ import java.time.{ Instant, ZoneId }
 import java.util.Locale
 import java.util.zip.{ ZipEntry, ZipOutputStream }
 
-import akka.stream.scaladsl.StreamConverters
+import akka.stream.Materializer
+import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
+import akka.util.ByteString
 import julienrf.json.derived
 import play.api.Logger
 import play.api.data.Form
@@ -33,12 +35,11 @@ import play.api.mvc.{ AnyContent, MessagesControllerComponents }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
-
 sealed trait RefreshTemplateResult extends Product with Serializable
 case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
 case class RefreshError(formTemplateId: FormTemplateId, errorMessage: String) extends RefreshTemplateResult
@@ -64,7 +65,10 @@ case object NoTempatesToRefresh extends RefreshResult
 class GformsController(
   val authConnector: AuthConnector,
   gformConnector: GformConnector,
-  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
+  messagesControllerComponents: MessagesControllerComponents)(
+  implicit ec: ExecutionContext,
+  appConfig: AppConfig,
+  m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private def fileByteData(fileList: Seq[(FormTemplateId, JsValue)]): ByteArrayInputStream = {
@@ -214,6 +218,37 @@ class GformsController(
 
   def gformAnalytics = Authentication.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.analytics()))
+  }
+
+  def dbLookupFileUpload() = Authentication.async(parse.multipartFormData) { implicit request =>
+    val collectionName = request.body.dataParts("collectionName").head
+    if (collectionName.isEmpty) {
+      Future.successful(BadRequest("'collectionName' param is empty"))
+    } else {
+      Logger.info(s"Uploading db lookup file for collection $collectionName")
+      request.body
+        .file("file")
+        .map(filePart => {
+          FileIO
+            .fromPath(filePart.ref.getAbsoluteFile.toPath)
+            .via(Framing
+              .delimiter(ByteString("\n"), 9, true)
+              .grouped(1000))
+            .mapAsync(1)((lines: Seq[ByteString]) =>
+              gformConnector.saveDBLookupIds(collectionName, lines.map(l => DbLookupId(l.utf8String))))
+            .toMat(Sink.ignore)(Keep.right)
+            .run()
+            .map { _ =>
+              Created(s"Uploaded db lookup file for collection $collectionName")
+            }
+            .recover {
+              case e =>
+                Logger.info(s"Failed to send uploaded file to gforms for collection $collectionName", e)
+                InternalServerError(s"Failed to send uploaded file to gforms for collection $collectionName [error=$e]")
+            }
+        })
+        .getOrElse(Future.successful(BadRequest("'file' param is missing")))
+    }
   }
 
   val gFormForm: Form[GformId] = Form(

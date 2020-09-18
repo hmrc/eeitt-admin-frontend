@@ -16,6 +16,7 @@ POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.
 POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
+POST       /db-lookup-file-upload    uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope

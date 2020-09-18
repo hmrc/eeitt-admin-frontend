@@ -154,7 +154,8 @@ class ApplicationModule(context: Context)
 
   val gformController = new GformsController(authModule.authConnector, gformConnector, messagesControllerComponents)(
     executionContext,
-    configModule.frontendAppConfig)
+    configModule.frontendAppConfig,
+    materializer)
   val fileUploadController =
     new FileUploadController(authModule.authConnector, fileUploadConnector, messagesControllerComponents)(
       executionContext,
