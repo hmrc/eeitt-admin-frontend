@@ -28,6 +28,8 @@
 @govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
 @govukTextarea = @{new govukTextarea(new govukErrorMessage(), new govukHint(), new govukLabel())}
 @govukButton = @{new govukButton()}
+@govukSelect = @{new govukSelect(new govukErrorMessage, new govukHint, new govukLabel)}
+@govukFileUpload = @{new govukFileUpload(new govukErrorMessage, new govukHint, new govukLabel)}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform", tab = "gforms") {
 
@@ -106,6 +108,43 @@
     @govukButton(Button(
         preventDoubleClick = true,
         content = Text("Reload all Templates")
+    ))
+}
+
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.dbLookupFileUpload, args = 'enctype -> "multipart/form-data") {
+    <h2 class="govuk-heading-m">Upload DB Lookup Ids</h2>
+    @govukSelect(
+        Select(
+            id = "collectionName",
+            name = "collectionName",
+            items = Seq(
+                SelectItem(
+                    value = Some(""),
+                    text = "--select--",
+                    selected = true
+                ),
+                SelectItem(
+                    value = Some("mtdVatNumber"),
+                    text = "mtdVatNumber"
+                )),
+            label = Label(
+                classes = "govuk-label--s",
+                content = Text("Collection")
+            ))
+    )
+
+    @govukFileUpload(FileUpload(
+        name = "file",
+        id = "file",
+        label = Label(
+            classes = "govuk-label--s",
+            content = Text("File (lookup ids for the chosen collection, one per line)")
+        )
+    ))
+
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Upload")
     ))
 }
 

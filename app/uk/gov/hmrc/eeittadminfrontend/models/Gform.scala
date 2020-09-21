@@ -33,3 +33,11 @@ case class GformTemplate(template: JsValue)
 object GformTemplate {
   implicit val format: Format[GformTemplate] = Json.format[GformTemplate]
 }
+
+case class DbLookupId(_id: String)
+
+object DbLookupId {
+  implicit val format: Format[DbLookupId] = Json.format[DbLookupId]
+}
+
+case class GformServiceError(statusCode: Int, message: String) extends Exception(message)

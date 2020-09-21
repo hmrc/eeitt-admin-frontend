@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import akka.http.scaladsl.model.StatusCodes
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
+import play.api.Logger
 
 class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
@@ -69,4 +71,21 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   def deleteTemplate(
     formTemplateId: FormTemplateId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
+
+  def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(
+    implicit headerCarrier: HeaderCarrier,
+    ec: ExecutionContext): Future[Unit] =
+    wsHttp
+      .doPut(gformUrl + s"/dblookup/$collectionName", dbLookupIds, Seq.empty)
+      .map { response =>
+        response.status match {
+          case StatusCodes.Created.intValue =>
+            ()
+          case _ =>
+            val message =
+              s"Failed to save dbLookup ids for collection $collectionName [status=${response.status}, error=${response.body}]"
+            Logger.error(message)
+            throw GformServiceError(response.status, message)
+        }
+      }
 }
