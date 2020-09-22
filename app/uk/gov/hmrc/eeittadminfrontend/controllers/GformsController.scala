@@ -232,10 +232,10 @@ class GformsController(
           FileIO
             .fromPath(filePart.ref.getAbsoluteFile.toPath)
             .via(Framing
-              .delimiter(ByteString("\n"), 9, true)
+              .delimiter(ByteString("\n"), 100, true)
               .grouped(1000))
             .mapAsync(1)((lines: Seq[ByteString]) =>
-              gformConnector.saveDBLookupIds(collectionName, lines.map(l => DbLookupId(l.utf8String))))
+              gformConnector.saveDBLookupIds(collectionName, lines.map(_.utf8String).filter(_.trim().nonEmpty).map(DbLookupId.apply)))
             .toMat(Sink.ignore)(Keep.right)
             .run()
             .map { _ =>
