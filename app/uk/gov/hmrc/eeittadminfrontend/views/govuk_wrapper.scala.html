@@ -19,11 +19,9 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.views.components._
 @import uk.gov.hmrc.govukfrontend.views.html.layouts._
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.FooterItem
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.hmrcfrontend.views.html.components
 @import uk.gov.hmrc.hmrcfrontend.views.html.components.Banner
-@import uk.gov.hmrc.eeittadminfrontend.controllers.routes._
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 
 @(title: String,
@@ -43,8 +41,6 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
 @govukSkipLink = @{new govukSkipLink()}
 @govukTag = @{new govukTag()}
 @hmrcBanner = @{new hmrcBanner()}
-@hmrcHeader = @{new hmrcHeader(hmrcBanner)}
-@govukPhaseBanner = @{new govukPhaseBanner(govukTag)}
 @govukTemplate = @{new govukTemplate(govukHeader, govukFooter, govukSkipLink)}
 @govukLayout = @{new govukLayout(govukTemplate, govukHeader, govukFooter, govukBackLink)}
 

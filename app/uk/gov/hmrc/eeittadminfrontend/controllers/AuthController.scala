@@ -49,7 +49,7 @@ class AuthController(
     }
   }
 
-  def signOut(): Action[AnyContent] = Action.async { implicit request =>
+  def signOut(): Action[AnyContent] = Action.async { _ =>
     Future.successful(
       Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
   }
@@ -67,7 +67,7 @@ class AuthController(
             Logger.info(s"${email.value} Logged in")
             Future.successful(
               Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
-                .withSession(request.session + ("token", email.value)))
+                .withSession(request.session.+(("token", email.value))))
           case Invalid(err) =>
             Future.successful(Unauthorized(s"Failed ${err.error}"))
         }

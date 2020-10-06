@@ -27,12 +27,12 @@ object LoginError {
 
   implicit val readsLoginErrorUser: Reads[Validated[LoginError, User]] = new Reads[Validated[LoginError, User]] {
     override def reads(json: JsValue): JsResult[Validated[LoginError, User]] =
-      json.validateOpt[User] match {
-        case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))
+      json.validate[User] match {
+        case JsSuccess(x, _) => JsSuccess(Validated.valid(x))
         case JsError(err) =>
-          json.validateOpt[LoginError] match {
-            case JsSuccess(Some(y), _) => JsSuccess(Validated.invalid(y))
-            case JsError(error)        => JsError(error.++(err))
+          json.validate[LoginError] match {
+            case JsSuccess(y, _) => JsSuccess(Validated.invalid(y))
+            case JsError(error)  => JsError(error.++(err))
           }
       }
   }

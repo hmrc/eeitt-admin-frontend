@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.config
 
 import com.typesafe.config.{ ConfigFactory, Config => TypeSafeConfig }
-import net.ceedubs.ficus.Ficus._
 import play.api.{ ApplicationLoader, Configuration, Environment, Mode }
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
 import uk.gov.hmrc.play.bootstrap.config._

@@ -15,11 +15,10 @@
  *@
 
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
-@import helper._
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-@(formTemplateIds: Seq[FormTemplateId])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages, appConfig: AppConfig)
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Submissions ", tab = "submissions") {
     <h2 class="govuk-heading-m">Form templates</h2>

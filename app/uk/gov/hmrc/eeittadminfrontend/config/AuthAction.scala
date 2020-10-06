@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.eeittadminfrontend.config
 
-import play.api.Play
 import play.api.mvc.Results._
 import play.api.mvc._
 
@@ -28,10 +27,11 @@ object RequestWithUser {
   implicit def asRequest[A](implicit rwu: RequestWithUser[A]): Request[A] = rwu.request
 }
 
-object Authentication extends ActionBuilder[RequestWithUser, AnyContent] {
+class AuthAction(messagesControllerComponents: MessagesControllerComponents)
+    extends ActionBuilder[RequestWithUser, AnyContent] {
 
-  override def executionContext: ExecutionContext = Play.current.actorSystem.dispatcher
-  override def parser: BodyParser[AnyContent] = BodyParsers.parse.default
+  override def executionContext: ExecutionContext = messagesControllerComponents.executionContext
+  override def parser: BodyParser[AnyContent] = messagesControllerComponents.parsers.default
 
   private def username(request: RequestHeader): Option[String] = request.session.get("token")
 

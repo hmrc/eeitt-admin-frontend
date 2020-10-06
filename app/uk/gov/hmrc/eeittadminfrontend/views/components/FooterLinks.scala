@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.views.components
 
 import play.api.i18n.Messages
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, FrontendAppConfig }
+import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.FooterItem
 
 object FooterLinks {

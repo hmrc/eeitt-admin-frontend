@@ -20,7 +20,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{Envelope, EnvelopeId}
 @import uk.gov.hmrc.eeittadminfrontend.views._
 
-@(formTemplateId: FormTemplateId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@(formTemplateId: FormTemplateId, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit messages: Messages, appConfig: AppConfig)
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Submissions for @{formTemplateId.value}", tab = "submissions"){
 
     <h2 class="govuk-heading-m">Submissions for form @{formTemplateId.value}</h2>

@@ -30,13 +30,13 @@ object ValueClassFormat {
     override def reads(json: JsValue) =
       json.validate match {
         case JsSuccess(x, _) =>
-          (json \ path).getOrElse(JsString("ERROR")) match {
-            case JsString("ERROR") =>
-              JsError("Some Error")
-            case JsString(y) =>
+          (json \ path).toOption match {
+            case Some(JsString(y)) =>
               JsSuccess(func(y, x))
+            case _ =>
+              JsError("Some Error")
           }
-        case JsError(err) =>
+        case JsError(_) =>
           JsError("Some Error")
       }
 
