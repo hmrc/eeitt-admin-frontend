@@ -24,7 +24,7 @@ import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.mvc.{ MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication }
+import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,6 +34,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 class FileUploadController(
   val authConnector: AuthConnector,
+  authAction: AuthAction,
   fileUploadConnector: FileUploadConnector,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
@@ -43,12 +44,12 @@ class FileUploadController(
       EnvelopeIdForm.unapply)
   )
 
-  def fileUpload() = Authentication.async { implicit request =>
+  def fileUpload() = authAction.async { implicit request =>
     Future.successful(Ok(views.html.file_upload(envelopeIdForm)))
   }
 
-  private def WithUserLogin(f: (EnvelopeId, String) => HeaderCarrier => Future[Result]) = Authentication.async {
-    implicit request =>
+  private def WithUserLogin(f: (EnvelopeId, String) => HeaderCarrier => Future[Result]) =
+    authAction.async { implicit request =>
       envelopeIdForm
         .bindFromRequest()
         .fold(
@@ -57,7 +58,7 @@ class FileUploadController(
           },
           envelopeId => f(envelopeId.envelopeId, request.userLogin)(hc)
         )
-  }
+    }
 
   def findEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
     Logger.info(s"$userLogin Queried for envelopeId $envelopeId")
@@ -67,14 +68,14 @@ class FileUploadController(
     }
   }
 
-  def showEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
+  def showEnvelope(envelopeId: EnvelopeId) = authAction.async { implicit request =>
     fileUploadConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)
     }
   }
 
-  def downloadEnvelope(envelopeId: EnvelopeId) = Authentication.async { implicit request =>
+  def downloadEnvelope(envelopeId: EnvelopeId) = authAction.async { implicit request =>
     Logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
     fileUploadConnector.downloadEnvelopeId(envelopeId).map {
       case Right(source) =>
@@ -87,7 +88,7 @@ class FileUploadController(
     }
   }
 
-  def downloadEnvelopePost() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
+  def downloadEnvelopePost() = WithUserLogin { (envelopeId, userLogin) => _ =>
     Future.successful(
       Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelope(envelopeId)))
   }

@@ -24,7 +24,7 @@ import play.api.i18n.I18nSupport
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication }
+import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ Envelope, EnvelopeId }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Submission }
@@ -34,12 +34,13 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 class SubmissionController(
   val authConnector: AuthConnector,
+  authAction: AuthAction,
   gformConnector: GformConnector,
   fileUploadConnector: FileUploadConnector,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
-  def submissions() = Authentication.async { implicit request =>
+  def submissions() = authAction.async { implicit request =>
     gformConnector.getAllGformsTemplates.map {
       case JsArray(formTemplateIds) =>
         val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
@@ -53,7 +54,7 @@ class SubmissionController(
   implicit val localDateTimeOrdering: Ordering[LocalDateTime] =
     Ordering.by(_.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli())
 
-  def submission(formTemplateId: FormTemplateId) = Authentication.async { implicit request =>
+  def submission(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
     Logger.info(s"${request.userLogin} looking at submissions for " + formTemplateId)
     gformConnector.getAllSubmissons(formTemplateId).flatMap {
       case jsonSubmissions =>

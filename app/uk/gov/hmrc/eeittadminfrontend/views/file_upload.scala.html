@@ -15,9 +15,7 @@
  *@
 
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
-@import helper._
 @import play.api.i18n.Messages.Implicits._
-@import uk.gov.hmrc.eeittadminfrontend.models.{GformId, GformTemplate}
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeIdForm
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
@@ -25,7 +23,6 @@
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
-@govukTextarea = @{new govukTextarea(new govukErrorMessage(), new govukHint(), new govukLabel())}
 @govukButton = @{new govukButton()}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "File upload", tab = "file-upload") {

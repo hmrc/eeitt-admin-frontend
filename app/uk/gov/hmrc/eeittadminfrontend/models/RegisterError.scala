@@ -28,12 +28,12 @@ object RegisterError {
   implicit val readsRegisterErrorString: Reads[Validated[RegisterError, String]] =
     new Reads[Validated[RegisterError, String]] {
       override def reads(json: JsValue): JsResult[Validated[RegisterError, String]] =
-        json.validateOpt[String] match {
-          case JsSuccess(Some(x), _) => JsSuccess(Validated.valid(x))
+        json.validate[String] match {
+          case JsSuccess(x, _) => JsSuccess(Validated.valid(x))
           case JsError(err) =>
-            json.validateOpt[RegisterError] match {
-              case JsSuccess(Some(y), _) => JsSuccess(Validated.invalid(y))
-              case JsError(error)        => JsError(error.++(err))
+            json.validate[RegisterError] match {
+              case JsSuccess(y, _) => JsSuccess(Validated.invalid(y))
+              case JsError(error)  => JsError(error.++(err))
             }
         }
     }

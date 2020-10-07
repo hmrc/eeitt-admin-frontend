@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.auth
 
-import play.api.{ Configuration, Mode }
+import play.api.Configuration
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.play.bootstrap.config.{ RunMode, ServicesConfig }

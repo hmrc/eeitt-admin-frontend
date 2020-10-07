@@ -94,16 +94,16 @@ object EnrollmentResponse {
     override def reads(json: JsValue) =
       json.validate[UID] match {
         case JsSuccess(x, _) =>
-          (json \ "groupId").getOrElse(JsString("Error")) match {
-            case JsString("Error") =>
-              JsError("Errors")
-            case JsString(y) =>
-              (json \ "regimeId").getOrElse(JsString("Error")) match {
-                case JsString("Error") =>
-                  JsSuccess(EnrollmentResponse(y, x, None))
-                case JsString(z) =>
+          (json \ "groupId").toOption match {
+            case Some(JsString(y)) =>
+              (json \ "regimeId").toOption match {
+                case Some(JsString(z)) =>
                   JsSuccess(EnrollmentResponse(y, x, Some(z)))
+                case _ =>
+                  JsSuccess(EnrollmentResponse(y, x, None))
               }
+            case _ =>
+              JsError("Errors")
           }
         case JsError(err) =>
           JsError("Errors")
@@ -117,16 +117,16 @@ object UID {
 
   implicit val format: Format[UID] = new Format[UID] {
     override def reads(json: JsValue) =
-      (json \ "arn").getOrElse(JsString("ARN Failure")) match {
-        case JsString("ARN Failure") =>
-          (json \ "registrationNumber").getOrElse(JsString("REG Failure")) match {
-            case JsString("REG Failure") =>
-              JsError("Bob")
-            case JsString(registration) =>
-              JsSuccess(UID(registration))
-          }
-        case JsString(arn) =>
+      (json \ "arn").toOption match {
+        case Some(JsString(arn)) =>
           JsSuccess(UID(arn))
+        case _ =>
+          (json \ "registrationNumber").toOption match {
+            case Some(JsString(registration)) =>
+              JsSuccess(UID(registration))
+            case _ =>
+              JsError("Bob")
+          }
       }
 
     override def writes(o: UID) =

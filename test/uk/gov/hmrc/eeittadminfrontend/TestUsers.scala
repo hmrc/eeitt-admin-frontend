@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend
 
 import play.api.mvc.AnyContentAsFormUrlEncoded
-import uk.gov.hmrc.eeittadminfrontend.controllers.AuthController
 
 object TestUsers {
 

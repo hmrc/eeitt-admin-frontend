@@ -20,11 +20,7 @@ import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
 import uk.gov.hmrc.play.bootstrap.config.RunMode
 
-import scala.concurrent.ExecutionContext
-
-class AuthModule(configModule: ConfigModule, wSHttpModule: WSHttpModule)(
-  implicit ec: ExecutionContext
-) {
+class AuthModule(configModule: ConfigModule, wSHttpModule: WSHttpModule) {
   self =>
 
   lazy val authConnector = new AuthConnector(

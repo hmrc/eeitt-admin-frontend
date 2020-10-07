@@ -33,7 +33,7 @@ import play.api.i18n.I18nSupport
 import play.api.libs.json._
 import play.api.mvc.{ AnyContent, MessagesControllerComponents }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, Authentication, RequestWithUser }
+import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
@@ -45,13 +45,13 @@ case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTempl
 case class RefreshError(formTemplateId: FormTemplateId, errorMessage: String) extends RefreshTemplateResult
 
 object RefreshTemplateResult {
-  implicit val format: OFormat[RefreshTemplateResult] = derived.oformat
+  implicit val format: OFormat[RefreshTemplateResult] = derived.oformat()
 }
 
 sealed trait RefreshResult extends Product with Serializable
 
 object RefreshResult {
-  implicit val format: OFormat[RefreshResult] = derived.oformat
+  implicit val format: OFormat[RefreshResult] = derived.oformat()
 }
 
 case class RefreshTemplateResults(results: List[RefreshTemplateResult]) extends RefreshResult {
@@ -64,6 +64,7 @@ case object NoTempatesToRefresh extends RefreshResult
 
 class GformsController(
   val authConnector: AuthConnector,
+  authAction: AuthAction,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents)(
   implicit ec: ExecutionContext,
@@ -91,7 +92,7 @@ class GformsController(
     new ByteArrayInputStream(baos.toByteArray)
   }
 
-  def getBlob = Authentication.async { implicit request =>
+  def getBlob = authAction.async { implicit request =>
     Logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
     val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
       gformConnector.getAllGformsTemplates.flatMap {
@@ -126,7 +127,7 @@ class GformsController(
 
   private def formatInstant(instant: Instant): String = dtf.format(instant)
 
-  def getGformByFormType = Authentication.async { implicit request =>
+  def getGformByFormType = authAction.async { implicit request =>
     gFormForm
       .bindFromRequest()
       .fold(
@@ -144,7 +145,7 @@ class GformsController(
       )
   }
 
-  def saveGformSchema = Authentication.async(parse.multipartFormData) { implicit request =>
+  def saveGformSchema = authAction.async(parse.multipartFormData) { implicit request =>
     val template = Json.parse(
       new String(
         org.apache.commons.codec.binary.Base64.decodeBase64(request.body.dataParts("template").mkString),
@@ -157,12 +158,12 @@ class GformsController(
     }
   }
 
-  def getAllTemplates = Authentication.async { implicit request =>
+  def getAllTemplates = authAction.async { implicit request =>
     Logger.info(s"${request.userLogin} Queried for all form templates")
     gformConnector.getAllGformsTemplates.map(x => Ok(x))
   }
 
-  def reloadTemplates = Authentication.async { implicit request =>
+  def reloadTemplates = authAction.async { implicit request =>
     Logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
@@ -193,12 +194,12 @@ class GformsController(
         }
     }
 
-  def getAllSchema = Authentication.async { implicit request =>
+  def getAllSchema = authAction.async { implicit request =>
     Logger.info(s"${request.userLogin} Queried for all form Schema")
     gformConnector.getAllSchema.map(x => Ok(x))
   }
 
-  def deleteGformTemplate = Authentication.async { implicit request =>
+  def deleteGformTemplate = authAction.async { implicit request =>
     gFormForm
       .bindFromRequest()
       .fold(
@@ -212,15 +213,15 @@ class GformsController(
       )
   }
 
-  def gformPage = Authentication.async { implicit request =>
+  def gformPage = authAction.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
   }
 
-  def gformAnalytics = Authentication.async { implicit request =>
+  def gformAnalytics = authAction.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.analytics()))
   }
 
-  def dbLookupFileUpload() = Authentication.async(parse.multipartFormData) { implicit request =>
+  def dbLookupFileUpload() = authAction.async(parse.multipartFormData) { implicit request =>
     val collectionName = request.body.dataParts("collectionName").head
     if (collectionName.isEmpty) {
       Future.successful(BadRequest("'collectionName' param is empty"))
@@ -235,7 +236,9 @@ class GformsController(
               .delimiter(ByteString("\n"), 100, true)
               .grouped(1000))
             .mapAsync(1)((lines: Seq[ByteString]) =>
-              gformConnector.saveDBLookupIds(collectionName, lines.map(_.utf8String).filter(_.trim().nonEmpty).map(DbLookupId.apply)))
+              gformConnector.saveDBLookupIds(
+                collectionName,
+                lines.map(_.utf8String).filter(_.trim().nonEmpty).map(DbLookupId.apply)))
             .toMat(Sink.ignore)(Keep.right)
             .run()
             .map { _ =>

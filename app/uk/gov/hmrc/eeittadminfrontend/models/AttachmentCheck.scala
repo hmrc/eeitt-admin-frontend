@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.JsValue
-
 trait AttachmentCheck extends Product with Serializable
 object AttachmentCheck {
   case object CountOk extends AttachmentCheck

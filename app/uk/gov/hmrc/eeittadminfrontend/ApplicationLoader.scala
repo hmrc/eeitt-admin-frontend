@@ -31,7 +31,7 @@ import play.filters.csrf.CSRFComponents
 import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthModule
-import uk.gov.hmrc.eeittadminfrontend.config.{ ConfigModule, ErrResponder, ErrorHandler }
+import uk.gov.hmrc.eeittadminfrontend.config.{ AuthAction, ConfigModule, ErrResponder, ErrorHandler }
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
@@ -63,7 +63,9 @@ class CustomHttpRequestHandler(
     extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
   override def routeRequest(request: RequestHeader): Option[Handler] =
     router.handlerFor(request).orElse {
-      Some(request.path).filter(_.endsWith("/")).flatMap(p => router.handlerFor(request.copy(path = p.dropRight(1))))
+      Some(request.path)
+        .filter(_.endsWith("/"))
+        .flatMap(p => router.handlerFor(request.withTarget(request.target.withPath(p.dropRight(1)))))
     }
 }
 
@@ -151,17 +153,19 @@ class ApplicationModule(context: Context)
 
   val govukRoutes: govuk.Routes = new govuk.Routes(httpErrorHandler, govukfrontendAssets)
   val hmrcfrontendRoutes: hmrcfrontend.Routes = new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets)
-
-  val gformController = new GformsController(authModule.authConnector, gformConnector, messagesControllerComponents)(
-    executionContext,
-    configModule.frontendAppConfig,
-    materializer)
+  val authAction: AuthAction = new AuthAction(messagesControllerComponents)
+  val gformController = new GformsController(
+    authModule.authConnector,
+    authAction,
+    gformConnector,
+    messagesControllerComponents)(executionContext, configModule.frontendAppConfig, materializer)
   val fileUploadController =
-    new FileUploadController(authModule.authConnector, fileUploadConnector, messagesControllerComponents)(
+    new FileUploadController(authModule.authConnector, authAction, fileUploadConnector, messagesControllerComponents)(
       executionContext,
       configModule.frontendAppConfig)
   val submissionController = new SubmissionController(
     authModule.authConnector,
+    authAction,
     gformConnector,
     fileUploadConnector,
     messagesControllerComponents)(executionContext, configModule.frontendAppConfig)
