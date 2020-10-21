@@ -28,4 +28,7 @@ POST        /file-upload/archive             uk.gov.hmrc.eeittadminfrontend.cont
 GET         /submissions                     uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submissions
 GET         /submission/:formTemplateId      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submission(formTemplateId: FormTemplateId)
 
+GET         /submission-consolidator/consolidate  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionConsolidatorController.submissionConsolidatorPage
+POST        /submission-consolidator/consolidate  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionConsolidatorController.consolidate
+
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

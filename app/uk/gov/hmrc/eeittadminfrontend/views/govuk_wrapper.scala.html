@@ -86,6 +86,11 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformAnalytics.path),
                 content = Text("Analytics"),
                 active = if(tab == "analytics") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path),
+                content = Text("Submission Consolidator"),
+                active = if(tab == "submissionconsolidator") true else false
             )
             )
         )
