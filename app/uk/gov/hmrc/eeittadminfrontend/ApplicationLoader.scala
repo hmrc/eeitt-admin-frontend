@@ -32,7 +32,7 @@ import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthModule
 import uk.gov.hmrc.eeittadminfrontend.config.{ AuthAction, ConfigModule, ErrResponder, ErrorHandler }
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector, SubmissionConsolidatorConnector }
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
@@ -147,6 +147,8 @@ class ApplicationModule(context: Context)
 
   val fileUploadConnector = new FileUploadConnector(wSHttpModule.auditableWSHttp, configModule.serviceConfig)
   val gformConnector = new GformConnector(wSHttpModule.auditableWSHttp, configModule.serviceConfig)
+  val submissionConsolidatorConnector =
+    new SubmissionConsolidatorConnector(wSHttpModule.auditableWSHttp, configModule.serviceConfig)
 
   val govukfrontendAssets = new GovukAssets(httpErrorHandler, assetsMetadata)
   val hmrcfrontendAssets = new HmrcAssets(httpErrorHandler, assetsMetadata)
@@ -169,6 +171,11 @@ class ApplicationModule(context: Context)
     gformConnector,
     fileUploadConnector,
     messagesControllerComponents)(executionContext, configModule.frontendAppConfig)
+  val submissionConsolidatorController = new SubmissionConsolidatorController(
+    authModule.authConnector,
+    authAction,
+    submissionConsolidatorConnector,
+    messagesControllerComponents)(executionContext, configModule.frontendAppConfig)
 
   val appRoutes = new app.Routes(
     httpErrorHandler,
@@ -178,6 +185,7 @@ class ApplicationModule(context: Context)
     gformController,
     fileUploadController,
     submissionController,
+    submissionConsolidatorController,
     this.assets
   )
 
