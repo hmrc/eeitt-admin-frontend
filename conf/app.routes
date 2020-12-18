@@ -25,8 +25,8 @@ GET         /file-upload/dowload/:envelopeId uk.gov.hmrc.eeittadminfrontend.cont
 POST        /file-upload/dowload             uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.downloadEnvelopePost
 POST        /file-upload/archive             uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.archiveEnvelope
 
-GET         /submissions                     uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submissions
-GET         /submission/:formTemplateId      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submission(formTemplateId: FormTemplateId)
+GET         /submissions                      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submissions
+GET         /submission/:formTemplateId/:page uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionController.submission(formTemplateId: FormTemplateId, page: Int)
 
 GET         /submission-consolidator/consolidate  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionConsolidatorController.submissionConsolidatorPage
 POST        /submission-consolidator/consolidate  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionConsolidatorController.consolidate

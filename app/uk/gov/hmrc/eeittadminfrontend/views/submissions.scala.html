@@ -24,7 +24,7 @@
     <h2 class="govuk-heading-m">Form templates</h2>
     @for(formTemplateId <- formTemplateIds) {
       <div>
-        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submission(formTemplateId)" class="govuk-link">@formTemplateId</a>
+        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submission(formTemplateId, 0)" class="govuk-link">@formTemplateId</a>
       </div>
     }
 }

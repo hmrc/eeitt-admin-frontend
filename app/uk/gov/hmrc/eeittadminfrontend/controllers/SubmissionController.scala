@@ -27,7 +27,7 @@ import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ Envelope, EnvelopeId }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Submission }
+import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Pagination, Submission }
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -54,11 +54,12 @@ class SubmissionController(
   implicit val localDateTimeOrdering: Ordering[LocalDateTime] =
     Ordering.by(_.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli())
 
-  def submission(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
-    Logger.info(s"${request.userLogin} looking at submissions for " + formTemplateId)
-    gformConnector.getAllSubmissons(formTemplateId).flatMap {
-      case jsonSubmissions =>
-        val submissions = jsonSubmissions.as[List[Submission]].sortBy(_.submittedDate).reverse
+  def submission(formTemplateId: FormTemplateId, page: Int) = authAction.async { implicit request =>
+    val checkedPage = Math.max(0, page)
+    Logger.info(s"${request.userLogin} looking at submissions for $formTemplateId page $checkedPage")
+    gformConnector.getAllSubmissons(formTemplateId, Math.max(0, checkedPage), Pagination.pageSize).flatMap {
+      case submissionPageData =>
+        val submissions = submissionPageData.submissions
         val submissionsWithCheck: Future[List[(Submission, Envelope, AttachmentCheck)]] = Future.traverse(submissions) {
           submission =>
             val envelopeId = EnvelopeId(submission.envelopeId)
@@ -81,8 +82,10 @@ class SubmissionController(
             }
         }
 
+        val pagination = Pagination(submissionPageData.count, checkedPage, submissions.size)
+
         submissionsWithCheck.map { data =>
-          Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submission(formTemplateId, data))
+          Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submission(formTemplateId, pagination, data))
         }
     }
   }

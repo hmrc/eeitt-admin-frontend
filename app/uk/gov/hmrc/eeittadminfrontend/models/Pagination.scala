@@ -16,18 +16,19 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import java.time.LocalDateTime
-import play.api.libs.json.{ Format, Json }
+import cats.syntax.eq._
+import cats.instances.int._
 
-case class Submission(
-  _id: String,
-  submittedDate: LocalDateTime,
-  submissionRef: String,
-  envelopeId: String,
-  attachment_count: Int,
-  formTemplateId: String,
-  customerId: String)
+case class Pagination(count: Long, page: Int, submissionCount: Int) {
+  val last: Int = Math.ceil(count.toDouble / Pagination.pageSize).toInt - 1
+  val isFirstPage: Boolean = page === 0
+  val isLastPage: Boolean = last <= page
+  val previousPage: Int = if (isFirstPage) page else page - 1
+  val nextPage: Int = if (isLastPage) page else page + 1
+  val from: Int = if (submissionCount === 0) 0 else 1 + Pagination.pageSize * page
+  val to: Long = if (submissionCount === 0) 0 else Math.min(Pagination.pageSize.toLong * (page + 1), count)
+}
 
-object Submission {
-  implicit val reads: Format[Submission] = Json.format[Submission]
+object Pagination {
+  val pageSize: Int = 100
 }
