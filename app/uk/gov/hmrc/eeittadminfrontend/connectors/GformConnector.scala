@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.http.scaladsl.model.StatusCodes
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError, SubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -42,8 +42,10 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
           Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
       }
 
-  def getAllSubmissons(formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext) =
-    wsHttp.GET[JsArray](gformUrl + s"/submissionDetails/all/${formTemplateId.value}")
+  def getAllSubmissons(formTemplateId: FormTemplateId, page: Int, pageSize: Int)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext) =
+    wsHttp.GET[SubmissionPageData](gformUrl + s"/submissionDetails/all/${formTemplateId.value}/$page/$pageSize")
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     wsHttp.GET[JsArray](gformUrl + "/formtemplates")

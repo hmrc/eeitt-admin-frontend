@@ -16,18 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import java.time.LocalDateTime
 import play.api.libs.json.{ Format, Json }
 
-case class Submission(
-  _id: String,
-  submittedDate: LocalDateTime,
-  submissionRef: String,
-  envelopeId: String,
-  attachment_count: Int,
-  formTemplateId: String,
-  customerId: String)
+case class SubmissionPageData(
+  submissions: List[Submission],
+  count: Long
+)
 
-object Submission {
-  implicit val reads: Format[Submission] = Json.format[Submission]
+object SubmissionPageData {
+  implicit val format: Format[SubmissionPageData] = Json.format[SubmissionPageData]
 }
