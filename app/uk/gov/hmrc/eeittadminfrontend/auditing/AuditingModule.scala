@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 
 package uk.gov.hmrc.eeittadminfrontend.auditing
 
+import play.api.inject.ApplicationLifecycle
+import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.audit.DefaultAuditConnector
 
 import scala.concurrent.ExecutionContext
 
-class AuditingModule(configModule: ConfigModule)(
+class AuditingModule(configModule: ConfigModule, akkaModule: AkkaModule, lifecycle: ApplicationLifecycle)(
   implicit ec: ExecutionContext
 ) {
   self =>
 
   lazy val auditConnector: AuditConnector =
-    new DefaultAuditConnector(configModule.auditingConfig)
+    new DefaultAuditConnector(configModule.auditingConfig, akkaModule.materializer, lifecycle)
 
   val httpAuditingService: HttpAuditingService =
     new HttpAuditingService(configModule.frontendAppConfig.appName, auditConnector)

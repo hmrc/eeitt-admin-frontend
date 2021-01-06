@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package uk.gov.hmrc.eeittadminfrontend
 package controllers
 
-import java.time.{ LocalDateTime, ZoneId }
+import org.slf4j.{ Logger, LoggerFactory }
 
-import play.api.Logger
+import java.time.{ LocalDateTime, ZoneId }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.MessagesControllerComponents
@@ -28,7 +28,7 @@ import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ Envelope, EnvelopeId }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Pagination, Submission }
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -39,6 +39,8 @@ class SubmissionController(
   fileUploadConnector: FileUploadConnector,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def submissions() = authAction.async { implicit request =>
     gformConnector.getAllGformsTemplates.map {
@@ -56,7 +58,7 @@ class SubmissionController(
 
   def submission(formTemplateId: FormTemplateId, page: Int) = authAction.async { implicit request =>
     val checkedPage = Math.max(0, page)
-    Logger.info(s"${request.userLogin} looking at submissions for $formTemplateId page $checkedPage")
+    logger.info(s"${request.userLogin} looking at submissions for $formTemplateId page $checkedPage")
     gformConnector.getAllSubmissons(formTemplateId, Math.max(0, checkedPage), Pagination.pageSize).flatMap {
       case submissionPageData =>
         val submissions = submissionPageData.submissions
@@ -73,11 +75,11 @@ class SubmissionController(
                       (submission, envelope, AttachmentCheck.CountDoesNotMatch(envelope.files.size))
                     }
                   case None =>
-                    Logger.warn(s"${request.userLogin} failed to parse envelopeId $envelopeId. Json payload: $jsValue")
+                    logger.warn(s"${request.userLogin} failed to parse envelopeId $envelopeId. Json payload: $jsValue")
                     (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.CannotParseEnvelope)
                 }
               case Left(error) =>
-                Logger.warn(s"${request.userLogin} failed to retrieve envelopeId $envelopeId. Error: $error")
+                logger.warn(s"${request.userLogin} failed to retrieve envelopeId $envelopeId. Error: $error")
                 (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.EnvelopeDoesNotExists)
             }
         }

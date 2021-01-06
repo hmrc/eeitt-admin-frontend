@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,11 @@ import java.time.format.DateTimeFormatter
 import java.time.{ Instant, ZoneId }
 import java.util.Locale
 import java.util.zip.{ ZipEntry, ZipOutputStream }
-
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
 import akka.util.ByteString
 import julienrf.json.derived
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
@@ -37,7 +36,7 @@ import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWit
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
 sealed trait RefreshTemplateResult extends Product with Serializable
@@ -72,6 +71,8 @@ class GformsController(
   m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   private def fileByteData(fileList: Seq[(FormTemplateId, JsValue)]): ByteArrayInputStream = {
 
     val baos = new ByteArrayOutputStream()
@@ -93,7 +94,7 @@ class GformsController(
   }
 
   def getBlob = authAction.async { implicit request =>
-    Logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
+    logger.info(s" ${request.userLogin} ask for all templates as a zip blob")
     val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
       gformConnector.getAllGformsTemplates.flatMap {
         case JsArray(templates) =>
@@ -135,7 +136,7 @@ class GformsController(
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformIdAndVersion => {
-          Logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTemplateId}")
+          logger.info(s"${request.userLogin} Queried for ${gformIdAndVersion.formTemplateId}")
           gformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
             case Left(ex) =>
               Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTemplateId}. Reason: $ex")
@@ -152,19 +153,19 @@ class GformsController(
         "UTF-8"))
     gformConnector.saveTemplate(template).map { x =>
       {
-        Logger.info(s"${request.userLogin} saved ID: ${template \ "_id"} }")
+        logger.info(s"${request.userLogin} saved ID: ${template \ "_id"} }")
         Ok("Saved")
       }
     }
   }
 
   def getAllTemplates = authAction.async { implicit request =>
-    Logger.info(s"${request.userLogin} Queried for all form templates")
+    logger.info(s"${request.userLogin} Queried for all form templates")
     gformConnector.getAllGformsTemplates.map(x => Ok(x))
   }
 
   def reloadTemplates = authAction.async { implicit request =>
-    Logger.info(s"${request.userLogin} Reload all form templates")
+    logger.info(s"${request.userLogin} Reload all form templates")
 
     for {
       maybeTemplateIds <- gformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
@@ -177,7 +178,7 @@ class GformsController(
     request: RequestWithUser[AnyContent]): Future[RefreshResult] =
     formTemplateIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) {
       case (resultsAcc, formTemplateId) =>
-        Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId")
+        logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId")
         for {
           results         <- resultsAcc
           templateOrError <- gformConnector.getGformsTemplate(formTemplateId)
@@ -186,7 +187,7 @@ class GformsController(
                   case Right(template) => gformConnector.saveTemplate(template)
                 }
         } yield {
-          Logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId finished: " + res)
+          logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId finished: " + res)
           res match {
             case Left(error) => results.addResult(RefreshError(formTemplateId, error))
             case Right(())   => results.addResult(RefreshSuccesful(formTemplateId))
@@ -195,7 +196,7 @@ class GformsController(
     }
 
   def getAllSchema = authAction.async { implicit request =>
-    Logger.info(s"${request.userLogin} Queried for all form Schema")
+    logger.info(s"${request.userLogin} Queried for all form Schema")
     gformConnector.getAllSchema.map(x => Ok(x))
   }
 
@@ -207,7 +208,7 @@ class GformsController(
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
         },
         gformId => {
-          Logger.info(s"${request.userLogin} deleted ${gformId.formTemplateId} ")
+          logger.info(s"${request.userLogin} deleted ${gformId.formTemplateId} ")
           gformConnector.deleteTemplate(gformId.formTemplateId).map(res => Ok)
         }
       )
@@ -226,7 +227,7 @@ class GformsController(
     if (collectionName.isEmpty) {
       Future.successful(BadRequest("'collectionName' param is empty"))
     } else {
-      Logger.info(s"Uploading db lookup file for collection $collectionName")
+      logger.info(s"Uploading db lookup file for collection $collectionName")
       request.body
         .file("file")
         .map(filePart => {
@@ -246,7 +247,7 @@ class GformsController(
             }
             .recover {
               case e =>
-                Logger.info(s"Failed to send uploaded file to gforms for collection $collectionName", e)
+                logger.info(s"Failed to send uploaded file to gforms for collection $collectionName", e)
                 InternalServerError(s"Failed to send uploaded file to gforms for collection $collectionName [error=$e]")
             }
         })

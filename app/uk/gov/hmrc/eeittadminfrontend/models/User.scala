@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
 case class User(email: Email, permission: Seq[Permission] = Seq(QueryPermission)) {
@@ -41,6 +41,9 @@ object GFormsPermission extends Permission("Gforms")
 object Permission {
 
   implicit val format: Format[Permission] = new Format[Permission] {
+
+    private val logger: Logger = LoggerFactory.getLogger(getClass)
+
     override def reads(json: JsValue): JsResult[Permission] = {
       println("BOB" + Json.prettyPrint(json))
       (json \ "value").getOrElse(JsString("Error")) match {
@@ -48,7 +51,7 @@ object Permission {
         case JsString("Deltas") => JsSuccess(DeltasPermission)
         case JsString("Gforms") => JsSuccess(GFormsPermission)
         case _ =>
-          Logger.error("Some error")
+          logger.error("Some error")
           JsError("Some error")
       }
     }
@@ -59,7 +62,7 @@ object Permission {
         case DeltasPermission => Json.obj("value" -> "Deltas")
         case GFormsPermission => Json.obj("value" -> "Gforms")
         case _ =>
-          Logger.error("Some writes Error")
+          logger.error("Some writes Error")
           JsString("Error")
       }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.Validated.{ Invalid, Valid }
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents }
+import pureconfig.ConfigSource
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.{ ClientID, SecuredActions }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.AuthService
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import pureconfig.generic.auto._
 import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 
@@ -39,7 +40,9 @@ class AuthController(
   messagesControllerComponents: MessagesControllerComponents)(implicit appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
-  val clientID: ClientID = pureconfig.loadConfigOrThrow[ClientID]("clientid")
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  val clientID: ClientID = ConfigSource.default.at("clientid").loadOrThrow[ClientID]
 
   val loginForm = Form(single("token" -> nonEmptyText))
 
@@ -57,14 +60,14 @@ class AuthController(
   def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
       error => {
-        Logger.error(s"Failed to Login $error")
+        logger.error(s"Failed to Login $error")
         Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
       },
       success => {
         val email = Email(success) //googleService(success.value))
         authService.checkUser(email) match {
           case Valid(()) =>
-            Logger.info(s"${email.value} Logged in")
+            logger.info(s"${email.value} Logged in")
             Future.successful(
               Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
                 .withSession(request.session.+(("token", email.value))))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
 trait Database {
-
-  override def toString: String
+  def toString: String
   val reg: Option[String] = None
   val agent: Option[String] = None
   val regime: Option[String] = None
@@ -50,6 +49,8 @@ object Error extends Database {
 
 object Database {
 
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   implicit val format = new Format[Database] {
     override def reads(json: JsValue): JsResult[Database] =
       (json \ "database").getOrElse(JsString("Error")) match {
@@ -63,7 +64,7 @@ object Database {
         case ETMP        => Json.obj("database" -> "ETMP")
         case Enrollments => Json.obj("database" -> "Enrollments")
         case Error =>
-          Logger.error("Illegal arguement")
+          logger.error("Illegal arguement")
           JsString("Error")
       }
   }

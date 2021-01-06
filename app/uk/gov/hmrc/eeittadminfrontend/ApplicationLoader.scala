@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend
 
 import _root_.controllers.AssetsComponents
 import com.kenshoo.play.metrics._
-import org.slf4j.MDC
+import org.slf4j.{ LoggerFactory, MDC }
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.http._
@@ -27,6 +27,7 @@ import play.api.inject.{ Injector, SimpleInjector }
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc._
 import play.api.routing.Router
+import play.core.DefaultWebCommands
 import play.filters.csrf.CSRFComponents
 import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
@@ -60,7 +61,13 @@ class CustomHttpRequestHandler(
   httpErrorHandler: HttpErrorHandler,
   httpConfiguration: HttpConfiguration,
   httpFilters: Seq[EssentialFilter])
-    extends DefaultHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters: _*) {
+    extends DefaultHttpRequestHandler(
+      new DefaultWebCommands,
+      None,
+      router,
+      httpErrorHandler,
+      httpConfiguration,
+      httpFilters) {
   override def routeRequest(request: RequestHeader): Option[Handler] =
     router.handlerFor(request).orElse {
       Some(request.path)
@@ -73,11 +80,13 @@ class ApplicationModule(context: Context)
     extends BuiltInComponentsFromContext(context) with AssetsComponents with AhcWSComponents with I18nComponents
     with CSRFComponents { self =>
 
-  Logger.info(s"Starting microservice : eeitt-admin-frontend")
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  logger.info(s"Starting microservice : eeitt-admin-frontend")
 
   protected val akkaModule = new AkkaModule(materializer, actorSystem)
   protected val configModule = new ConfigModule(context)
-  protected val auditingModule = new AuditingModule(configModule)
+  protected val auditingModule = new AuditingModule(configModule, akkaModule, applicationLifecycle)
   private val playBuiltInsModule = new PlayBuiltInsModule(self)
 
   val errResponder: ErrResponder = new ErrResponder(
@@ -88,7 +97,7 @@ class ApplicationModule(context: Context)
   override lazy val httpErrorHandler: ErrorHandler = new ErrorHandler(
     environment,
     configuration,
-    configModule.context.sourceMapper,
+    configModule.context.devContext.map(_.sourceMapper),
     errResponder
   )
 
@@ -217,11 +226,11 @@ class ApplicationModule(context: Context)
 
   def initialize() = {
     val appName = configModule.frontendAppConfig.appName
-    Logger.info(s"Starting $appName in mode ${environment.mode}")
+    logger.info(s"Starting $appName in mode ${environment.mode}")
     MDC.put("appName", appName)
     val loggerDateFormat: Option[String] = configuration.getOptional[String]("logger.json.dateformat")
     loggerDateFormat.foreach(str => MDC.put("logger.json.dateformat", str))
-    Logger.info(
+    logger.info(
       s"Started $appName in mode ${environment.mode} at port ${application.configuration.getOptional[String]("http.port")}")
   }
 }

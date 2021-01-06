@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,13 @@ class ConfigModule(val context: ApplicationLoader.Context) {
   val environment: Environment = context.environment
 
   val mode: Mode = environment.mode
-  val runMode: RunMode = new RunMode(playConfiguration, mode)
 
   val frontendAppConfig = new FrontendAppConfig(playConfiguration)
 
-  val serviceConfig = new ServicesConfig(playConfiguration, runMode)
+  val serviceConfig = new ServicesConfig(playConfiguration)
 
   val controllerConfigs = ControllerConfigs.fromConfig(playConfiguration)
 
   val auditingConfig: AuditingConfig =
-    new AuditingConfigProvider(playConfiguration, runMode, frontendAppConfig.appName).get()
+    new AuditingConfigProvider(playConfiguration, frontendAppConfig.appName).get()
 }

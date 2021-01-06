@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package uk.gov.hmrc.eeittadminfrontend.support
 
 import java.net.URL
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
-import uk.gov.hmrc.play.it.Port
+
+import scala.util.Random
 
 case class WireMockBaseUrl(value: URL)
 
@@ -31,7 +31,7 @@ object WireMockSupport {
   // We have to make the wireMockPort constant per-JVM instead of constant
   // per-WireMockSupport-instance because config values containing it are
   // cached in the GGConfig object
-  private lazy val wireMockPort = Port.randomAvailable
+  private lazy val wireMockPort = 10000 + Random.nextInt(10000)
 }
 
 trait WireMockSupport extends BeforeAndAfterAll with BeforeAndAfterEach {
