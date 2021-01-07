@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,22 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  implicit val legacyRawReads: HttpReads[HttpResponse] =
+    HttpReadsInstances.throwOnFailure(HttpReadsInstances.readEitherOf(HttpReadsInstances.readRaw))
+
   val fileUploadUrl = sc.baseUrl("file-upload")
 
   def getEnvelopeById(
@@ -36,7 +42,7 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     wsHttp
       .doGet(url)
       .map { response =>
-        if (response.status == 200) Right(response.json) else Left(response.body.toString)
+        if (response.status == 200) Right(response.json) else Left(response.body)
       }
       .recover {
         case ex =>
@@ -65,13 +71,12 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     ec: ExecutionContext): Future[Either[String, String]] = {
 
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
-
     wsHttp
       .DELETE[HttpResponse](url)
       .map { response =>
         val success =
           s"Envelope $envelopeId archived successfully. Status: ${response.status}, body: ${response.body}"
-        Logger.info(success)
+        logger.info(success)
         Right(success)
       }
       .recover {

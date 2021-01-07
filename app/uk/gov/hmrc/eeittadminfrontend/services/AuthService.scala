@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,23 @@ package uk.gov.hmrc.eeittadminfrontend.services
 
 import cats.data._
 import cats.syntax.all._
-import play.api.Logger
-import pureconfig.loadConfigOrThrow
+import org.slf4j.{ Logger, LoggerFactory }
+import pureconfig.ConfigSource
 import uk.gov.hmrc.eeittadminfrontend.models.{ Email, LoginError }
 import pureconfig.generic.auto._
 
 case class AuthorisedUsers(users: String)
 class AuthService {
 
-  lazy val validUserList: Array[String] = loadConfigOrThrow[AuthorisedUsers]("basicAuth").users.split(":")
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  lazy val validUserList: Array[String] =
+    ConfigSource.default.at("basicAuth").loadOrThrow[AuthorisedUsers].users.split(":")
 
   def checkUser(email: Email): Validated[LoginError, Unit] =
     if (validUserList.contains(email.value)) ().valid
     else {
-      Logger.error(s"""Attemp to log with ${email.value}. Only ${validUserList.mkString(",")} allowed.""")
+      logger.error(s"""Attemp to log with ${email.value}. Only ${validUserList.mkString(",")} allowed.""")
       LoginError("Unauthorised User").invalid
     }
 }

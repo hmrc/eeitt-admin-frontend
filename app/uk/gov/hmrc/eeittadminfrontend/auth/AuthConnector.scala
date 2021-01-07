@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package uk.gov.hmrc.eeittadminfrontend.auth
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.play.bootstrap.config.{ RunMode, ServicesConfig }
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class AuthConnector(baseUrl: String, wsHttp: WSHttp, mode: RunMode, configuration: Configuration)
-    extends ServicesConfig(configuration, mode) with PlayAuthConnector {
+class AuthConnector(baseUrl: String, wsHttp: WSHttp, configuration: Configuration)
+    extends ServicesConfig(configuration) with PlayAuthConnector {
   val serviceUrl = baseUrl
   lazy val http = wsHttp
 }

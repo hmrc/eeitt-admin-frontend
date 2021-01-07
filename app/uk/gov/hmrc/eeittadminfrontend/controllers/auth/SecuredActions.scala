@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers.auth
 
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.mvc.{ RequestHeader, Result }
-import play.api.{ Configuration, Logger }
+import play.api.Configuration
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.infrastructure._
 
@@ -39,6 +40,8 @@ class SecuredActionsImpl(config: Configuration, val authConnector: AuthConnector
 
 object WhiteListingConf {
 
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   def apply(config: Configuration): BasicAuthConfiguration = {
 
     def getWhitelist(config: Configuration): Option[List[Address]] =
@@ -46,11 +49,11 @@ object WhiteListingConf {
         _.split(",").map(a => Address(a)).toList
       } match {
         case None =>
-          Logger.warn(
+          logger.warn(
             "Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access")
           None
         case Some(x) =>
-          Logger.info(
+          logger.info(
             s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
           Some(x)
       }
@@ -61,7 +64,7 @@ object WhiteListingConf {
       case Some(true)  => WhiteListingEnabled(getWhitelist(config))
       case Some(false) => WhiteListingIsDisabled
       case _ => {
-        Logger.warn(
+        logger.warn(
           "A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
         WhiteListingIsDisabled
       }

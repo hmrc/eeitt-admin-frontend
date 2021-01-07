@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
 import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
 import uk.gov.hmrc.play.bootstrap.config.DefaultHttpAuditEvent
-import uk.gov.hmrc.play.bootstrap.filters.frontend.crypto.{ DefaultSessionCookieCryptoFilter, SessionCookieCrypto, SessionCookieCryptoFilter, SessionCookieCryptoProvider }
-import uk.gov.hmrc.play.bootstrap.filters.frontend.deviceid.DefaultDeviceIdFilter
-import uk.gov.hmrc.play.bootstrap.filters.frontend.{ DefaultFrontendAuditFilter, HeadersFilter, SessionTimeoutFilter, SessionTimeoutFilterConfig }
-import uk.gov.hmrc.play.bootstrap.filters._
+import uk.gov.hmrc.play.bootstrap.filters.{ CacheControlConfig, CacheControlFilter, DefaultLoggingFilter, MDCFilter }
+import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.{ DefaultSessionCookieCryptoFilter, SessionCookieCrypto, SessionCookieCryptoFilter, SessionCookieCryptoProvider }
+import uk.gov.hmrc.play.bootstrap.frontend.filters.deviceid.DefaultDeviceIdFilter
+import uk.gov.hmrc.play.bootstrap.frontend.filters.{ AllowlistFilter, DefaultFrontendAuditFilter, FrontendFilters, HeadersFilter, SessionIdFilter, SessionTimeoutFilter, SessionTimeoutFilterConfig }
 
 import scala.concurrent.ExecutionContext
 
@@ -80,6 +80,10 @@ class FrontendFiltersModule(
 
   private val loggingFilter = new DefaultLoggingFilter(configModule.controllerConfigs)
 
+  private val allowListFilter = new AllowlistFilter(configModule.playConfiguration, materializer)
+
+  private val sessionIdFilter = new SessionIdFilter(materializer, ec, sessionCookieBaker)
+
   lazy val httpFilters: Seq[EssentialFilter] = new FrontendFilters(
     configModule.playConfiguration,
     loggingFilter,
@@ -92,6 +96,8 @@ class FrontendFiltersModule(
     cookieCryptoFilter,
     sessionTimeoutFilter,
     cacheControlFilter,
-    mdcFilter
+    mdcFilter,
+    allowListFilter,
+    sessionIdFilter
   ).filters
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import java.time.LocalDate
+import org.slf4j.{ Logger, LoggerFactory }
 
-import play.api.Logger
+import java.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, nonEmptyText }
 import play.api.i18n.I18nSupport
@@ -27,7 +27,7 @@ import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.SubmissionConsolidatorConnector
 import uk.gov.hmrc.eeittadminfrontend.models.submissionconsolidator.ManualConsolidationForm
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -37,6 +37,9 @@ class SubmissionConsolidatorController(
   submissionConsolidatorConnector: SubmissionConsolidatorConnector,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   private val manualConsolidationForm: Form[ManualConsolidationForm] = Form(
     mapping("consolidatorJobId" -> nonEmptyText, "startDate" -> nonEmptyText, "endDate" -> nonEmptyText)(
       ManualConsolidationForm.apply)(ManualConsolidationForm.unapply)
@@ -51,11 +54,11 @@ class SubmissionConsolidatorController(
       .bindFromRequest()
       .fold(
         form => {
-          Logger.error(s"Failed to consoliate submissions $form")
+          logger.error(s"Failed to consoliate submissions $form")
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(form)))
         },
         form => {
-          Logger.info(
+          logger.info(
             s"User ${request.userLogin} triggered consolidaton [consolidatorJobId=${form.consolidatorJobId}, startDate=${form.startDate}, endDate=${form.endDate}]")
           submissionConsolidatorConnector
             .consolidate(form.consolidatorJobId, LocalDate.parse(form.startDate), LocalDate.parse(form.endDate))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
 trait Response
@@ -35,8 +35,9 @@ object EitherResponseValueClassFormat {
 
   def format: Format[Either[List[ETMPBusiness], List[ETMPAgent]]] =
     new Format[Either[List[ETMPBusiness], List[ETMPAgent]]] {
-      override def reads(json: JsValue) = {
-        println(Json.prettyPrint(json))
+      private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+      override def reads(json: JsValue) =
         json.validate[List[ETMPBusiness]] match {
           case JsSuccess(x, _) =>
             JsSuccess(Left(x))
@@ -45,11 +46,10 @@ object EitherResponseValueClassFormat {
               case JsSuccess(y, _) =>
                 JsSuccess(Right(y))
               case JsError(err) =>
-                Logger.error("Failed to return the agent")
+                logger.error("Failed to return the agent")
                 JsError("BOTH Agent and Business failed")
             }
         }
-      }
 
       override def writes(o: Either[List[ETMPBusiness], List[ETMPAgent]]) =
         o match {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend
 package controllers
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, text }
 import play.api.i18n.I18nSupport
@@ -28,7 +28,7 @@ import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -38,6 +38,8 @@ class FileUploadController(
   fileUploadConnector: FileUploadConnector,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private val envelopeIdForm: Form[EnvelopeIdForm] = Form(
     mapping("envelopeId" -> mapping("value" -> text)(EnvelopeId.apply)(EnvelopeId.unapply))(EnvelopeIdForm.apply)(
@@ -61,7 +63,7 @@ class FileUploadController(
     }
 
   def findEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
-    Logger.info(s"$userLogin Queried for envelopeId $envelopeId")
+    logger.info(s"$userLogin Queried for envelopeId $envelopeId")
     fileUploadConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)
@@ -76,7 +78,7 @@ class FileUploadController(
   }
 
   def downloadEnvelope(envelopeId: EnvelopeId) = authAction.async { implicit request =>
-    Logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
+    logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
     fileUploadConnector.downloadEnvelopeId(envelopeId).map {
       case Right(source) =>
         Ok.chunked(source)
@@ -94,7 +96,7 @@ class FileUploadController(
   }
 
   def archiveEnvelope() = WithUserLogin { (envelopeId, userLogin) => implicit hc =>
-    Logger.info(s"$userLogin Delete envelopeId $envelopeId")
+    logger.info(s"$userLogin Delete envelopeId $envelopeId")
     fileUploadConnector.archiveEnvelopeId(envelopeId).map {
       case Right(payload) => Ok(payload)
       case Left(error)    => BadRequest(error)

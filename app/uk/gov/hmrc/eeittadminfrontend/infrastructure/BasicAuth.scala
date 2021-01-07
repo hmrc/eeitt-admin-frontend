@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.infrastructure
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.mvc.Results.Status
 import play.api.mvc.{ RequestHeader, Result }
 
@@ -24,13 +24,15 @@ import scala.concurrent.Future
 
 trait BasicAuth {
 
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   def whitelistPassed(address: Option[Address]): Boolean
 
   def apply(block: => Future[Result])(implicit request: RequestHeader) = {
     val trueClient = "True-Client-IP"
     val maybeSource = request.headers.get(trueClient).map(Address)
     val forwardedFor = request.headers.get("x-forwarded-for").getOrElse("none")
-    Logger.info(s"""Remote address ${request.remoteAddress}, x-forwarded-for $forwardedFor, True-Client-IP ${maybeSource
+    logger.info(s"""Remote address ${request.remoteAddress}, x-forwarded-for $forwardedFor, True-Client-IP ${maybeSource
       .getOrElse("none")}""")
     if (whitelistPassed(maybeSource)) {
       block

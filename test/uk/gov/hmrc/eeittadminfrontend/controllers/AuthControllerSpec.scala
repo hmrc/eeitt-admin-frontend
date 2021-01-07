@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.Validated
 import cats.syntax.all._
+import org.scalatest.{ Matchers, WordSpec }
 import org.scalatest.concurrent.ScalaFutures
 import play.api.http.Status
 import play.api.mvc.{ AnyContentAsEmpty, Headers, Result }
+import play.api.test.Helpers.stubMessagesControllerComponents
 import play.api.test.{ FakeHeaders, FakeRequest }
 import uk.gov.hmrc.eeittadminfrontend._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.AuthService
-import uk.gov.hmrc.play.bootstrap.tools.Stubs.stubMessagesControllerComponents
-import uk.gov.hmrc.play.test.UnitSpec
 
-class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with ScalaFutures {
+class AuthControllerSpec extends WordSpec with ApplicationComponentsOnePerSuite with ScalaFutures with Matchers {
 
   override def additionalConfiguration: Map[String, Any] =
     Map("basicAuth.whitelist" -> "192.168.1.1", "feature.basicAuthEnabled" -> true)
@@ -43,8 +43,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
         method = "POST",
         uri = serverUrl + "/eeittadminfrontend/login",
         headers = Headers("True-Client-IP" -> "192.168.1.1"),
-        body = TestUsers.validUser(),
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+        body = TestUsers.validUser()
       )
 
       val result: Result = authController.checkCredentials()(fakeRequest).futureValue
@@ -57,8 +56,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
         method = "POST",
         uri = serverUrl + "/eeittadminfrontend/login",
         headers = Headers("True-Client-IP" -> "192.168.1.1"),
-        body = TestUsers.invalidUser(),
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+        body = TestUsers.invalidUser()
       )
 
       val result: Result = authController.checkCredentials()(fakeRequest).futureValue
@@ -71,8 +69,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
         method = "POST",
         uri = serverUrl + "/eeittadminfrontend/login",
         headers = FakeHeaders(),
-        body = AnyContentAsEmpty,
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> ""))
+        body = AnyContentAsEmpty)
 
       val result: Result = authController.loginPage()(fakeRequest).futureValue
 
@@ -84,8 +81,7 @@ class AuthControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite 
         method = "POST",
         uri = serverUrl + "/eeittadminfrontend/login",
         headers = Headers("True-Client-IP" -> "192.168.1.2"),
-        body = AnyContentAsEmpty,
-        tags = Map("CSRF_TOKEN_NAME" -> "", "CSRF_TOKEN" -> "")
+        body = AnyContentAsEmpty
       )
 
       val result: Result = authController.loginPage()(fakeRequest).futureValue

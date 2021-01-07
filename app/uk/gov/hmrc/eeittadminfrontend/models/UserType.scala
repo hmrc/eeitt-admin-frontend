@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.Logger
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 
 trait UserType {
@@ -41,6 +41,8 @@ object Business extends UserType {
 object UserType {
 
   implicit val format: Format[UserType] = new Format[UserType] {
+    private val logger: Logger = LoggerFactory.getLogger(getClass)
+
     override def reads(json: JsValue): JsResult[UserType] =
       (json \ "user").getOrElse(JsString("Error")) match {
         case JsString("Agent")    => JsSuccess(Agent)
@@ -53,7 +55,7 @@ object UserType {
         case Agent    => Json.obj("user" -> "Agent")
         case Business => Json.obj("user" -> "Business")
         case _ =>
-          Logger.error("illegal arguement")
+          logger.error("illegal arguement")
           JsString("Error")
       }
   }
