@@ -81,7 +81,7 @@ class FileUploadController(
     logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
     fileUploadConnector.downloadEnvelopeId(envelopeId).map {
       case Right(source) =>
-        Ok.chunked(source)
+        Ok.streamed(source, None)
           .withHeaders(
             CONTENT_TYPE        -> "application/zip",
             CONTENT_DISPOSITION -> s"""attachment; filename = "${envelopeId.value}.zip""""

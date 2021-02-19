@@ -56,7 +56,8 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
     wsHttp
       .buildRequest(url)
-      .get
+      .withMethod("GET")
+      .stream()
       .map { response =>
         if (response.status == 200) Right(response.bodyAsSource) else Left(response.body)
       }
