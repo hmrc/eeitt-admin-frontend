@@ -5,7 +5,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "eeitt-admin-frontend"
 
-val silencerVersion = "1.7.0"
+val silencerVersion = "1.7.3"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(
@@ -20,7 +20,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     organization := "uk.gov.hmrc",
     majorVersion := 1,
-    scalaVersion := "2.12.11",
+    scalaVersion := "2.12.13",
     scalafmtOnCompile := true,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
     libraryDependencies ++= Seq(
@@ -44,13 +44,15 @@ lazy val microservice = Project(appName, file("."))
       s"-P:silencer:sourceRoots=${baseDirectory.value.getCanonicalPath}"
     )
   )
-  .settings(resolvers ++= Seq(
-    Resolver.bintrayRepo("jetbrains", "markdown"),
-    Resolver.jcenterRepo,
-    "bintray-djspiewak-maven" at "https://dl.bintray.com/djspiewak/maven",
-    "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
-    "bintray" at "https://dl.bintray.com/webjars/maven"
-  ))
+  .settings(
+    resolvers ++= Seq(
+      Resolver.bintrayRepo("jetbrains", "markdown"),
+      Resolver.jcenterRepo,
+      "bintray-djspiewak-maven" at "https://dl.bintray.com/djspiewak/maven",
+      "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
+      "bintray" at "https://dl.bintray.com/webjars/maven"
+    )
+  )
   .settings(
     TwirlKeys.templateImports ++= Seq(
       "play.twirl.api.Html",

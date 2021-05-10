@@ -36,20 +36,21 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
-    formTemplateId: FormTemplateId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
+    formTemplateId: FormTemplateId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] =
     wsHttp
       .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
       .map { response =>
         if (response.status == 200) Right(response.json) else Left(response.body.toString)
       }
-      .recover {
-        case ex =>
-          Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
       }
 
-  def getAllSubmissons(formTemplateId: FormTemplateId, page: Int, pageSize: Int)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext) =
+  def getAllSubmissons(formTemplateId: FormTemplateId, page: Int, pageSize: Int)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ) =
     wsHttp.GET[SubmissionPageData](gformUrl + s"/submissionDetails/all/${formTemplateId.value}/$page/$pageSize")
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
@@ -59,29 +60,30 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     wsHttp.GET[JsValue](gformUrl + "/schemas")
 
   def saveTemplate(
-    gformTemplate: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
+    gformTemplate: JsValue
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
     wsHttp
       .doPost[JsValue](gformUrl + "/formtemplates", gformTemplate, List.empty[(String, String)])
       .map { response =>
-        if (response.status == 204) { // Results.NoContent
+        if (response.status == 204) // Results.NoContent
           Right(())
-        } else {
+        else
           Left(response.json.toString)
-        }
       }
-      .recover {
-        case ex =>
-          val formTemplateId = (gformTemplate \ "_id")
-          Left(s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage)
+      .recover { case ex =>
+        val formTemplateId = gformTemplate \ "_id"
+        Left(s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage)
       }
 
   def deleteTemplate(
-    formTemplateId: FormTemplateId)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    formTemplateId: FormTemplateId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
 
-  def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(
-    implicit headerCarrier: HeaderCarrier,
-    ec: ExecutionContext): Future[Unit] =
+  def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(implicit
+    headerCarrier: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
     wsHttp
       .doPut(gformUrl + s"/dblookup/$collectionName", dbLookupIds, Seq.empty)
       .map { response =>

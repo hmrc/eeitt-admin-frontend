@@ -37,7 +37,8 @@ class AuthController(
   val authConnector: AuthConnector,
   sa: SecuredActions,
   authService: AuthService,
-  messagesControllerComponents: MessagesControllerComponents)(implicit appConfig: AppConfig)
+  messagesControllerComponents: MessagesControllerComponents
+)(implicit appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -46,36 +47,41 @@ class AuthController(
 
   val loginForm = Form(single("token" -> nonEmptyText))
 
-  def loginPage(): Action[AnyContent] = Action.async { implicit request =>
-    sa.whiteListing {
-      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm, clientID.id)))
-    }
-  }
-
-  def signOut(): Action[AnyContent] = Action.async { _ =>
-    Future.successful(
-      Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession)
-  }
-
-  def checkCredentials(): Action[AnyContent] = Action.async { implicit request =>
-    loginForm.bindFromRequest.fold(
-      error => {
-        logger.error(s"Failed to Login $error")
-        Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
-      },
-      success => {
-        val email = Email(success) //googleService(success.value))
-        authService.checkUser(email) match {
-          case Valid(()) =>
-            logger.info(s"${email.value} Logged in")
-            Future.successful(
-              Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
-                .withSession(request.session.+(("token", email.value))))
-          case Invalid(err) =>
-            Future.successful(Unauthorized(s"Failed ${err.error}"))
-        }
+  def loginPage(): Action[AnyContent] =
+    Action.async { implicit request =>
+      sa.whiteListing {
+        Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(loginForm, clientID.id)))
       }
-    )
-  }
+    }
+
+  def signOut(): Action[AnyContent] =
+    Action.async { _ =>
+      Future.successful(
+        Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage()).withNewSession
+      )
+    }
+
+  def checkCredentials(): Action[AnyContent] =
+    Action.async { implicit request =>
+      loginForm.bindFromRequest.fold(
+        error => {
+          logger.error(s"Failed to Login $error")
+          Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
+        },
+        success => {
+          val email = Email(success) //googleService(success.value))
+          authService.checkUser(email) match {
+            case Valid(()) =>
+              logger.info(s"${email.value} Logged in")
+              Future.successful(
+                Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
+                  .withSession(request.session.+(("token", email.value)))
+              )
+            case Invalid(err) =>
+              Future.successful(Unauthorized(s"Failed ${err.error}"))
+          }
+        }
+      )
+    }
 
 }

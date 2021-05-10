@@ -47,7 +47,8 @@ class FrontendFiltersModule(
     configModule.controllerConfigs,
     auditingModule.auditConnector,
     new DefaultHttpAuditEvent(configModule.frontendAppConfig.appName),
-    materializer) {
+    materializer
+  ) {
     override val maskedFormFields = Seq("password")
   }
 
@@ -67,12 +68,14 @@ class FrontendFiltersModule(
     new MDCFilter(materializer, configModule.playConfiguration, configModule.frontendAppConfig.appName)
 
   private val sessionTimeoutFilter = new SessionTimeoutFilter(
-    SessionTimeoutFilterConfig.fromConfig(configModule.playConfiguration))
+    SessionTimeoutFilterConfig.fromConfig(configModule.playConfiguration)
+  )
 
   private val deviceIdFilter = new DefaultDeviceIdFilter(
     configModule.frontendAppConfig.appName,
     configModule.playConfiguration,
-    auditingModule.auditConnector)
+    auditingModule.auditConnector
+  )
 
   private val securityHeadersFilter = SecurityHeadersFilter(configModule.playConfiguration)
 

@@ -69,7 +69,8 @@ class AuthControllerSpec extends WordSpec with ApplicationComponentsOnePerSuite 
         method = "POST",
         uri = serverUrl + "/eeittadminfrontend/login",
         headers = FakeHeaders(),
-        body = AnyContentAsEmpty)
+        body = AnyContentAsEmpty
+      )
 
       val result: Result = authController.loginPage()(fakeRequest).futureValue
 
@@ -97,7 +98,8 @@ class AuthControllerSpec extends WordSpec with ApplicationComponentsOnePerSuite 
     new FakeAuthConnector(),
     securedActions,
     new FakeAuthService,
-    stubMessagesControllerComponents())(appConfig)
+    stubMessagesControllerComponents()
+  )(appConfig)
   class FakeAuthService extends AuthService {
     override def checkUser(email: Email): Validated[LoginError, Unit] =
       if (email.value == "test@test.com") ().valid else LoginError("Test Error").invalid

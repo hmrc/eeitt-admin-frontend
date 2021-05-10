@@ -28,7 +28,9 @@ object TestUsers {
       Map(
         "email.value"           -> Seq("test@test.com"),
         "permissions.[0].value" -> Seq("Query"),
-        "permissions.[1].value" -> Seq("Deltas")))
+        "permissions.[1].value" -> Seq("Deltas")
+      )
+    )
 
   def validUser() =
     AnyContentAsFormUrlEncoded(Map("token" -> Seq("test@test.com")))

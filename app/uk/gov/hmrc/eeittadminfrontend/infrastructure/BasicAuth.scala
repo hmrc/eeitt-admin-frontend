@@ -34,11 +34,10 @@ trait BasicAuth {
     val forwardedFor = request.headers.get("x-forwarded-for").getOrElse("none")
     logger.info(s"""Remote address ${request.remoteAddress}, x-forwarded-for $forwardedFor, True-Client-IP ${maybeSource
       .getOrElse("none")}""")
-    if (whitelistPassed(maybeSource)) {
+    if (whitelistPassed(maybeSource))
       block
-    } else {
+    else
       Future.successful(new Status(403))
-    }
   }
 
 }
@@ -51,17 +50,18 @@ object AlwaysAuthorisedBasicAuth extends BasicAuth {
 
 class AuthorisingBasicAuth(whitelist: Option[List[Address]]) extends BasicAuth {
 
-  def whitelistPassed(address: Option[Address]): Boolean = whitelist match {
-    case Some(w) =>
-      address match {
-        case Some(a) =>
-          w.contains(a)
-        case None =>
-          false
-      }
-    case None =>
-      true
-  }
+  def whitelistPassed(address: Option[Address]): Boolean =
+    whitelist match {
+      case Some(w) =>
+        address match {
+          case Some(a) =>
+            w.contains(a)
+          case None =>
+            false
+        }
+      case None =>
+        true
+    }
 
 }
 

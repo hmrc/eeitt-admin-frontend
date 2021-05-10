@@ -22,31 +22,36 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.FooterItem
 
 object FooterLinks {
 
-  def cookieLink(appConfig: AppConfig)(implicit messages: Messages) = FooterItem(
-    Some(messages("footer.links.Cookies")),
-    Some(appConfig.footerCookiesUrl)
-  )
+  def cookieLink(appConfig: AppConfig)(implicit messages: Messages) =
+    FooterItem(
+      Some(messages("footer.links.Cookies")),
+      Some(appConfig.footerCookiesUrl)
+    )
 
-  def privacyLink(appConfig: AppConfig)(implicit messages: Messages) = FooterItem(
-    Some(messages("footer.links.PrivacyPolicy")),
-    Some(appConfig.footerPrivacyPolicyUrl)
-  )
+  def privacyLink(appConfig: AppConfig)(implicit messages: Messages) =
+    FooterItem(
+      Some(messages("footer.links.PrivacyPolicy")),
+      Some(appConfig.footerPrivacyPolicyUrl)
+    )
 
-  def termsConditionsLink(appConfig: AppConfig)(implicit messages: Messages) = FooterItem(
-    Some(messages("footer.links.TermsConditions")),
-    Some(appConfig.footerTermsConditionsUrl)
-  )
+  def termsConditionsLink(appConfig: AppConfig)(implicit messages: Messages) =
+    FooterItem(
+      Some(messages("footer.links.TermsConditions")),
+      Some(appConfig.footerTermsConditionsUrl)
+    )
 
-  def helpLink(appConfig: AppConfig)(implicit messages: Messages) = FooterItem(
-    Some(messages("footer.links.Help")),
-    Some(appConfig.footerHelpUrl)
-  )
+  def helpLink(appConfig: AppConfig)(implicit messages: Messages) =
+    FooterItem(
+      Some(messages("footer.links.Help")),
+      Some(appConfig.footerHelpUrl)
+    )
 
-  def items(appConfig: AppConfig)(implicit messages: Messages) = Seq(
-    cookieLink(appConfig),
-    privacyLink(appConfig),
-    termsConditionsLink(appConfig),
-    helpLink(appConfig)
-  )
+  def items(appConfig: AppConfig)(implicit messages: Messages) =
+    Seq(
+      cookieLink(appConfig),
+      privacyLink(appConfig),
+      termsConditionsLink(appConfig),
+      helpLink(appConfig)
+    )
 
 }

@@ -31,14 +31,15 @@ case class Envelope(
 }
 
 object Envelope {
-  def nonExistentEnvelope(id: EnvelopeId) = Envelope(
-    id,
-    Metadata("-", "-"),
-    Constraints(0, "-", "-"),
-    "-",
-    "-",
-    "-",
-    List.empty
-  )
+  def nonExistentEnvelope(id: EnvelopeId) =
+    Envelope(
+      id,
+      Metadata("-", "-"),
+      Constraints(0, "-", "-"),
+      "-",
+      "-",
+      "-",
+      List.empty
+    )
   implicit val reads: Reads[Envelope] = Json.reads[Envelope]
 }

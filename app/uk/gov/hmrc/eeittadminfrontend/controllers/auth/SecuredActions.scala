@@ -50,11 +50,13 @@ object WhiteListingConf {
       } match {
         case None =>
           logger.warn(
-            "Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access")
+            "Configuration of basicAuth.whitelist has not been provided, so no whitelisting of IP addresses for BasicAuth access"
+          )
           None
         case Some(x) =>
           logger.info(
-            s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]""")
+            s""""Whitelisting of IP addresses for BasicAuth access configured to [${x.map(_.ip).mkString(",")}]"""
+          )
           Some(x)
       }
 
@@ -63,11 +65,11 @@ object WhiteListingConf {
       .flatMap(flag => Try(flag.toBoolean).toOption) match {
       case Some(true)  => WhiteListingEnabled(getWhitelist(config))
       case Some(false) => WhiteListingIsDisabled
-      case _ => {
+      case _ =>
         logger.warn(
-          "A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false")
+          "A boolean configuration value has not been provided for feature.basicAuthEnabled, defaulting to false"
+        )
         WhiteListingIsDisabled
-      }
     }
   }
 }

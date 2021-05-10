@@ -24,9 +24,10 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 class TestOnlyController(messagesControllerComponents: MessagesControllerComponents)
     extends FrontendController(messagesControllerComponents) {
 
-  def config() = Action { r =>
-    val result: JsValue = Json.parse(ConfigFactory.load().root().render(ConfigRenderOptions.concise()))
-    Ok(result)
-  }
+  def config() =
+    Action { r =>
+      val result: JsValue = Json.parse(ConfigFactory.load().root().render(ConfigRenderOptions.concise()))
+      Ok(result)
+    }
 
 }

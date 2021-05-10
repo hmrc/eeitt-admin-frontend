@@ -26,7 +26,8 @@ case class Submission(
   envelopeId: String,
   attachment_count: Int,
   formTemplateId: String,
-  customerId: String)
+  customerId: String
+)
 
 object Submission {
   implicit val reads: Format[Submission] = Json.format[Submission]

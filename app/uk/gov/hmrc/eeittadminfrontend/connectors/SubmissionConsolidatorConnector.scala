@@ -30,23 +30,24 @@ class SubmissionConsolidatorConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   val DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-  def consolidate(consolidatorJobId: String, startDate: LocalDate, endDate: LocalDate)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[String, Unit]] =
+  def consolidate(consolidatorJobId: String, startDate: LocalDate, endDate: LocalDate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Either[String, Unit]] =
     wsHttp
       .doPost[String](
         s"$submissionConsolidatorUrl/consolidate/$consolidatorJobId/${startDate.format(DATE_FORMAT)}/${endDate.format(DATE_FORMAT)}",
-        "")
+        ""
+      )
       .map { response =>
-        if (response.status == 204) { // Results.NoContent
+        if (response.status == 204) // Results.NoContent
           Right(())
-        } else {
+        else
           Left(response.toString)
-        }
       }
-      .recover {
-        case ex =>
-          Left(
-            s"Unknown problem when trying consolidate forms [consolidatorJobId=$consolidatorJobId, startDate=$startDate, endDate=$endDate]" + ex.getMessage)
+      .recover { case ex =>
+        Left(
+          s"Unknown problem when trying consolidate forms [consolidatorJobId=$consolidatorJobId, startDate=$startDate, endDate=$endDate]" + ex.getMessage
+        )
       }
 }

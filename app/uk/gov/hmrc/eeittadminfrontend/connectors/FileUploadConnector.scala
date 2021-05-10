@@ -37,22 +37,22 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   val fileUploadUrl = sc.baseUrl("file-upload")
 
   def getEnvelopeById(
-    envelopeId: EnvelopeId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    envelopeId: EnvelopeId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
     val url = fileUploadUrl + s"/file-upload/envelopes/${envelopeId.value}"
     wsHttp
       .doGet(url)
       .map { response =>
         if (response.status == 200) Right(response.json) else Left(response.body)
       }
-      .recover {
-        case ex =>
-          Left(s"Unknown problem when trying to retrieve envelopeId $envelopeId: " + ex.getMessage)
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve envelopeId $envelopeId: " + ex.getMessage)
       }
   }
 
-  def downloadEnvelopeId(envelopeId: EnvelopeId)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
+  def downloadEnvelopeId(
+    envelopeId: EnvelopeId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
     wsHttp
       .buildRequest(url)
@@ -61,15 +61,14 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
       .map { response =>
         if (response.status == 200) Right(response.bodyAsSource) else Left(response.body)
       }
-      .recover {
-        case ex =>
-          Left(s"Unknown problem when trying to download an envelopeId $envelopeId: " + ex.getMessage)
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to download an envelopeId $envelopeId: " + ex.getMessage)
       }
   }
 
-  def archiveEnvelopeId(envelopeId: EnvelopeId)(
-    implicit headerCarrier: HeaderCarrier,
-    ec: ExecutionContext): Future[Either[String, String]] = {
+  def archiveEnvelopeId(
+    envelopeId: EnvelopeId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] = {
 
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
     wsHttp
@@ -80,9 +79,8 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
         logger.info(success)
         Right(success)
       }
-      .recover {
-        case ex =>
-          Left(s"Unknown problem when trying to archive envelopeId $envelopeId: " + ex.getMessage)
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to archive envelopeId $envelopeId: " + ex.getMessage)
       }
   }
 }

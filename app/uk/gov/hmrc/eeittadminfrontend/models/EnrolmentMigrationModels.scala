@@ -43,31 +43,33 @@ case class DeleteKnownFactsRequest(request: Either[List[Identifier], Exception])
 
 object DeleteKnownFactsRequest {
   def apply(identifiers: String): DeleteKnownFactsRequest =
-    try {
-      Json
-        .fromJson[List[Identifier]](Json.parse(identifiers))
-        .fold(
-          invalid => DeleteKnownFactsRequest(Right(new Exception(invalid.toString()))),
-          valid => DeleteKnownFactsRequest(Left(valid))
-        )
-    } catch {
+    try Json
+      .fromJson[List[Identifier]](Json.parse(identifiers))
+      .fold(
+        invalid => DeleteKnownFactsRequest(Right(new Exception(invalid.toString()))),
+        valid => DeleteKnownFactsRequest(Left(valid))
+      )
+    catch {
       case e: Exception => DeleteKnownFactsRequest(Right(e))
     }
 
-  def toStrings(d: DeleteKnownFactsRequest): Option[String] = d.request match {
-    case Left(x)  => Some(Json.toJson(x).toString())
-    case Right(e) => None
-  }
+  def toStrings(d: DeleteKnownFactsRequest): Option[String] =
+    d.request match {
+      case Left(x)  => Some(Json.toJson(x).toString())
+      case Right(e) => None
+    }
 
   val deleteKnownFactsRequestForm: Form[DeleteKnownFactsRequest] = Form(
-    mapping("identifiers" -> text)(DeleteKnownFactsRequest.apply)(DeleteKnownFactsRequest.toStrings))
+    mapping("identifiers" -> text)(DeleteKnownFactsRequest.apply)(DeleteKnownFactsRequest.toStrings)
+  )
 }
 
 case class TaxEnrolmentRequest(request: String)
 
 object TaxEnrolmentRequest {
   val knownFactsForm: Form[TaxEnrolmentRequest] = Form(
-    mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply))
+    mapping("identifiers" -> text)(TaxEnrolmentRequest.apply)(TaxEnrolmentRequest.unapply)
+  )
 }
 
 case class AllEnrolmentRequest(regimeId: String)
@@ -89,25 +91,26 @@ case class UpsertKnownFactsRequest(request: Either[UpsertRequest, Exception])
 object UpsertKnownFactsRequest {
   def apply(taxEnrolment: String): UpsertKnownFactsRequest = {
     println("sadsada" + taxEnrolment)
-    try {
-      Json
-        .fromJson[UpsertRequest](Json.parse(taxEnrolment))
-        .fold(
-          invalid => UpsertKnownFactsRequest(Right(new Exception(invalid.toString()))),
-          valid => UpsertKnownFactsRequest(Left(UpsertRequest(valid.identifiers, valid.verifiers)))
-        )
-    } catch {
+    try Json
+      .fromJson[UpsertRequest](Json.parse(taxEnrolment))
+      .fold(
+        invalid => UpsertKnownFactsRequest(Right(new Exception(invalid.toString()))),
+        valid => UpsertKnownFactsRequest(Left(UpsertRequest(valid.identifiers, valid.verifiers)))
+      )
+    catch {
       case e: Exception => UpsertKnownFactsRequest(Right(e))
     }
   }
 
-  def toStrings(u: UpsertKnownFactsRequest): Option[String] = u.request match {
-    case Left(x)  => Some(Json.toJson(TaxEnrolment(x.identifiers, x.verifiers)).toString())
-    case Right(e) => None
-  }
+  def toStrings(u: UpsertKnownFactsRequest): Option[String] =
+    u.request match {
+      case Left(x)  => Some(Json.toJson(TaxEnrolment(x.identifiers, x.verifiers)).toString())
+      case Right(e) => None
+    }
 
   val upsertKnownFactsRequestForm: Form[UpsertKnownFactsRequest] = Form(
-    mapping("identifiersverifiers" -> text)(UpsertKnownFactsRequest.apply)(UpsertKnownFactsRequest.toStrings))
+    mapping("identifiersverifiers" -> text)(UpsertKnownFactsRequest.apply)(UpsertKnownFactsRequest.toStrings)
+  )
 }
 
 case class UserDetailsData(credentialRole: String, gatewayId: String)

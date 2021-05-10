@@ -35,38 +35,43 @@ class SubmissionConsolidatorController(
   val authConnector: AuthConnector,
   authAction: AuthAction,
   submissionConsolidatorConnector: SubmissionConsolidatorConnector,
-  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext, appConfig: AppConfig)
+  messagesControllerComponents: MessagesControllerComponents
+)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private val manualConsolidationForm: Form[ManualConsolidationForm] = Form(
     mapping("consolidatorJobId" -> nonEmptyText, "startDate" -> nonEmptyText, "endDate" -> nonEmptyText)(
-      ManualConsolidationForm.apply)(ManualConsolidationForm.unapply)
+      ManualConsolidationForm.apply
+    )(ManualConsolidationForm.unapply)
   )
 
-  def submissionConsolidatorPage() = authAction.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(manualConsolidationForm)))
-  }
+  def submissionConsolidatorPage() =
+    authAction.async { implicit request =>
+      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(manualConsolidationForm)))
+    }
 
-  def consolidate() = authAction.async { implicit request =>
-    manualConsolidationForm
-      .bindFromRequest()
-      .fold(
-        form => {
-          logger.error(s"Failed to consoliate submissions $form")
-          Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(form)))
-        },
-        form => {
-          logger.info(
-            s"User ${request.userLogin} triggered consolidaton [consolidatorJobId=${form.consolidatorJobId}, startDate=${form.startDate}, endDate=${form.endDate}]")
-          submissionConsolidatorConnector
-            .consolidate(form.consolidatorJobId, LocalDate.parse(form.startDate), LocalDate.parse(form.endDate))
-            .map {
-              case Right(_)    => Ok("Consolidation complete")
-              case Left(error) => InternalServerError(error)
-            }
-        }
-      )
-  }
+  def consolidate() =
+    authAction.async { implicit request =>
+      manualConsolidationForm
+        .bindFromRequest()
+        .fold(
+          form => {
+            logger.error(s"Failed to consoliate submissions $form")
+            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(form)))
+          },
+          form => {
+            logger.info(
+              s"User ${request.userLogin} triggered consolidaton [consolidatorJobId=${form.consolidatorJobId}, startDate=${form.startDate}, endDate=${form.endDate}]"
+            )
+            submissionConsolidatorConnector
+              .consolidate(form.consolidatorJobId, LocalDate.parse(form.startDate), LocalDate.parse(form.endDate))
+              .map {
+                case Right(_)    => Ok("Consolidation complete")
+                case Left(error) => InternalServerError(error)
+              }
+          }
+        )
+    }
 }

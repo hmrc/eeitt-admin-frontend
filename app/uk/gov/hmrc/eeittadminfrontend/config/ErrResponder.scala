@@ -25,14 +25,12 @@ import uk.gov.hmrc.eeittadminfrontend.auditing.HttpAuditingService
 
 import scala.concurrent.Future
 
-/**
-  * This object suppose to render responses if something unexpected happened.
+/** This object suppose to render responses if something unexpected happened.
   * It as well does a bunch of side effects:
   *  - sends audit events
   *  - does logging so please use it just before returning
   */
-class ErrResponder(httpAuditingService: HttpAuditingService, i18nSupport: I18nSupport)(
-  implicit
+class ErrResponder(httpAuditingService: HttpAuditingService, i18nSupport: I18nSupport)(implicit
   val messagesApi: MessagesApi,
   frontendAppConfig: AppConfig
 ) {
@@ -76,29 +74,33 @@ class ErrResponder(httpAuditingService: HttpAuditingService, i18nSupport: I18nSu
     Future.successful(NotFound(renderNotFound(requestHeader)))
   }
 
-  private def renderInternalServerError(implicit request: RequestHeader) = renderErrorPage(
-    pageTitle = Messages("global.error.InternalServerError500.title"),
-    heading = Messages("global.error.InternalServerError500.heading"),
-    message = Messages("global.error.InternalServerError500.message")
-  )
+  private def renderInternalServerError(implicit request: RequestHeader) =
+    renderErrorPage(
+      pageTitle = Messages("global.error.InternalServerError500.title"),
+      heading = Messages("global.error.InternalServerError500.heading"),
+      message = Messages("global.error.InternalServerError500.message")
+    )
 
-  private def renderForbidden(reason: String)(implicit request: RequestHeader) = renderErrorPage(
-    "Access forbidden",
-    restricted,
-    reason
-  )
+  private def renderForbidden(reason: String)(implicit request: RequestHeader) =
+    renderErrorPage(
+      "Access forbidden",
+      restricted,
+      reason
+    )
 
-  private def renderNotFound(implicit request: RequestHeader) = renderErrorPage(
-    pageTitle = Messages("global.error.pageNotFound404.title"),
-    heading = Messages("global.error.pageNotFound404.heading"),
-    message = Messages("global.error.pageNotFound404.message")
-  )
+  private def renderNotFound(implicit request: RequestHeader) =
+    renderErrorPage(
+      pageTitle = Messages("global.error.pageNotFound404.title"),
+      heading = Messages("global.error.pageNotFound404.heading"),
+      message = Messages("global.error.pageNotFound404.message")
+    )
 
-  private def renderBadRequest(implicit request: RequestHeader) = renderErrorPage(
-    pageTitle = Messages("global.error.badRequest400.title"),
-    heading = Messages("global.error.badRequest400.heading"),
-    message = Messages("global.error.badRequest400.message")
-  )
+  private def renderBadRequest(implicit request: RequestHeader) =
+    renderErrorPage(
+      pageTitle = Messages("global.error.badRequest400.title"),
+      heading = Messages("global.error.badRequest400.heading"),
+      message = Messages("global.error.badRequest400.message")
+    )
 
   private def renderErrorPage(
     pageTitle: String,

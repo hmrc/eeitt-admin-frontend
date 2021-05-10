@@ -43,14 +43,16 @@ class ErrorHandler(
   override protected def onOtherClientError(
     requestHeader: RequestHeader,
     statusCode: Int,
-    message: String): Future[Result] = errResponder.onOtherClientError(requestHeader, statusCode, message)
+    message: String
+  ): Future[Result] = errResponder.onOtherClientError(requestHeader, statusCode, message)
 
-  override def onServerError(requestHeader: RequestHeader, exception: Throwable): Future[Result] = exception match {
-    case e: BadRequestException => onBadRequest(requestHeader, e.message)
-    //    case e: UnauthorizedException => TODO redirect to login page
-    case e: ForbiddenException => errResponder.forbidden(requestHeader, e.message)
-    case e: NotFoundException  => errResponder.notFound(requestHeader, e.message)
-    case e                     => errResponder.internalServerError(requestHeader, e)
-  }
+  override def onServerError(requestHeader: RequestHeader, exception: Throwable): Future[Result] =
+    exception match {
+      case e: BadRequestException => onBadRequest(requestHeader, e.message)
+      //    case e: UnauthorizedException => TODO redirect to login page
+      case e: ForbiddenException => errResponder.forbidden(requestHeader, e.message)
+      case e: NotFoundException  => errResponder.notFound(requestHeader, e.message)
+      case e                     => errResponder.internalServerError(requestHeader, e)
+    }
 
 }

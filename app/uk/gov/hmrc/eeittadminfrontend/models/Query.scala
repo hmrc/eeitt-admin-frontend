@@ -26,25 +26,27 @@ object ValueClassFormat {
     path: String,
     func: (String, B) => A,
     revFuncAToB: A => B,
-    revFuncAToString: A => String): Format[A] = new Format[A] {
-    override def reads(json: JsValue) =
-      json.validate match {
-        case JsSuccess(x, _) =>
-          (json \ path).toOption match {
-            case Some(JsString(y)) =>
-              JsSuccess(func(y, x))
-            case _ =>
-              JsError("Some Error")
-          }
-        case JsError(_) =>
-          JsError("Some Error")
-      }
+    revFuncAToString: A => String
+  ): Format[A] =
+    new Format[A] {
+      override def reads(json: JsValue) =
+        json.validate match {
+          case JsSuccess(x, _) =>
+            (json \ path).toOption match {
+              case Some(JsString(y)) =>
+                JsSuccess(func(y, x))
+              case _ =>
+                JsError("Some Error")
+            }
+          case JsError(_) =>
+            JsError("Some Error")
+        }
 
-    override def writes(o: A) =
-      Json
-        .obj(path -> JsString(revFuncAToString(o)))
-        .++(Json.toJson(revFuncAToB(o)).as[JsObject])
-  }
+      override def writes(o: A) =
+        Json
+          .obj(path -> JsString(revFuncAToString(o)))
+          .++(Json.toJson(revFuncAToB(o)).as[JsObject])
+    }
 }
 
 object RegistrationNumber { //BusinessUser both ETMP and Enrollments
@@ -83,26 +85,27 @@ object Arn { //Agent Only ETMP and Enrollments
 
 object EitherValueClassFormat {
 
-  def format: Format[Either[Arn, RegistrationNumber]] = new Format[Either[Arn, RegistrationNumber]] {
-    override def reads(json: JsValue) =
-      json.validate[Arn] match {
-        case JsSuccess(x, _) =>
-          JsSuccess(Left(x))
-        case JsError(error) =>
-          json.validate[RegistrationNumber] match {
-            case JsSuccess(y, _) =>
-              JsSuccess(Right(y))
-            case JsError(err) =>
-              JsError("BOTH Agent and Business failed")
-          }
-      }
+  def format: Format[Either[Arn, RegistrationNumber]] =
+    new Format[Either[Arn, RegistrationNumber]] {
+      override def reads(json: JsValue) =
+        json.validate[Arn] match {
+          case JsSuccess(x, _) =>
+            JsSuccess(Left(x))
+          case JsError(error) =>
+            json.validate[RegistrationNumber] match {
+              case JsSuccess(y, _) =>
+                JsSuccess(Right(y))
+              case JsError(err) =>
+                JsError("BOTH Agent and Business failed")
+            }
+        }
 
-    override def writes(o: Either[Arn, RegistrationNumber]) =
-      o match {
-        case Left(x)  => Json.toJson(x)
-        case Right(y) => Json.toJson(y)
-      }
-  }
+      override def writes(o: Either[Arn, RegistrationNumber]) =
+        o match {
+          case Left(x)  => Json.toJson(x)
+          case Right(y) => Json.toJson(y)
+        }
+    }
 }
 
 object ValueClassFormatter {

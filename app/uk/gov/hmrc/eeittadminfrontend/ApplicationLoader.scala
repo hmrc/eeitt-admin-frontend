@@ -60,14 +60,15 @@ class CustomHttpRequestHandler(
   router: Router,
   httpErrorHandler: HttpErrorHandler,
   httpConfiguration: HttpConfiguration,
-  httpFilters: Seq[EssentialFilter])
-    extends DefaultHttpRequestHandler(
+  httpFilters: Seq[EssentialFilter]
+) extends DefaultHttpRequestHandler(
       new DefaultWebCommands,
       None,
       router,
       httpErrorHandler,
       httpConfiguration,
-      httpFilters) {
+      httpFilters
+    ) {
   override def routeRequest(request: RequestHeader): Option[Handler] =
     router.handlerFor(request).orElse {
       Some(request.path)
@@ -152,7 +153,8 @@ class ApplicationModule(context: Context)
   val securedActions = new SecuredActionsImpl(configuration, authModule.authConnector)
   val authController =
     new AuthController(authModule.authConnector, securedActions, authService, messagesControllerComponents)(
-      configModule.frontendAppConfig)
+      configModule.frontendAppConfig
+    )
 
   val fileUploadConnector = new FileUploadConnector(wSHttpModule.auditableWSHttp, configModule.serviceConfig)
   val gformConnector = new GformConnector(wSHttpModule.auditableWSHttp, configModule.serviceConfig)
@@ -165,26 +167,30 @@ class ApplicationModule(context: Context)
   val govukRoutes: govuk.Routes = new govuk.Routes(httpErrorHandler, govukfrontendAssets)
   val hmrcfrontendRoutes: hmrcfrontend.Routes = new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets)
   val authAction: AuthAction = new AuthAction(messagesControllerComponents)
-  val gformController = new GformsController(
-    authModule.authConnector,
-    authAction,
-    gformConnector,
-    messagesControllerComponents)(executionContext, configModule.frontendAppConfig, materializer)
+  val gformController =
+    new GformsController(authModule.authConnector, authAction, gformConnector, messagesControllerComponents)(
+      executionContext,
+      configModule.frontendAppConfig,
+      materializer
+    )
   val fileUploadController =
     new FileUploadController(authModule.authConnector, authAction, fileUploadConnector, messagesControllerComponents)(
       executionContext,
-      configModule.frontendAppConfig)
+      configModule.frontendAppConfig
+    )
   val submissionController = new SubmissionController(
     authModule.authConnector,
     authAction,
     gformConnector,
     fileUploadConnector,
-    messagesControllerComponents)(executionContext, configModule.frontendAppConfig)
+    messagesControllerComponents
+  )(executionContext, configModule.frontendAppConfig)
   val submissionConsolidatorController = new SubmissionConsolidatorController(
     authModule.authConnector,
     authAction,
     submissionConsolidatorConnector,
-    messagesControllerComponents)(executionContext, configModule.frontendAppConfig)
+    messagesControllerComponents
+  )(executionContext, configModule.frontendAppConfig)
 
   val appRoutes = new app.Routes(
     httpErrorHandler,
@@ -222,7 +228,8 @@ class ApplicationModule(context: Context)
     httpRequestHandler,
     httpErrorHandler,
     actorSystem,
-    materializer)
+    materializer
+  )
 
   def initialize() = {
     val appName = configModule.frontendAppConfig.appName
@@ -231,6 +238,7 @@ class ApplicationModule(context: Context)
     val loggerDateFormat: Option[String] = configuration.getOptional[String]("logger.json.dateformat")
     loggerDateFormat.foreach(str => MDC.put("logger.json.dateformat", str))
     logger.info(
-      s"Started $appName in mode ${environment.mode} at port ${application.configuration.getOptional[String]("http.port")}")
+      s"Started $appName in mode ${environment.mode} at port ${application.configuration.getOptional[String]("http.port")}"
+    )
   }
 }
