@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.auditing
 
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.play.audit.http.connector.{ AuditConnector, AuditResult }
 import uk.gov.hmrc.play.bootstrap.config.HttpAuditEvent
 
@@ -54,7 +54,7 @@ class HttpAuditingService(appName: String, auditConnector: AuditConnector)(impli
   private val httpAuditEvent = new HttpAuditEvent {
     //function dataEvent is protected, we need to access it this is why it's exposed in such way
     def dataEvent0(eventType: String, transactionName: String, request: RequestHeader)(implicit
-      hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+      hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     ) =
       dataEvent(eventType, transactionName, request)
     override def appName = self.appName

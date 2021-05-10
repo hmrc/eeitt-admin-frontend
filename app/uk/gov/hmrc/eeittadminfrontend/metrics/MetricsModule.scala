@@ -16,21 +16,18 @@
 
 package uk.gov.hmrc.eeittadminfrontend.metrics
 
-import com.kenshoo.play.metrics.{ MetricsController, MetricsFilter, MetricsFilterImpl, MetricsImpl }
+import com.kenshoo.play.metrics.{ Metrics, MetricsController, MetricsFilter, MetricsFilterImpl }
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
-import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
 
 import scala.concurrent.ExecutionContext
 
 class MetricsModule(
-  configModule: ConfigModule,
+  metrics: Metrics,
   akkaModule: AkkaModule,
   controllerComponents: ControllerComponents,
   ec: ExecutionContext
 ) {
-
-  val metrics = new MetricsImpl(configModule.context.lifecycle, configModule.context.initialConfiguration)
 
   val metricsFilter: MetricsFilter = new MetricsFilterImpl(metrics)(akkaModule.materializer, ec)
 

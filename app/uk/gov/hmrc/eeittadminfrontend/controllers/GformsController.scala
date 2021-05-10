@@ -35,7 +35,6 @@ import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -171,7 +170,7 @@ class GformsController(
 
   def fetchAndSave(
     formTemplateIds: List[FormTemplateId]
-  )(implicit hc: HeaderCarrier, request: RequestWithUser[AnyContent]): Future[RefreshResult] =
+  )(implicit request: RequestWithUser[AnyContent]): Future[RefreshResult] =
     formTemplateIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) { case (resultsAcc, formTemplateId) =>
       logger.info(s"${request.userLogin} Refreshing formTemplateId: $formTemplateId")
       for {

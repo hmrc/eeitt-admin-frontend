@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.bootstrap.config.DefaultHttpAuditEvent
 import uk.gov.hmrc.play.bootstrap.filters.{ CacheControlConfig, CacheControlFilter, DefaultLoggingFilter, MDCFilter }
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.{ DefaultSessionCookieCryptoFilter, SessionCookieCrypto, SessionCookieCryptoFilter, SessionCookieCryptoProvider }
 import uk.gov.hmrc.play.bootstrap.frontend.filters.deviceid.DefaultDeviceIdFilter
-import uk.gov.hmrc.play.bootstrap.frontend.filters.{ AllowlistFilter, DefaultFrontendAuditFilter, FrontendFilters, HeadersFilter, SessionIdFilter, SessionTimeoutFilter, SessionTimeoutFilterConfig }
+import uk.gov.hmrc.play.bootstrap.frontend.filters.{ DefaultFrontendAuditFilter, HeadersFilter, SessionIdFilter, SessionTimeoutFilter, SessionTimeoutFilterConfig }
 
 import scala.concurrent.ExecutionContext
 
@@ -44,6 +44,7 @@ class FrontendFiltersModule(
   private implicit val materializer: Materializer = akkaModule.materializer
 
   private val frontendAuditFilter = new DefaultFrontendAuditFilter(
+    configModule.playConfiguration,
     configModule.controllerConfigs,
     auditingModule.auditConnector,
     new DefaultHttpAuditEvent(configModule.frontendAppConfig.appName),
@@ -52,7 +53,7 @@ class FrontendFiltersModule(
     override val maskedFormFields = Seq("password")
   }
 
-  private val cookieCryptoFilter: SessionCookieCryptoFilter = {
+  private val sessionCookieCryptoFilter: SessionCookieCryptoFilter = {
     val applicationCrypto: ApplicationCrypto = new ApplicationCrypto(configModule.typesafeConfig)
     val sessionCookieCrypto: SessionCookieCrypto = new SessionCookieCryptoProvider(applicationCrypto).get()
 
@@ -83,24 +84,20 @@ class FrontendFiltersModule(
 
   private val loggingFilter = new DefaultLoggingFilter(configModule.controllerConfigs)
 
-  private val allowListFilter = new AllowlistFilter(configModule.playConfiguration, materializer)
-
   private val sessionIdFilter = new SessionIdFilter(materializer, ec, sessionCookieBaker)
 
-  lazy val httpFilters: Seq[EssentialFilter] = new FrontendFilters(
-    configModule.playConfiguration,
-    loggingFilter,
-    headersFilter,
+  lazy val httpFilters: Seq[EssentialFilter] = List(
     securityHeadersFilter,
-    frontendAuditFilter,
     metricsModule.metricsFilter,
+    sessionCookieCryptoFilter,
+    headersFilter,
     deviceIdFilter,
-    csrfComponents.csrfFilter,
-    cookieCryptoFilter,
+    loggingFilter,
+    frontendAuditFilter,
     sessionTimeoutFilter,
+    csrfComponents.csrfFilter,
     cacheControlFilter,
     mdcFilter,
-    allowListFilter,
     sessionIdFilter
-  ).filters
+  )
 }

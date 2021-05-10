@@ -42,8 +42,10 @@ import uk.gov.hmrc.eeittadminfrontend.services.AuthService
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
 import uk.gov.hmrc.play.health.HealthController
+import uk.gov.hmrc.play.language.LanguageUtils
 import uk.gov.hmrc.govukfrontend.controllers.{ Assets => GovukAssets }
-import uk.gov.hmrc.hmrcfrontend.controllers.{ Assets => HmrcAssets }
+import uk.gov.hmrc.hmrcfrontend.config.LanguageConfig
+import uk.gov.hmrc.hmrcfrontend.controllers.{ Assets => HmrcAssets, KeepAliveController, LanguageController }
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
@@ -85,12 +87,16 @@ class ApplicationModule(context: Context)
 
   logger.info(s"Starting microservice : eeitt-admin-frontend")
 
-  protected val akkaModule = new AkkaModule(materializer, actorSystem)
+  protected val akkaModule = new AkkaModule(materializer, actorSystem, coordinatedShutdown)
   protected val configModule = new ConfigModule(context)
-  protected val auditingModule = new AuditingModule(configModule, akkaModule, applicationLifecycle)
+
+  private val metrics: Metrics =
+    new MetricsImpl(applicationLifecycle, configuration)
+
+  protected lazy val auditingModule = new AuditingModule(configModule, metrics, akkaModule, applicationLifecycle)
   private val playBuiltInsModule = new PlayBuiltInsModule(self)
 
-  val errResponder: ErrResponder = new ErrResponder(
+  lazy val errResponder: ErrResponder = new ErrResponder(
     auditingModule.httpAuditingService,
     playBuiltInsModule.i18nSupport
   )(messagesApi, configModule.frontendAppConfig)
@@ -102,7 +108,7 @@ class ApplicationModule(context: Context)
     errResponder
   )
 
-  private val metricsModule = new MetricsModule(configModule, akkaModule, controllerComponents, executionContext)
+  protected val metricsModule = new MetricsModule(metrics, akkaModule, controllerComponents, executionContext)
 
   private val sessionCookieBaker: SessionCookieBaker = {
     val httpConfiguration: HttpConfiguration =
@@ -125,9 +131,6 @@ class ApplicationModule(context: Context)
 
   override lazy val httpRequestHandler: HttpRequestHandler =
     new CustomHttpRequestHandler(router, httpErrorHandler, httpConfiguration, httpFilters)
-
-  // Don't use uk.gov.hmrc.play.graphite.GraphiteMetricsImpl as it won't allow hot reload due to overridden onStop() method
-  lazy val metrics = new MetricsImpl(applicationLifecycle, configuration)
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
@@ -164,8 +167,18 @@ class ApplicationModule(context: Context)
   val govukfrontendAssets = new GovukAssets(httpErrorHandler, assetsMetadata)
   val hmrcfrontendAssets = new HmrcAssets(httpErrorHandler, assetsMetadata)
 
+  val keepAliveController: KeepAliveController = new KeepAliveController(controllerComponents)
+
+  val languageUtils: LanguageUtils = new LanguageUtils(playBuiltInsModule.langs, configModule.playConfiguration)(
+    playBuiltInsModule.messagesApi
+  )
+  val languageConfig: LanguageConfig = new LanguageConfig(configuration)
+  val languageController: LanguageController =
+    new LanguageController(configuration, languageUtils, controllerComponents, languageConfig)
+
   val govukRoutes: govuk.Routes = new govuk.Routes(httpErrorHandler, govukfrontendAssets)
-  val hmrcfrontendRoutes: hmrcfrontend.Routes = new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets)
+  val hmrcfrontendRoutes: hmrcfrontend.Routes =
+    new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets, keepAliveController, languageController)
   val authAction: AuthAction = new AuthAction(messagesControllerComponents)
   val gformController =
     new GformsController(authModule.authConnector, authAction, gformConnector, messagesControllerComponents)(

@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.akka
 
-import akka.actor.ActorSystem
+import akka.actor.{ ActorSystem, CoordinatedShutdown }
 import akka.stream.Materializer
 
 class AkkaModule(
   val materializer: Materializer,
-  val actorSystem: ActorSystem
+  val actorSystem: ActorSystem,
+  val coordinatedShutdown: CoordinatedShutdown
 )

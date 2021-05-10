@@ -20,7 +20,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -31,7 +30,6 @@ class SubmissionConsolidatorConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   val DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
   def consolidate(consolidatorJobId: String, startDate: LocalDate, endDate: LocalDate)(implicit
-    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     wsHttp

@@ -65,7 +65,7 @@ class FileUploadController(
     }
 
   def findEnvelope() =
-    WithUserLogin { (envelopeId, userLogin) => implicit hc =>
+    WithUserLogin { (envelopeId, userLogin) => hc =>
       logger.info(s"$userLogin Queried for envelopeId $envelopeId")
       fileUploadConnector.getEnvelopeById(envelopeId).map {
         case Right(payload) => Ok(Json.prettyPrint(payload))
@@ -74,7 +74,7 @@ class FileUploadController(
     }
 
   def showEnvelope(envelopeId: EnvelopeId) =
-    authAction.async { implicit request =>
+    authAction.async { request =>
       fileUploadConnector.getEnvelopeById(envelopeId).map {
         case Right(payload) => Ok(Json.prettyPrint(payload))
         case Left(error)    => BadRequest(error)

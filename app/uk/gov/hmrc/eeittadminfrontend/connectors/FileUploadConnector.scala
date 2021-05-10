@@ -38,7 +38,7 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   def getEnvelopeById(
     envelopeId: EnvelopeId
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
     val url = fileUploadUrl + s"/file-upload/envelopes/${envelopeId.value}"
     wsHttp
       .doGet(url)
@@ -52,10 +52,10 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   def downloadEnvelopeId(
     envelopeId: EnvelopeId
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
+  )(implicit ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
     wsHttp
-      .buildRequest(url)
+      .buildRequest(url, Seq.empty[(String, String)])
       .withMethod("GET")
       .stream()
       .map { response =>

@@ -16,21 +16,42 @@
 
 package uk.gov.hmrc.eeittadminfrontend.auditing
 
+import com.kenshoo.play.metrics.Metrics
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.audit.DefaultAuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{ AuditChannel, AuditConnector, AuditCounter, AuditCounterMetrics }
+import uk.gov.hmrc.play.bootstrap.audit.{ DefaultAuditChannel, DefaultAuditConnector, DefaultAuditCounter, DefaultAuditCounterMetrics }
 
 import scala.concurrent.ExecutionContext
 
-class AuditingModule(configModule: ConfigModule, akkaModule: AkkaModule, lifecycle: ApplicationLifecycle)(implicit
+class AuditingModule(
+  configModule: ConfigModule,
+  metrics: Metrics,
+  akkaModule: AkkaModule,
+  lifecycle: ApplicationLifecycle
+)(implicit
   ec: ExecutionContext
 ) {
   self =>
 
+  val auditChannel: AuditChannel =
+    new DefaultAuditChannel(configModule.auditingConfig, akkaModule.materializer, lifecycle)
+
+  val auditMetrics: AuditCounterMetrics = new DefaultAuditCounterMetrics(metrics)
+
+  val auditCounter: AuditCounter =
+    new DefaultAuditCounter(
+      akkaModule.actorSystem,
+      akkaModule.coordinatedShutdown,
+      configModule.auditingConfig,
+      auditChannel,
+      auditMetrics,
+      ec
+    )
+
   lazy val auditConnector: AuditConnector =
-    new DefaultAuditConnector(configModule.auditingConfig, akkaModule.materializer, lifecycle)
+    new DefaultAuditConnector(configModule.auditingConfig, auditChannel, auditCounter, lifecycle)
 
   val httpAuditingService: HttpAuditingService =
     new HttpAuditingService(configModule.frontendAppConfig.appName, auditConnector)
