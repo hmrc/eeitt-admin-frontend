@@ -61,7 +61,7 @@ class SubmissionController(
   def submission(formTemplateId: FormTemplateId, page: Int) =
     authAction.async { implicit request =>
       val checkedPage = Math.max(0, page)
-      logger.info(s"${request.userLogin} looking at submissions for $formTemplateId page $checkedPage")
+      logger.info(s"${request.userData} looking at submissions for $formTemplateId page $checkedPage")
       gformConnector.getAllSubmissons(formTemplateId, Math.max(0, checkedPage), Pagination.pageSize).flatMap {
         case submissionPageData =>
           val submissions = submissionPageData.submissions
@@ -78,11 +78,11 @@ class SubmissionController(
                         (submission, envelope, AttachmentCheck.CountDoesNotMatch(envelope.files.size))
                     case None =>
                       logger
-                        .warn(s"${request.userLogin} failed to parse envelopeId $envelopeId. Json payload: $jsValue")
+                        .warn(s"${request.userData} failed to parse envelopeId $envelopeId. Json payload: $jsValue")
                       (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.CannotParseEnvelope)
                   }
                 case Left(error) =>
-                  logger.warn(s"${request.userLogin} failed to retrieve envelopeId $envelopeId. Error: $error")
+                  logger.warn(s"${request.userData} failed to retrieve envelopeId $envelopeId. Error: $error")
                   (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.EnvelopeDoesNotExists)
               }
             }

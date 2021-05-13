@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend.config
 
+import uk.gov.hmrc.eeittadminfrontend.models.{ Email, UserData, Username }
 import play.api.mvc.Results._
 import play.api.mvc._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-case class RequestWithUser[A](request: Request[A], userLogin: String) extends WrappedRequest[A](request)
+case class RequestWithUser[A](request: Request[A], userData: UserData) extends WrappedRequest[A](request)
 
 object RequestWithUser {
   implicit def asRequest[A](implicit rwu: RequestWithUser[A]): Request[A] = rwu.request
@@ -33,15 +34,18 @@ class AuthAction(messagesControllerComponents: MessagesControllerComponents)
   override def executionContext: ExecutionContext = messagesControllerComponents.executionContext
   override def parser: BodyParser[AnyContent] = messagesControllerComponents.parsers.default
 
-  private def username(request: RequestHeader): Option[String] = request.session.get("token")
+  private def userDataFromSession(request: RequestHeader): Option[UserData] = for {
+    username <- request.session.get("username").map(Username.apply)
+    email    <- request.session.get("email").map(Email.apply)
+  } yield UserData(username, email)
 
   def onUnauthorised =
     Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.AuthController.loginPage())
 
   override def invokeBlock[A](request: Request[A], block: RequestWithUser[A] => Future[Result]): Future[Result] =
-    username(request)
-      .map { login =>
-        block(RequestWithUser(request, login))
+    userDataFromSession(request)
+      .map { userData =>
+        block(RequestWithUser(request, userData))
       }
       .getOrElse(Future.successful(onUnauthorised))
 }

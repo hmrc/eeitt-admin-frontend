@@ -26,6 +26,7 @@ import play.api.mvc.{ MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.FileUploadConnector
+import uk.gov.hmrc.eeittadminfrontend.models.UserData
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -53,20 +54,20 @@ class FileUploadController(
       Future.successful(Ok(views.html.file_upload(envelopeIdForm)))
     }
 
-  private def WithUserLogin(f: (EnvelopeId, String) => HeaderCarrier => Future[Result]) =
+  private def WithUserLogin(f: (EnvelopeId, UserData) => HeaderCarrier => Future[Result]) =
     authAction.async { implicit request =>
       envelopeIdForm
         .bindFromRequest()
         .fold(
           formWithErrors =>
             Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.file_upload(envelopeIdForm))),
-          envelopeId => f(envelopeId.envelopeId, request.userLogin)(hc)
+          envelopeId => f(envelopeId.envelopeId, request.userData)(hc)
         )
     }
 
   def findEnvelope() =
-    WithUserLogin { (envelopeId, userLogin) => hc =>
-      logger.info(s"$userLogin Queried for envelopeId $envelopeId")
+    WithUserLogin { (envelopeId, userData) => hc =>
+      logger.info(s"$userData Queried for envelopeId $envelopeId")
       fileUploadConnector.getEnvelopeById(envelopeId).map {
         case Right(payload) => Ok(Json.prettyPrint(payload))
         case Left(error)    => BadRequest(error)
@@ -83,7 +84,7 @@ class FileUploadController(
 
   def downloadEnvelope(envelopeId: EnvelopeId) =
     authAction.async { implicit request =>
-      logger.info(s"${request.userLogin} Download an envelopeId $envelopeId")
+      logger.info(s"${request.userData} Download an envelopeId $envelopeId")
       fileUploadConnector.downloadEnvelopeId(envelopeId).map {
         case Right(source) =>
           Ok.streamed(source, None)
@@ -96,15 +97,15 @@ class FileUploadController(
     }
 
   def downloadEnvelopePost() =
-    WithUserLogin { (envelopeId, userLogin) => _ =>
+    WithUserLogin { (envelopeId, userData) => _ =>
       Future.successful(
         Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelope(envelopeId))
       )
     }
 
   def archiveEnvelope() =
-    WithUserLogin { (envelopeId, userLogin) => implicit hc =>
-      logger.info(s"$userLogin Delete envelopeId $envelopeId")
+    WithUserLogin { (envelopeId, userData) => implicit hc =>
+      logger.info(s"$userData Delete envelopeId $envelopeId")
       fileUploadConnector.archiveEnvelopeId(envelopeId).map {
         case Right(payload) => Ok(payload)
         case Left(error)    => BadRequest(error)

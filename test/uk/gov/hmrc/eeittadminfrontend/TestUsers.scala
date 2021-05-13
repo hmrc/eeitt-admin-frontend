@@ -21,7 +21,12 @@ import play.api.mvc.AnyContentAsFormUrlEncoded
 object TestUsers {
 
   def invalidUser() =
-    AnyContentAsFormUrlEncoded(Map("token" -> Seq("invalid@test.com")))
+    AnyContentAsFormUrlEncoded(
+      Map(
+        "username" -> Seq("John Doe"),
+        "email"    -> Seq("invalid@test.com")
+      )
+    )
 
   def registration() =
     AnyContentAsFormUrlEncoded(
@@ -33,6 +38,11 @@ object TestUsers {
     )
 
   def validUser() =
-    AnyContentAsFormUrlEncoded(Map("token" -> Seq("test@test.com")))
+    AnyContentAsFormUrlEncoded(
+      Map(
+        "username" -> Seq("John Doe"),
+        "email"    -> Seq("test@test.com")
+      )
+    )
 
 }

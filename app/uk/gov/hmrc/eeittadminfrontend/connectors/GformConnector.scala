@@ -60,6 +60,7 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     wsHttp.GET[JsValue](gformUrl + "/schemas")
 
   def saveTemplate(
+    formTemplateId: FormTemplateId,
     gformTemplate: JsValue
   )(implicit ec: ExecutionContext): Future[Either[String, Unit]] =
     wsHttp
@@ -71,8 +72,9 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
           Left(response.json.toString)
       }
       .recover { case ex =>
-        val formTemplateId = gformTemplate \ "_id"
-        Left(s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage)
+        val message = s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
       }
 
   def deleteTemplate(

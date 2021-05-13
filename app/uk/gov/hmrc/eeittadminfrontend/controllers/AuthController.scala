@@ -45,7 +45,15 @@ class AuthController(
 
   val clientID: ClientID = ConfigSource.default.at("clientid").loadOrThrow[ClientID]
 
-  val loginForm = Form(single("token" -> nonEmptyText))
+  val loginForm: play.api.data.Form[UserData] =
+    Form(
+      mapping(
+        "username" -> nonEmptyText,
+        "email"    -> nonEmptyText
+      )((username, email) => UserData(Username(username), Email(email)))(userData =>
+        Some((userData.username.value, userData.email.value))
+      )
+    )
 
   def loginPage(): Action[AnyContent] =
     Action.async { implicit request =>
@@ -68,14 +76,14 @@ class AuthController(
           logger.error(s"Failed to Login $error")
           Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.login_page(error, clientID.id)))
         },
-        success => {
-          val email = Email(success) //googleService(success.value))
+        userData => {
+          val email = userData.email
           authService.checkUser(email) match {
             case Valid(()) =>
-              logger.info(s"${email.value} Logged in")
+              logger.info(s"$userData Logged in")
               Future.successful(
                 Redirect(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage)
-                  .withSession(request.session.+(("token", email.value)))
+                  .addingToSession("email" -> email.value, "username" -> userData.username.value)
               )
             case Invalid(err) =>
               Future.successful(Unauthorized(s"Failed ${err.error}"))

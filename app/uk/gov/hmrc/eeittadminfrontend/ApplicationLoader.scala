@@ -33,12 +33,13 @@ import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthModule
 import uk.gov.hmrc.eeittadminfrontend.config.{ AuthAction, ConfigModule, ErrResponder, ErrorHandler }
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector, SubmissionConsolidatorConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector, GithubConnector, SubmissionConsolidatorConnector }
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
+import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
-import uk.gov.hmrc.eeittadminfrontend.services.AuthService
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
 import uk.gov.hmrc.play.health.HealthController
@@ -180,8 +181,20 @@ class ApplicationModule(context: Context)
   val hmrcfrontendRoutes: hmrcfrontend.Routes =
     new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets, keepAliveController, languageController)
   val authAction: AuthAction = new AuthAction(messagesControllerComponents)
+
+  val githubConnector: Option[GithubConnector] =
+    Authorization(configuration).map(auth => new GithubConnector(auth, wSHttpModule.auditableWSHttp))
+
+  val githubService: GithubService = new GithubService(githubConnector)
+
   val gformController =
-    new GformsController(authModule.authConnector, authAction, gformConnector, messagesControllerComponents)(
+    new GformsController(
+      authModule.authConnector,
+      authAction,
+      gformConnector,
+      githubService,
+      messagesControllerComponents
+    )(
       executionContext,
       configModule.frontendAppConfig,
       materializer

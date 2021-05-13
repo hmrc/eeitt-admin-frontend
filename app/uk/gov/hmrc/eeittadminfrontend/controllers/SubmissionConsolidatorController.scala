@@ -58,12 +58,12 @@ class SubmissionConsolidatorController(
         .bindFromRequest()
         .fold(
           form => {
-            logger.error(s"Failed to consoliate submissions $form")
+            logger.error(s"Failed to consolidate submissions $form")
             Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.submission_consolidator(form)))
           },
           form => {
             logger.info(
-              s"User ${request.userLogin} triggered consolidaton [consolidatorJobId=${form.consolidatorJobId}, startDate=${form.startDate}, endDate=${form.endDate}]"
+              s"User ${request.userData} triggered consolidaton [consolidatorJobId=${form.consolidatorJobId}, startDate=${form.startDate}, endDate=${form.endDate}]"
             )
             submissionConsolidatorConnector
               .consolidate(form.consolidatorJobId, LocalDate.parse(form.startDate), LocalDate.parse(form.endDate))

@@ -27,7 +27,7 @@ object User {
   implicit val format: OFormat[User] = Json.format[User]
 }
 
-case class Email(value: String)
+case class Email(value: String) extends AnyVal
 
 object Email {
   implicit val format: OFormat[Email] = Json.format[Email]
