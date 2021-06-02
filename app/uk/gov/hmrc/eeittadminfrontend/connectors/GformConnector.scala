@@ -41,7 +41,7 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     wsHttp
       .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
       .map { response =>
-        if (response.status == 200) Right(response.json) else Left(response.body.toString)
+        if (response.status == 200) Right(response.json) else Left(response.body)
       }
       .recover { case ex =>
         Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
@@ -69,7 +69,7 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
         if (response.status == 204) // Results.NoContent
           Right(())
         else
-          Left(response.json.toString)
+          Left((Json.parse(response.body) \ "error").as[String])
       }
       .recover { case ex =>
         val message = s"Unknown problem when trying to save template $formTemplateId: " + ex.getMessage

@@ -42,6 +42,7 @@ import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWit
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.github.GetTemplate
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.services.GithubService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
@@ -73,6 +74,7 @@ class GformsController(
   authAction: AuthAction,
   gformConnector: GformConnector,
   githubService: GithubService,
+  formTemplateValidator: FormTemplateValidator,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
@@ -160,13 +162,17 @@ class GformsController(
       val result: EitherT[Future, String, Result] =
         for {
           formTemplate   <- parseRawJson(rawJson).leftMap(e => "Not a valid json: " + e.getMessage + "\n\n" + rawJson)
-          formTemplateId <- getFormTemplateId(formTemplate).leftMap(decodingFailure => "No '_id' field defined.")
+          formTemplateId <- getFormTemplateId(formTemplate).leftMap(_ => "No '_id' field defined.")
+          _              <- EitherT(formTemplateValidator.validate(formTemplate))
           getTemplate    <- githubService.getTemplate(formTemplateId).mapK(ioToFuture)
           _              <- saveTemplate(getTemplate, formTemplate) // Save template after successful call to Github
           result         <- githubService.updateFormTemplateId(getTemplate, formTemplate, author).mapK(ioToFuture)
         } yield result
 
-      result.leftMap(error => BadRequest(error)).value.map(_.merge)
+      result
+        .leftMap(error => Redirect(routes.GformsController.gformPage()).flashing("error" -> error))
+        .value
+        .map(_.merge)
     }
 
   private def saveTemplate(getTemplate: GetTemplate, formTemplate: io.circe.Json) = EitherT(

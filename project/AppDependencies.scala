@@ -17,17 +17,19 @@ object AppDependencies {
     "org.http4s"            %% "http4s-blaze-client"        % "0.21.22",
     "io.circe"              %% "circe-core"                 % "0.13.0",
     "io.circe"              %% "circe-parser"               % "0.13.0",
+    "io.circe"              %% "circe-optics"               % "0.13.0",
     "com.github.jwt-scala"  %% "jwt-circe"                  % "7.1.4",
-    "org.bouncycastle"      %  "bcpkix-jdk15on"             % "1.68"
+    "org.bouncycastle"       % "bcpkix-jdk15on"             % "1.68"
   )
 
   def test(scope: String = "test") =
     Seq(
-      "uk.gov.hmrc"            %% "service-integration-test" % "0.13.0-play-27"    % scope,
-      "org.pegdown"             % "pegdown"                  % "1.6.0"             % scope,
-      "org.jsoup"               % "jsoup"                    % "1.11.3"            % scope,
-      "com.typesafe.play"      %% "play-test"                % PlayVersion.current % scope,
-      "org.scalatestplus.play" %% "scalatestplus-play"       % "4.0.3"             % scope,
-      "com.github.tomakehurst"  % "wiremock-jre8"            % "2.26.3"            % scope
+      "uk.gov.hmrc"            %% "service-integration-test"    % "0.13.0-play-27"    % scope,
+      "org.pegdown"             % "pegdown"                     % "1.6.0"             % scope,
+      "org.jsoup"               % "jsoup"                       % "1.11.3"            % scope,
+      "com.typesafe.play"      %% "play-test"                   % PlayVersion.current % scope,
+      "org.scalatestplus.play" %% "scalatestplus-play"          % "4.0.3"             % scope,
+      "com.github.tomakehurst"  % "wiremock-jre8"               % "2.26.3"            % scope,
+      "org.scalamock"          %% "scalamock-scalatest-support" % "3.6.0"             % scope
     )
 }
