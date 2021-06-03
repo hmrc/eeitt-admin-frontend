@@ -19,8 +19,8 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.GformId
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-
-@(form: Form[GformId])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.content
+@(form: Form[GformId])(implicit request : Request[_], flash: Flash, messages: Messages, appConfig: AppConfig)
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
@@ -30,6 +30,13 @@
 @govukFileUpload = @{new govukFileUpload(new govukErrorMessage, new govukHint, new govukLabel)}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform", tab = "gforms") {
+
+@{flash.get("error").fold(Html(""))(e =>
+    new govukErrorSummary()(
+        ErrorSummary(
+        errorList = List(ErrorLink(content = content.Text(e))),
+        title = content.Text("Error")))
+)}
 
 <h2 class="govuk-heading-m">Download all Gform templates in a zip</h2>
 @govukButton(Button(
@@ -75,6 +82,7 @@
 
 @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema, args = 'class -> "js-form", 'enctype -> "multipart/form-data", 'autocomplete -> "off") {
     <h2 class="govuk-heading-m">Save a template</h2>
+
     @govukTextarea(Textarea(
         id = "template",
         name = "template",

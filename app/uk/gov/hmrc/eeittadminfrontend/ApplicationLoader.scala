@@ -33,7 +33,7 @@ import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.auditing.AuditingModule
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthModule
 import uk.gov.hmrc.eeittadminfrontend.config.{ AuthAction, ConfigModule, ErrResponder, ErrorHandler }
-import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector, GithubConnector, SubmissionConsolidatorConnector }
+import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector, GithubConnector, HMRCEmailRendererConnector, SubmissionConsolidatorConnector }
 import uk.gov.hmrc.eeittadminfrontend.controllers._
 import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
@@ -41,6 +41,7 @@ import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
 import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
+import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
 import uk.gov.hmrc.play.health.HealthController
 import uk.gov.hmrc.play.language.LanguageUtils
@@ -187,18 +188,21 @@ class ApplicationModule(context: Context)
 
   val githubService: GithubService = new GithubService(githubConnector)
 
-  val gformController =
-    new GformsController(
-      authModule.authConnector,
-      authAction,
-      gformConnector,
-      githubService,
-      messagesControllerComponents
-    )(
-      executionContext,
-      configModule.frontendAppConfig,
-      materializer
+  val hmrcEmailRendererConnector =
+    new HMRCEmailRendererConnector(
+      wSHttpModule.auditableWSHttp,
+      configModule.serviceConfig.baseUrl("hmrc-email-renderer")
     )
+  val formTemplateValidator = new FormTemplateValidator(hmrcEmailRendererConnector)
+  val gformController = new GformsController(
+    authModule.authConnector,
+    authAction,
+    gformConnector,
+    githubService,
+    formTemplateValidator,
+    messagesControllerComponents
+  )(executionContext, configModule.frontendAppConfig, materializer)
+
   val fileUploadController =
     new FileUploadController(authModule.authConnector, authAction, fileUploadConnector, messagesControllerComponents)(
       executionContext,
