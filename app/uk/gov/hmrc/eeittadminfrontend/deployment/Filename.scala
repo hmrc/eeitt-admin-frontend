@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.models.github
+package uk.gov.hmrc.eeittadminfrontend.deployment
 
-import io.circe._
-import java.nio.charset.StandardCharsets
-import play.api.libs.json.{ Format, Json }
+import play.api.libs.json.Format
+import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 
-case class PrettyPrintJson(
-  content: Array[Byte]
-)
+case class Filename(value: String) extends AnyVal
 
-object PrettyPrintJson {
-
-  private val postmanPrinter = Printer.spaces4.copy(colonLeft = "", lrbracketsEmpty = "")
-
-  def asString(template: Json): String = postmanPrinter.print(template)
-
-  def apply(template: Json): PrettyPrintJson =
-    PrettyPrintJson(postmanPrinter.print(template).getBytes(StandardCharsets.UTF_8))
-
-  implicit val format: Format[PrettyPrintJson] = Json.format[PrettyPrintJson]
+object Filename {
+  implicit val format: Format[Filename] = ValueClassFormatter.format(Filename.apply)(_.value)
 }

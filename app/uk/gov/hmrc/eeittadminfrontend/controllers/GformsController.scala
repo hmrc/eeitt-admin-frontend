@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import cats.~>
 import cats.data.EitherT
-import cats.effect.IO
 import cats.syntax.all._
 import io.circe.{ DecodingFailure, ParsingFailure }
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
@@ -40,10 +38,10 @@ import play.api.mvc.{ AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.github.GetTemplate
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubContent
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
-import uk.gov.hmrc.eeittadminfrontend.services.GithubService
+import uk.gov.hmrc.eeittadminfrontend.services.{ GformService, GithubService }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -73,6 +71,7 @@ class GformsController(
   val authConnector: AuthConnector,
   authAction: AuthAction,
   gformConnector: GformConnector,
+  gformService: GformService,
   githubService: GithubService,
   formTemplateValidator: FormTemplateValidator,
   messagesControllerComponents: MessagesControllerComponents
@@ -80,10 +79,6 @@ class GformsController(
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  private val ioToFuture: IO ~> Future = new (IO ~> Future) {
-    def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
-  }
 
   private def fileByteData(fileList: Seq[(FormTemplateId, JsValue)]): ByteArrayInputStream = {
 
@@ -157,17 +152,16 @@ class GformsController(
     authAction.async(parse.multipartFormData) { implicit request =>
       val rawJson = new String(Base64.decodeBase64(request.body.dataParts("template").mkString), "UTF-8")
 
-      val author = request.userData.toCommitter
-
       val result: EitherT[Future, String, Result] =
         for {
           formTemplate   <- parseRawJson(rawJson).leftMap(e => "Not a valid json: " + e.getMessage + "\n\n" + rawJson)
-          formTemplateId <- getFormTemplateId(formTemplate).leftMap(_ => "No '_id' field defined.")
           _              <- EitherT(formTemplateValidator.validate(formTemplate))
-          getTemplate    <- githubService.getTemplate(formTemplateId).mapK(ioToFuture)
-          _              <- saveTemplate(getTemplate, formTemplate) // Save template after successful call to Github
-          result         <- githubService.updateFormTemplateId(getTemplate, formTemplate, author).mapK(ioToFuture)
-        } yield result
+          formTemplateId <- getFormTemplateId(formTemplate).leftMap(decodingFailure => "No '_id' field defined.")
+          _              <- saveTemplate(formTemplateId, formTemplate)
+        } yield {
+          logger.info(s"${request.userData} saved ID: ${formTemplateId.value}")
+          Ok("Saved")
+        }
 
       result
         .leftMap(error => Redirect(routes.GformsController.gformPage()).flashing("error" -> error))
@@ -175,11 +169,10 @@ class GformsController(
         .map(_.merge)
     }
 
-  private def saveTemplate(getTemplate: GetTemplate, formTemplate: io.circe.Json) = EitherT(
-    gformConnector.saveTemplate(getTemplate.formTemplateId, circeToPlay(formTemplate))
-  )
-
-  private def circeToPlay(json: io.circe.Json): JsValue = Json.parse(json.toString)
+  private def saveTemplate(formTemplateId: FormTemplateId, formTemplate: io.circe.Json) =
+    gformService.saveTemplate(
+      GithubContent(formTemplateId, formTemplate)
+    )
 
   private def parseRawJson(rawJson: String): EitherT[Future, ParsingFailure, io.circe.Json] =
     EitherT.fromEither[Future](io.circe.parser.parse(rawJson))
@@ -241,7 +234,7 @@ class GformsController(
             Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm))),
           gformId => {
             logger.info(s"${request.userData} deleted ${gformId.formTemplateId} ")
-            gformConnector.deleteTemplate(gformId.formTemplateId).map(result => Ok)
+            gformConnector.deleteTemplate(gformId.formTemplateId)
           }
         )
     }

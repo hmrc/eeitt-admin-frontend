@@ -16,39 +16,47 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
-import cats.data.EitherT
+import cats.syntax.either._
+import cats.data.{ EitherT, NonEmptyList }
 import cats.effect.IO
-import github4s.domain.{ Committer, WriteFileResponse }
-import io.circe.Json
-import play.api.mvc.{ Result, Results }
+import github4s.domain.{ Commit, Content }
+import io.circe.{ DecodingFailure, Json }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GithubConnector
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename, GithubContent }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-import uk.gov.hmrc.eeittadminfrontend.models.github.GetTemplate
 
 class GithubService(maybeGithubConnector: Option[GithubConnector]) {
 
-  def getTemplate(formTemplateId: FormTemplateId): EitherT[IO, String, GetTemplate] = {
-    val noGithubEnabled: EitherT[IO, String, GetTemplate] = EitherT.pure(GetTemplate.NoGithubEnabled(formTemplateId))
-    maybeGithubConnector.fold(noGithubEnabled)(githubConnector => EitherT(githubConnector.getTemplate(formTemplateId)))
+  private def withGithubConnector[A](f: GithubConnector => EitherT[IO, String, A]): EitherT[IO, String, A] = {
+    val noGithubEnabled: EitherT[IO, String, A] =
+      EitherT.leftT[IO, A]("No Github integration available. Check service config.")
+    maybeGithubConnector.fold(noGithubEnabled)(f)
   }
 
-  def updateFormTemplateId(
-    getTemplate: GetTemplate,
-    template: Json,
-    author: Committer
-  ): EitherT[IO, String, Result] = {
+  def listTemplates(): EitherT[IO, String, NonEmptyList[Content]] =
+    withGithubConnector { githubConnector =>
+      EitherT(githubConnector.listTemplates)
+    }
 
-    val noGithubEnabled: EitherT[IO, String, Result] = EitherT.pure(Results.Ok("Saved"))
+  def getCommit(filename: Filename): EitherT[IO, String, Commit] =
+    withGithubConnector { githubConnector =>
+      EitherT(githubConnector.getCommit(filename.value))
+    }
 
-    maybeGithubConnector.fold(noGithubEnabled)(githubConnector =>
-      getTemplate
-        .fold(newFile => toResult(githubConnector.createFile(newFile.formTemplateId, template, author)))(existing =>
-          toResult(githubConnector.updateFile(existing.content, template, author))
-        )(_ => noGithubEnabled)
-    )
-  }
+  def retrieveContent(downloadUrl: DownloadUrl): EitherT[IO, String, GithubContent] =
+    withGithubConnector { githubConnector =>
+      val jsonContent: EitherT[IO, String, Json] = EitherT(githubConnector.fetchContent(downloadUrl))
 
-  private def toResult[A](writeFileResponseIO: IO[Either[String, WriteFileResponse]]): EitherT[IO, String, Result] =
-    EitherT(writeFileResponseIO)
-      .map(writeFileResponse => Results.Redirect(writeFileResponse.commit.html_url))
+      jsonContent.flatMap { json =>
+        val hcursor = json.hcursor
+        val formTemplateId: Either[DecodingFailure, FormTemplateId] =
+          hcursor.downField("_id").as[String].map(FormTemplateId.apply)
+
+        val githubContent: Either[String, GithubContent] = formTemplateId.bimap(
+          _.getMessage(),
+          formTemplateId => GithubContent(formTemplateId, json)
+        )
+        EitherT.fromEither(githubContent)
+      }
+    }
 }

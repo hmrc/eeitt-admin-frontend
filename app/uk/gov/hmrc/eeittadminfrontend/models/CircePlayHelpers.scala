@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.models.github
+package uk.gov.hmrc.eeittadminfrontend.models
 
-import io.circe._
-import java.nio.charset.StandardCharsets
-import play.api.libs.json.{ Format, Json }
+import io.circe.ParsingFailure
+import play.api.libs.json.{ JsValue, Json }
 
-case class PrettyPrintJson(
-  content: Array[Byte]
-)
+object CircePlayHelpers {
 
-object PrettyPrintJson {
+  def circeToPlayUnsafe(json: io.circe.Json): JsValue = Json.parse(json.toString)
+  def playToCirce(json: JsValue): Either[ParsingFailure, io.circe.Json] = io.circe.parser.parse(json.toString)
+  def playToCirceUnsafe(json: JsValue): io.circe.Json = playToCirce(json).right.get
 
-  private val postmanPrinter = Printer.spaces4.copy(colonLeft = "", lrbracketsEmpty = "")
-
-  def asString(template: Json): String = postmanPrinter.print(template)
-
-  def apply(template: Json): PrettyPrintJson =
-    PrettyPrintJson(postmanPrinter.print(template).getBytes(StandardCharsets.UTF_8))
-
-  implicit val format: Format[PrettyPrintJson] = Json.format[PrettyPrintJson]
 }

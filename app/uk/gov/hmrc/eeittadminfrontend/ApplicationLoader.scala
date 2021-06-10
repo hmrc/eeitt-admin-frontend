@@ -39,7 +39,7 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
@@ -186,6 +186,7 @@ class ApplicationModule(context: Context)
   val githubConnector: Option[GithubConnector] =
     Authorization(configuration).map(auth => new GithubConnector(auth, wSHttpModule.auditableWSHttp))
 
+  val gformService: GformService = new GformService(gformConnector)
   val githubService: GithubService = new GithubService(githubConnector)
 
   val hmrcEmailRendererConnector =
@@ -193,15 +194,35 @@ class ApplicationModule(context: Context)
       wSHttpModule.auditableWSHttp,
       configModule.serviceConfig.baseUrl("hmrc-email-renderer")
     )
+
   val formTemplateValidator = new FormTemplateValidator(hmrcEmailRendererConnector)
-  val gformController = new GformsController(
-    authModule.authConnector,
-    authAction,
-    gformConnector,
-    githubService,
-    formTemplateValidator,
-    messagesControllerComponents
-  )(executionContext, configModule.frontendAppConfig, materializer)
+
+  val gformController =
+    new GformsController(
+      authModule.authConnector,
+      authAction,
+      gformConnector,
+      gformService,
+      githubService,
+      formTemplateValidator,
+      messagesControllerComponents
+    )(
+      executionContext,
+      configModule.frontendAppConfig,
+      materializer
+    )
+
+  val deploymentController =
+    new DeploymentController(
+      authModule.authConnector,
+      authAction,
+      gformService,
+      githubService,
+      messagesControllerComponents
+    )(
+      executionContext,
+      configModule.frontendAppConfig
+    )
 
   val fileUploadController =
     new FileUploadController(authModule.authConnector, authAction, fileUploadConnector, messagesControllerComponents)(
@@ -228,6 +249,7 @@ class ApplicationModule(context: Context)
     hmrcfrontendRoutes,
     authController,
     gformController,
+    deploymentController,
     fileUploadController,
     submissionController,
     submissionConsolidatorController,

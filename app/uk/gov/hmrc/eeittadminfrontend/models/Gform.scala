@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
+import cats.Order
 import play.api.libs.json._
 
 case class FormTemplateId(value: String) extends AnyVal {
@@ -24,6 +25,8 @@ case class FormTemplateId(value: String) extends AnyVal {
 
 object FormTemplateId {
   implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
+
+  implicit val ordered: Order[FormTemplateId] = Order.by(_.value)
 }
 
 case class GformId(formTemplateId: FormTemplateId)
