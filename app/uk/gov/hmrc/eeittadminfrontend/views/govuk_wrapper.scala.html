@@ -46,9 +46,9 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
 @govukTag = @{new govukTag()}
 @hmrcBanner = @{new hmrcBanner()}
 @govukTemplate = @{new govukTemplate(govukHeader, govukFooter, govukSkipLink)}
-@govukLayout = @{new govukLayout(govukTemplate, govukHeader, govukFooter, govukBackLink)}
 
 @head = {
+    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/diff2html.min.css")" />
     <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/analytics.css")" />
     <!--[if lte IE 8]>
         <link href='@controllers.routes.Assets.versioned("stylesheets/application-ie-8.css")' rel="stylesheet" type="text/css" />
@@ -59,6 +59,8 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
     @appConfig.optimizelyUrl.map{ url =>
         <script src='@url' type='text/javascript'></script>
     }
+    <script src='@routes.Assets.versioned("javascripts/diff2html.min.js")'></script>
+    <script src='@routes.Assets.versioned("javascripts/diff2html-ui.min.js")'></script>
     <meta name="google-signin-client_id" content="414711673206-8c53ik1peqct770aaccmfkaih9hcb224.apps.googleusercontent.com">
     <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
     <meta name="format-detection" content="telephone=no" />
@@ -75,6 +77,11 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage.path),
                 content = Text("G-forms"),
                 active = if(tab == "gforms") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments.path),
+                content = Text("Deployment"),
+                active = if(tab == "deployment") true else false
             ),
             HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.fileUpload.path),
@@ -109,7 +116,7 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
     @backLink
 }
 
-@govukLayout(
+@govuk_layout(
     pageTitle = Some(title),
     headBlock = Some(head),
     headerBlock = Some(headerBlock),
@@ -118,4 +125,3 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
     scriptsBlock = scriptElem,
     footerBlock = Some(govukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items(appConfig)))))))
 )(mainContent)
-

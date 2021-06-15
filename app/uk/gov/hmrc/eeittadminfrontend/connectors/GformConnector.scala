@@ -19,6 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import akka.http.scaladsl.model.StatusCodes
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
+import play.api.mvc.{ Result, Results }
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError, SubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsInstances, HttpResponse }
@@ -79,8 +80,13 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   def deleteTemplate(
     formTemplateId: FormTemplateId
-  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+    wsHttp
+      .DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
+      .map(_ => Results.Ok(s"${formTemplateId.value} successfully deleted"))
+      .recover { case uk.gov.hmrc.http.Upstream4xxResponse(message, upstreamResponseCode, reportAs, headers) =>
+        Results.Ok(message)
+      }
 
   def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(implicit
     ec: ExecutionContext

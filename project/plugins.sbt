@@ -28,3 +28,5 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify" % "1.5.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.5.1")
+
+addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")

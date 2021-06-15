@@ -22,7 +22,6 @@ import java.util.Base64
 case class Authorization(
   repoOwner: String,
   repoName: String,
-  branch: String,
   accessToken: String
 )
 
@@ -30,9 +29,8 @@ object Authorization {
   def apply(configuration: Configuration): Option[Authorization] = for {
     repoOwner   <- configuration.getOptional[String]("github.repo-owner")
     repoName    <- configuration.getOptional[String]("github.repo-name")
-    branch      <- configuration.getOptional[String]("github.branch")
     accessToken <- configuration.getOptional[String]("github.access-token")
-  } yield Authorization(repoOwner, repoName, branch, decode(accessToken))
+  } yield Authorization(repoOwner, repoName, decode(accessToken))
 
   private def decode(string: String): String =
     new String(Base64.getDecoder.decode(string), "UTF-8")

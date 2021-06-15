@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.models.github
+package uk.gov.hmrc.eeittadminfrontend.deployment
 
-import github4s.domain.Content
+import play.api.mvc.Call
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-sealed trait GetTemplate extends Product with Serializable {
-
+sealed trait Reconciliation extends Product with Serializable {
   def formTemplateId: FormTemplateId
-
-  def fold[B](f: GetTemplate.NewFile => B)(g: GetTemplate.Exists => B)(h: GetTemplate.NoGithubEnabled => B): B =
-    this match {
-      case gt: GetTemplate.NewFile         => f(gt)
-      case gt: GetTemplate.Exists          => g(gt)
-      case gt: GetTemplate.NoGithubEnabled => h(gt)
-    }
 }
 
-object GetTemplate {
-  case class NewFile(formTemplateId: FormTemplateId) extends GetTemplate
-  case class Exists(formTemplateId: FormTemplateId, content: Content) extends GetTemplate
-  case class NoGithubEnabled(formTemplateId: FormTemplateId) extends GetTemplate
-
+object Reconciliation {
+  case class New(formTemplateId: FormTemplateId, filename: Filename, call: Call) extends Reconciliation
+  case class Existing(formTemplateId: FormTemplateId, filename: Filename, call: Call, inSync: Boolean)
+      extends Reconciliation
+  case class Deleted(formTemplateId: FormTemplateId, call: Call) extends Reconciliation
 }

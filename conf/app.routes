@@ -18,6 +18,14 @@ GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.
 GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 POST       /db-lookup-file-upload    uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 
+GET        /download/:formTemplateId           uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
+GET        /deployments                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
+GET        /deployment/existing:formTemplateId uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentExisting(formTemplateId: FormTemplateId, filename: Filename)
+GET        /deployment/new/:formTemplateId     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename)
+GET        /deployment/deleted/:formTemplateId uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId)
+POST       /deployment/delete/:formTemplateId  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
+POST       /deployment/:downloadUrl            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(downloadUrl: DownloadUrl, filename: Filename)
+
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
 GET         /file-upload/find/:envelopeId    uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.showEnvelope(envelopeId: EnvelopeId)

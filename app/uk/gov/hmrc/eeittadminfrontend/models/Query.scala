@@ -117,4 +117,13 @@ object ValueClassFormatter {
       },
       Writes[A](a => JsString(fromAToString(a)))
     )
+
+  def formatE[A: Format](fromString: String => Either[String, A])(fromAToString: A => String) =
+    Format[A](
+      Reads[A] {
+        case JsString(str) => fromString(str).fold(JsError(_), JsSuccess(_))
+        case unknown       => JsError(s"JsString value expected, got: $unknown")
+      },
+      Writes[A](a => JsString(fromAToString(a)))
+    )
 }

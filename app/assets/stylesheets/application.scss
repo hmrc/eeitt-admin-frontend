@@ -23,3 +23,19 @@ $hmrc-assets-path: "/eeitt-admin-frontend/assets/lib/hmrc-frontend/hmrc/";
     margin-bottom: 0.75em;
     padding-top: 0px;
 }
+
+.in-sync {
+    background-image: url("icons/check.png");
+    background-repeat: no-repeat;
+    padding-left: 20px;
+    background-size: 16px 16px;
+    background-position-y: 4px;
+}
+
+.out-of-sync {
+    background-image: url("icons/sync.png");
+    background-repeat: no-repeat;
+    padding-left: 20px;
+    background-size: 16px 16px;
+    background-position-y: 4px;
+}

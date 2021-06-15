@@ -16,15 +16,22 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import github4s.domain.Committer
-import github4s.{ GHError, GHResponse }
-import github4s.domain.{ Content, WriteFileResponse }
-import io.circe._
+import cats.syntax.all._
 import cats.data.NonEmptyList
+import cats.effect.{ Blocker, ContextShift, IO }
+import github4s.{ GHError, GHResponse, Github }
+import github4s.domain.{ Commit, Content }
+import github4s.Decoders._
+import io.circe._
+import java.util.concurrent.Executors
+import org.http4s.{ Header, Request, Uri }
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
+import scala.concurrent.ExecutionContext.global
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, GetTemplate, PrettyPrintJson }
+import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
 class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
 
@@ -32,103 +39,92 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
 
   val repoOwner = authorization.repoOwner
   val repoName = authorization.repoName
-  val branch = Some(authorization.branch)
+  val master = Some("master")
 
-  import java.util.concurrent.Executors
-
-  import cats.effect.{ Blocker, ContextShift, IO }
-  import github4s.Github
-  import org.http4s.client.{ Client, JavaNetClientBuilder }
-
-  import scala.concurrent.ExecutionContext.global
-
+  implicit val cs: ContextShift[IO] = IO.contextShift(global)
   val httpClient: Client[IO] = {
     val blockingPool = Executors.newFixedThreadPool(5)
     val blocker = Blocker.liftExecutorService(blockingPool)
-    implicit val cs: ContextShift[IO] = IO.contextShift(global)
     JavaNetClientBuilder[IO](blocker).create // use BlazeClientBuilder for production use
   }
 
   val gh = Github[IO](httpClient, Some(authorization.accessToken))
 
-  def createFile(
-    formTemplateId: FormTemplateId,
-    template: Json,
-    author: Committer
-  ): IO[Either[String, WriteFileResponse]] = {
+  def getCommit(filename: String): IO[Either[String, Commit]] = {
+    // We can't use gh.repos.listCommits() since it is not handling '&' character in filename correctly.
+    val uri = Uri(
+      scheme = Some(Uri.Scheme.https),
+      authority = Some(Uri.Authority(host = Uri.RegName("api.github.com"))),
+      path = s"repos/$repoOwner/$repoName/commits"
+    ).withQueryParam("path", filename)
 
-    val filename = formTemplateId + ".json"
-    val message = s"Creating $filename - ${author.name}"
-    val formatted = PrettyPrintJson(template)
-
-    val getContents: IO[GHResponse[WriteFileResponse]] =
-      gh.repos.createFile(
-        repoOwner,
-        repoName,
-        filename,
-        message,
-        formatted.content,
-        branch
+    httpClient
+      .expect[List[Commit]](
+        Request[IO]()
+          .withUri(uri)
+          .withHeaders(List(Header("Authorization", s"Bearer ${authorization.accessToken}")): _*)
       )
-
-    getContents.map { response =>
-      response.result match {
-        case Right(r) => Right(r)
+      .attempt
+      .map {
+        case Right(commit :: _) => Right(commit)
+        case Right(Nil)         => logError(s"No commit found for $filename")
         case Left(e) =>
-          logError(s"We could not create file $filename because ${e.getMessage}", e)
+          logError(s"Failed to query commits $uri because ${e.getMessage} ", e)
       }
-    }
   }
 
-  def updateFile(fileContent: Content, template: Json, author: Committer): IO[Either[String, WriteFileResponse]] = {
-
-    val filename = fileContent.name
-    val formatted = PrettyPrintJson(template)
-    val message = s"Updating ${fileContent.name} - ${author.name}"
-    val content = formatted.content
-    val sha = fileContent.sha
-
-    val getContents: IO[GHResponse[WriteFileResponse]] =
-      gh.repos.updateFile(
-        repoOwner,
-        repoName,
-        filename,
-        message,
-        content,
-        sha,
-        branch
+  def fetchDownloadUrl(url: DownloadUrl): IO[Either[String, Json]] =
+    httpClient
+      .expect[Json](
+        Request[IO]()
+          .withUri(url.uri)
+          .withHeaders(List(Header("Authorization", s"Bearer ${authorization.accessToken}")): _*)
       )
+      .attempt
+      .map(_.leftMap(error => s"Error when downloading ${url.uri}\n\n${error.getMessage()}"))
 
-    getContents.map { response =>
+  def fetchFilenameContent(filename: Filename): IO[Either[String, Content]] = {
+    val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
+      gh.repos.getContents(repoOwner, repoName, filename.value, master)
+
+    searchResults.map { response =>
       response.result match {
-        case Right(r) => Right(r)
+        case Right(r) => Right(r.head)
         case Left(e) =>
-          logError(s"We could not update file $filename because ${e.getMessage}", e)
+          logError(s"Templates search failed because ${e.getMessage}", e)
       }
     }
   }
 
-  def getTemplate(
-    formTemplateId: FormTemplateId
-  ): IO[Either[String, GetTemplate]] = {
+  def listTemplates(): IO[Either[String, NonEmptyList[Content]]] = {
 
-    val filename = formTemplateId + ".json"
+    val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
+      gh.repos.getContents(repoOwner, repoName, ".", master)
 
-    val getContents: IO[GHResponse[NonEmptyList[Content]]] =
-      gh.repos.getContents(repoOwner, repoName, filename, branch)
-
-    getContents.map { response =>
+    searchResults.map { response =>
       response.result match {
-        case Right(NonEmptyList(head, Nil))    => Right(GetTemplate.Exists(formTemplateId, head))
-        case Right(NonEmptyList(head, tail))   => Left(s"More than one file found. It looks like $filename is a folder.")
-        case Left(GHError.NotFoundError(_, _)) => Right(GetTemplate.NewFile(formTemplateId))
-        case Left(eh)                          => logError(s"Error when retrieving /contents/$filename: $eh", eh)
+        case Right(r) =>
+          val jsonFiles: List[Content] = r.filter { content =>
+            content.name.endsWith(".json")
+          }
+          val maybeJsons: Option[NonEmptyList[Content]] = NonEmptyList.fromList(jsonFiles)
+          maybeJsons.fold(logError[NonEmptyList[Content]]("No json file found."))(Right(_))
+        case Left(e) =>
+          logError(s"Templates search failed because ${e.getMessage}", e)
       }
     }
   }
 
+  private def logError[A](errorMessage: String, e: Throwable): Either[String, A] = {
+    logger.error(errorMessage, e)
+    logError(errorMessage)
+  }
   private def logError[A](errorMessage: String, e: GHError): Either[String, A] = {
     logger.error(errorMessage, e)
+    logError(errorMessage)
+  }
+  private def logError[A](errorMessage: String): Either[String, A] = {
+    logger.error(errorMessage)
     Left(errorMessage)
   }
 }
