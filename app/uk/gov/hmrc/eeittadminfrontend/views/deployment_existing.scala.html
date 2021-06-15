@@ -14,15 +14,16 @@
  * limitations under the License.
  *@
 
+@import github4s.domain.Commit
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-@import uk.gov.hmrc.eeittadminfrontend.deployment.{CommitUrl, DownloadUrl, Filename}
+@import uk.gov.hmrc.eeittadminfrontend.deployment.{DownloadUrl, Filename}
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @(formTemplateId: FormTemplateId,
   diff: Html,
-  commitUrl: CommitUrl,
+  commit: Commit,
   downloadUrl: DownloadUrl,
   filename: Filename
 )(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
@@ -33,12 +34,14 @@
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
     <h2 class="govuk-heading-m">Existing deployment @formTemplateId</h2>
 
+    @last_modified(commit)
+
     <ul class="govuk-list govuk-list--bullet">
         <li>
             <a class="govuk-link" target="_blank" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.download(formTemplateId)">Production version</a> of @formTemplateId
         </li>
         <li>
-            <a class="govuk-link" target="_blank" href="@commitUrl.url">Github commit</a> where @filename.value was last edited
+            <a class="govuk-link" target="_blank" href="@commit.url">Github commit</a> where @filename.value was last edited
         </li>
         <li>
             <a class="govuk-link" target="_blank" href="@downloadUrl.uri.renderString">Github content</a> of @filename.value

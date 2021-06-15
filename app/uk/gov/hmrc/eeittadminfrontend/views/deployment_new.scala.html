@@ -15,15 +15,15 @@
  *@
 
 @import cats.data.NonEmptyList
-@import github4s.domain.Content
+@import github4s.domain.{Commit, Content}
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-@import uk.gov.hmrc.eeittadminfrontend.deployment.{CommitUrl, DownloadUrl, Filename}
+@import uk.gov.hmrc.eeittadminfrontend.deployment.{DownloadUrl, Filename}
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @(formTemplateId: FormTemplateId,
-  commitUrl: CommitUrl,
+  commit: Commit,
   downloadUrl: DownloadUrl,
   filename: Filename
 )(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
@@ -34,9 +34,11 @@
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
     <h2 class="govuk-heading-m">New deployment @formTemplateId</h2>
 
+    @last_modified(commit)
+
     <ul class="govuk-list govuk-list--bullet">
         <li>
-            <a class="govuk-link" target="_blank" href="@commitUrl.url">Github commit</a> where @filename.value was last edited
+            <a class="govuk-link" target="_blank" href="@commit.url">Github commit</a> where @filename.value was last edited
         </li>
         <li>
             <a class="govuk-link" target="_blank" href="@downloadUrl.uri.renderString">Github content</a> of @filename.value

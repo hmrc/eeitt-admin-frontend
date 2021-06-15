@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.eeittadminfrontend.deployment
+@import github4s.domain.Commit
 
-import play.api.libs.json.Format
-import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
+@(commit: Commit)
 
-case class CommitUrl(url: String) extends AnyVal
-
-object CommitUrl {
-  implicit val format: Format[CommitUrl] = ValueClassFormatter.format(CommitUrl.apply)(_.url)
-}
+<p class="govuk-body">Last modified on @commit.date by @commit.login.getOrElse("Unknown")

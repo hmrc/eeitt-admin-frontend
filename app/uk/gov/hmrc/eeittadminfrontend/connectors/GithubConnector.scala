@@ -29,7 +29,7 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
 import scala.concurrent.ExecutionContext.global
-import uk.gov.hmrc.eeittadminfrontend.deployment.DownloadUrl
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
@@ -73,7 +73,7 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
       }
   }
 
-  def fetchContent(url: DownloadUrl): IO[Either[String, Json]] =
+  def fetchDownloadUrl(url: DownloadUrl): IO[Either[String, Json]] =
     httpClient
       .expect[Json](
         Request[IO]()
@@ -82,6 +82,19 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
       )
       .attempt
       .map(_.leftMap(error => s"Error when downloading ${url.uri}\n\n${error.getMessage()}"))
+
+  def fetchFilenameContent(filename: Filename): IO[Either[String, Content]] = {
+    val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
+      gh.repos.getContents(repoOwner, repoName, filename.value, master)
+
+    searchResults.map { response =>
+      response.result match {
+        case Right(r) => Right(r.head)
+        case Left(e) =>
+          logError(s"Templates search failed because ${e.getMessage}", e)
+      }
+    }
+  }
 
   def listTemplates(): IO[Either[String, NonEmptyList[Content]]] = {
 

@@ -28,7 +28,7 @@ import play.twirl.api.Html
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ CommitUrl, DownloadUrl, Filename, MongoContent, Reconciliation, ReconciliationLookup }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.github.PrettyPrintJson
@@ -63,7 +63,7 @@ class DeploymentController(
 
     logDeploymentStatus("started")
     (for {
-      githubContent <- githubService.retrieveContent(downloadUrl).mapK(ioToFuture)
+      githubContent <- githubService.retrieveFormTemplate(downloadUrl).mapK(ioToFuture)
       _             <- gformService.saveTemplate(githubContent)
     } yield githubContent.formTemplateId).fold(
       error => {
@@ -79,22 +79,27 @@ class DeploymentController(
 
   def deploymentExisting(
     formTemplateId: FormTemplateId,
-    downloadUrl: DownloadUrl,
-    filename: Filename,
-    commitUrl: CommitUrl
+    filename: Filename
   ) =
     authAction.async { implicit request =>
-      (for {
-        mongoTemplate  <- EitherT(gformService.getFormTemplate(formTemplateId))
-        githubTemplate <- githubService.retrieveContent(downloadUrl).mapK(ioToFuture)
-      } yield {
+      (
+        EitherT(gformService.getFormTemplate(formTemplateId)),
+        githubService.getCommit(filename).mapK(ioToFuture),
+        githubService.retrieveFilenameData(filename).mapK(ioToFuture)
+      ).parMapN { case (mongoTemplate, commit, (downloadUrl, githubTemplate)) =>
         val diff = DiffMaker.getDiff(filename, mongoTemplate, githubTemplate).replace("'", "\\'")
 
         Ok(
           uk.gov.hmrc.eeittadminfrontend.views.html
-            .deployment_existing(formTemplateId, Html(diff), commitUrl, downloadUrl, filename)
+            .deployment_existing(
+              formTemplateId,
+              Html(diff),
+              commit,
+              downloadUrl,
+              filename
+            )
         )
-      }).fold(error => BadRequest(error), identity)
+      }.fold(error => BadRequest(error), identity)
     }
 
   def delete(formTemplateId: FormTemplateId) =
@@ -109,47 +114,51 @@ class DeploymentController(
 
   def deploymentNew(
     formTemplateId: FormTemplateId,
-    downloadUrl: DownloadUrl,
-    filename: Filename,
-    commitUrl: CommitUrl
+    filename: Filename
   ) =
     authAction.async { implicit request =>
-      (for {
-        githubTemplate <- githubService.retrieveContent(downloadUrl).mapK(ioToFuture)
-      } yield Ok(
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .deployment_new(formTemplateId, commitUrl, downloadUrl, filename)
-      )).fold(error => BadRequest(error), identity)
+      (
+        githubService.getCommit(filename),
+        githubService.retrieveFilenameData(filename)
+      ).parMapN { case (commit, (downloadUrl, githubTemplate)) =>
+        Ok(
+          uk.gov.hmrc.eeittadminfrontend.views.html
+            .deployment_new(formTemplateId, commit, downloadUrl, filename)
+        )
+      }.mapK(ioToFuture)
+        .fold(error => BadRequest(error), identity)
     }
 
   def deployments =
     authAction.async { implicit request =>
-      gformService.getAllGformsTemplates.flatMap {
-        case Right(mongoTemplateIds) =>
+      EitherT(gformService.getAllGformsTemplates)
+        .flatMap { mongoTemplateIds =>
           logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
           val mongoTemplates: EitherT[Future, String, List[MongoContent]] =
             mongoTemplateIds.traverse { formTemplateId =>
               EitherT(gformService.getFormTemplate(formTemplateId))
             }
 
-          val res = for {
-            mongoTemplates  <- mongoTemplates
-            githubTemplates <- githubService.listTemplates().mapK(ioToFuture)
-            _ = logger.info(s"${request.userData} Loading ${githubTemplates.size} templates from Github")
-            reconciliationLookup <- toReconciliationLookup(mongoTemplates, githubTemplates).mapK(ioToFuture)
-          } yield Ok(
-            uk.gov.hmrc.eeittadminfrontend.views.html
-              .deployments(
-                reconciliationLookup,
-                existingTemplatesTable(reconciliationLookup.existingTemplates),
-                newTemplatesTable(reconciliationLookup.newTemplates)
-              )
-          )
+          (mongoTemplates, githubService.listTemplates().mapK(ioToFuture))
+            .parMapN((_, _))
+            .flatMap { case (mongoTemplates, githubTemplates) =>
+              logger.info(s"${request.userData} Loading ${githubTemplates.size} templates from Github")
 
-          res.fold(error => BadRequest(error), identity)
-
-        case Left(error) => Future.successful(BadRequest(error))
-      }
+              toReconciliationLookup(mongoTemplates, githubTemplates)
+                .mapK(ioToFuture)
+                .map(reconciliationLookup =>
+                  Ok(
+                    uk.gov.hmrc.eeittadminfrontend.views.html
+                      .deployments(
+                        reconciliationLookup,
+                        existingTemplatesTable(reconciliationLookup.existingTemplates),
+                        newTemplatesTable(reconciliationLookup.newTemplates)
+                      )
+                  )
+                )
+            }
+        }
+        .fold(error => BadRequest(error), identity)
     }
 
   private def toReconciliationLookup(
@@ -163,18 +172,13 @@ class DeploymentController(
     val reconciliationsNel: EitherT[IO, String, NonEmptyList[Reconciliation]] =
       githubTemplates
         .traverse { githubTemplate =>
-          githubTemplate.download_url
-            .fold(EitherT.leftT[IO, Reconciliation]("No download_url available")) { downloadUrl =>
-              EitherT
-                .fromEither[IO](DownloadUrl.stripQueryString(downloadUrl).leftMap(_.message))
-                .flatMap { downloadUrl =>
-                  reconciliation(
-                    mongoLookup,
-                    downloadUrl,
-                    Filename(githubTemplate.name)
-                  )
-                }
-            }
+          EitherT.fromEither[IO](DownloadUrl.fromContent(githubTemplate)).flatMap { downloadUrl =>
+            reconciliation(
+              mongoLookup,
+              downloadUrl.stripTokenQueryParam,
+              Filename(githubTemplate.name)
+            )
+          }
         }
 
     reconciliationsNel.map { reconciliations =>
@@ -200,8 +204,7 @@ class DeploymentController(
     downloadUrl: DownloadUrl,
     filename: Filename
   ): EitherT[IO, String, Reconciliation] =
-    (githubService.getCommit(filename), githubService.retrieveContent(downloadUrl)).parMapN { (commit, githubContent) =>
-      val commitUrl = CommitUrl(commit.url)
+    githubService.retrieveFormTemplate(downloadUrl).map { githubContent =>
       val formTemplateId = githubContent.formTemplateId
       mongoLookup.get(formTemplateId) match {
         case None =>
@@ -210,9 +213,7 @@ class DeploymentController(
             filename,
             routes.DeploymentController.deploymentNew(
               formTemplateId,
-              downloadUrl,
-              filename,
-              commitUrl
+              filename
             )
           )
         case Some(mongoContent) =>
@@ -221,7 +222,7 @@ class DeploymentController(
             formTemplateId,
             filename,
             routes.DeploymentController
-              .deploymentExisting(formTemplateId, downloadUrl, filename, commitUrl),
+              .deploymentExisting(formTemplateId, filename),
             inSync
           )
       }

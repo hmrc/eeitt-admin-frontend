@@ -43,9 +43,22 @@ class GithubService(maybeGithubConnector: Option[GithubConnector]) {
       EitherT(githubConnector.getCommit(filename.value))
     }
 
-  def retrieveContent(downloadUrl: DownloadUrl): EitherT[IO, String, GithubContent] =
+  def retrieveFilename(filename: Filename): EitherT[IO, String, Content] =
     withGithubConnector { githubConnector =>
-      val jsonContent: EitherT[IO, String, Json] = EitherT(githubConnector.fetchContent(downloadUrl))
+      EitherT(githubConnector.fetchFilenameContent(filename))
+    }
+
+  def retrieveFilenameData(filename: Filename): EitherT[IO, String, (DownloadUrl, GithubContent)] =
+    retrieveFilename(filename)
+      .flatMap { content =>
+        EitherT.fromEither[IO](DownloadUrl.fromContent(content)).flatMap { downloadUrl =>
+          retrieveFormTemplate(downloadUrl).map((downloadUrl, _))
+        }
+      }
+
+  def retrieveFormTemplate(downloadUrl: DownloadUrl): EitherT[IO, String, GithubContent] =
+    withGithubConnector { githubConnector =>
+      val jsonContent: EitherT[IO, String, Json] = EitherT(githubConnector.fetchDownloadUrl(downloadUrl))
 
       jsonContent.flatMap { json =>
         val hcursor = json.hcursor
