@@ -73,7 +73,8 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
       }
   }
 
-  def fetchDownloadUrl(url: DownloadUrl): IO[Either[String, Json]] =
+  def fetchDownloadUrl(url: DownloadUrl): IO[Either[String, Json]] = {
+    logger.debug(s"Downloading url ${url.uri.renderString} from Github")
     httpClient
       .expect[Json](
         Request[IO]()
@@ -82,6 +83,7 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
       )
       .attempt
       .map(_.leftMap(error => s"Error when downloading ${url.uri}\n\n${error.getMessage()}"))
+  }
 
   def fetchFilenameContent(filename: Filename): IO[Either[String, Content]] = {
     val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
@@ -97,6 +99,8 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
   }
 
   def listTemplates(): IO[Either[String, NonEmptyList[Content]]] = {
+
+    logger.debug(s"Fetching list of templates from Github")
 
     val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
       gh.repos.getContents(repoOwner, repoName, ".", master)

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.services
 
 import cats.data.EitherT
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.Result
 import scala.concurrent.{ ExecutionContext, Future }
@@ -26,6 +27,8 @@ import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId 
 import uk.gov.hmrc.http.HeaderCarrier
 
 class GformService(gformConnector: GformConnector) {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def getAllGformsTemplates(implicit
     ec: ExecutionContext,
@@ -43,10 +46,12 @@ class GformService(gformConnector: GformConnector) {
 
   def getFormTemplate(formTemplateId: FormTemplateId)(implicit
     ec: ExecutionContext
-  ): Future[Either[String, MongoContent]] =
+  ): Future[Either[String, MongoContent]] = {
+    logger.debug(s"Loading $formTemplateId from MongoDB")
     gformConnector
       .getGformsTemplate(formTemplateId)
       .map(_.map(json => MongoContent(formTemplateId, CircePlayHelpers.playToCirceUnsafe(json))))
+  }
 
   def saveTemplate(
     githubContent: GithubContent
