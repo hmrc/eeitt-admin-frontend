@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.models.github
 
 import play.api.Configuration
-import java.util.Base64
 
 case class Authorization(
   repoOwner: String,
@@ -30,9 +29,5 @@ object Authorization {
     repoOwner   <- configuration.getOptional[String]("github.repo-owner")
     repoName    <- configuration.getOptional[String]("github.repo-name")
     accessToken <- configuration.getOptional[String]("github.access-token")
-  } yield Authorization(repoOwner, repoName, decode(accessToken))
-
-  private def decode(string: String): String =
-    new String(Base64.getDecoder.decode(string), "UTF-8")
-
+  } yield Authorization(repoOwner, repoName, accessToken)
 }
