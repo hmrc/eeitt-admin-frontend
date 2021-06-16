@@ -448,11 +448,7 @@ function sectionViewQuery (config) {
 }
 
 function pageViewQuery (config) {
-  const names = ['pageViews', 'submissions', 'userError', 'acknowledgementPageViews'];
-
-  if (!GAConfig.formNames) {
-    names.push('allForms')
-  }
+  const names = ['pageViews', 'submissions', 'userError', 'acknowledgementPageViews', 'allForms'];
 
   GAQuery(query(config, names), parseResults)
 }
@@ -687,9 +683,19 @@ function handleStatsLink (e) {
   showStatsTable(stats)
 }
 
+function handleChangeEnv(e) {
+  $('#form-selector').prop('selectedIndex',0);
+}
+
 function populateFormSelector () {
+  var selectedOption = $('#form-selector').val();
+  $('#form-selector').find('option').not(':first').remove();
   GAConfig.formNames.forEach(name => {
-      $('#form-selector').append('<option value="' + name + '">' + name + '</option>')
+      var selected = ""
+      if(selectedOption == name) {
+        selected = "selected"
+      }
+      $('#form-selector').append('<option value="' + name + '" ' + selected + '>' + name + '</option>')
   })
 }
 
@@ -712,4 +718,5 @@ $(document).ready(function () {
     .on('click', 'a.stats-link', handleStatsLink)
     .on('click', 'a.section-stats', handleSectionStatsLink)
     .on('click', 'a.drilldown-error', handleDrillDownError)
+    .on('change', 'select#ga-view-select', handleChangeEnv)
 });
