@@ -23,6 +23,7 @@ import github4s.{ GHError, GHResponse, Github }
 import github4s.domain.{ Commit, Content }
 import github4s.Decoders._
 import io.circe._
+import java.net.Proxy
 import java.util.concurrent.Executors
 import org.http4s.{ Header, Request, Uri }
 import org.http4s.circe.CirceEntityDecoder._
@@ -33,7 +34,7 @@ import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
+class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], wsHttp: WSHttp) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -45,7 +46,9 @@ class GithubConnector(authorization: Authorization, wsHttp: WSHttp) {
   val httpClient: Client[IO] = {
     val blockingPool = Executors.newFixedThreadPool(5)
     val blocker = Blocker.liftExecutorService(blockingPool)
-    JavaNetClientBuilder[IO](blocker).create // use BlazeClientBuilder for production use
+    val cb = JavaNetClientBuilder[IO](blocker)
+
+    maybeProxy.fold(cb)(cb.withProxy).create // use BlazeClientBuilder for production use
   }
 
   val gh = Github[IO](httpClient, Some(authorization.accessToken))

@@ -48,6 +48,7 @@ import uk.gov.hmrc.play.language.LanguageUtils
 import uk.gov.hmrc.govukfrontend.controllers.{ Assets => GovukAssets }
 import uk.gov.hmrc.hmrcfrontend.config.LanguageConfig
 import uk.gov.hmrc.hmrcfrontend.controllers.{ Assets => HmrcAssets, KeepAliveController, LanguageController }
+import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyModule
 
 class ApplicationLoader extends play.api.ApplicationLoader {
   def load(context: Context) = {
@@ -183,8 +184,11 @@ class ApplicationModule(context: Context)
     new hmrcfrontend.Routes(httpErrorHandler, hmrcfrontendAssets, keepAliveController, languageController)
   val authAction: AuthAction = new AuthAction(messagesControllerComponents)
 
-  val githubConnector: Option[GithubConnector] =
-    Authorization(configuration).map(auth => new GithubConnector(auth, wSHttpModule.auditableWSHttp))
+  private val proxyModule = new ProxyModule(configModule)
+
+  val githubConnector: Option[GithubConnector] = Authorization(configuration).map(auth =>
+    new GithubConnector(auth, proxyModule.maybeProxy, wSHttpModule.auditableWSHttp)
+  )
 
   val gformService: GformService = new GformService(gformConnector)
   val githubService: GithubService = new GithubService(githubConnector)
