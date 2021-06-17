@@ -21,11 +21,14 @@ import cats.data.{ EitherT, NonEmptyList }
 import cats.effect.IO
 import github4s.domain.{ Commit, Content }
 import io.circe.{ DecodingFailure, Json }
+import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GithubConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename, GithubContent }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
 class GithubService(maybeGithubConnector: Option[GithubConnector]) {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private def withGithubConnector[A](f: GithubConnector => EitherT[IO, String, A]): EitherT[IO, String, A] = {
     val noGithubEnabled: EitherT[IO, String, A] =
@@ -61,6 +64,7 @@ class GithubService(maybeGithubConnector: Option[GithubConnector]) {
       val jsonContent: EitherT[IO, String, Json] = EitherT(githubConnector.fetchDownloadUrl(downloadUrl))
 
       jsonContent.flatMap { json =>
+        logger.debug(s"Downloading url ${downloadUrl.uri.renderString} from Github Completed")
         val hcursor = json.hcursor
         val formTemplateId: Either[DecodingFailure, FormTemplateId] =
           hcursor.downField("_id").as[String].map(FormTemplateId.apply)
