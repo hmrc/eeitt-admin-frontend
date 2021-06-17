@@ -135,7 +135,7 @@ class DeploymentController(
         .flatMap { mongoTemplateIds =>
           logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
           val mongoTemplates: EitherT[Future, String, List[MongoContent]] =
-            mongoTemplateIds.traverse { formTemplateId =>
+            mongoTemplateIds.parTraverse { formTemplateId =>
               EitherT(gformService.getFormTemplate(formTemplateId))
             }
 
@@ -171,7 +171,7 @@ class DeploymentController(
 
     val reconciliationsNel: EitherT[IO, String, NonEmptyList[Reconciliation]] =
       githubTemplates
-        .traverse { githubTemplate =>
+        .parTraverse { githubTemplate =>
           EitherT.fromEither[IO](DownloadUrl.fromContent(githubTemplate)).flatMap { downloadUrl =>
             reconciliation(
               mongoLookup,
