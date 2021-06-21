@@ -20,11 +20,13 @@ POST       /db-lookup-file-upload    uk.gov.hmrc.eeittadminfrontend.controllers.
 
 GET        /download/:formTemplateId           uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
 GET        /deployments                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
+GET        /deployment/home                    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentHome
 GET        /deployment/existing:formTemplateId uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentExisting(formTemplateId: FormTemplateId, filename: Filename)
 GET        /deployment/new/:formTemplateId     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename)
 GET        /deployment/deleted/:formTemplateId uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId)
+POST       /deployment/refresh-cache           uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache()
 POST       /deployment/delete/:formTemplateId  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
-POST       /deployment/:downloadUrl            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(downloadUrl: DownloadUrl, filename: Filename)
+POST       /deployment/:filename               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope

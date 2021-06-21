@@ -1,0 +1,94 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import github4s.domain.Commit
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@(
+    cacheStatus: CacheStatus
+)(
+    implicit request : Request[_], messages: Messages, appConfig: AppConfig
+)
+
+@formWithCSRF = @{new formWithCSRF()}
+@govukButton = @{new govukButton()}
+
+
+@refreshCache(message: Html) = {
+    @message
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache) {
+    <h2 class="govuk-heading-m">Refresh cache</h2>
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Refresh")
+    ))
+    }
+ }
+
+@ready(message: Html) = {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
+    <h2 class="govuk-heading-m">Deployments is ready</h2>
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("Go to deployments")
+    ))
+    }
+    @refreshCache(message)
+ }
+
+@commitInfo(commit: Commit) = {
+    <h2 class="govuk-heading-m">Commit info</h2>
+    <p class="govuk-body">Author: @commit.login.getOrElse("")</p>
+    <p class="govuk-body">Message:</p>
+    <pre>@commit.message</pre>
+    <p class="govuk-body"><a href="@commit.url">View commit @commit.sha</a></p>
+}
+
+@uninitialized() = {
+    <p class="govuk-body">Github templates cache has not yet been initialized.</p>
+}
+
+@failed() = {
+    <p class="govuk-body">
+    Github templates cache refresh has failed. Most probably new commit has been merged while refresh has been in progress.
+    </p>
+}
+
+@inProgress(progress: Int, total: Int, message: Html) = {
+   <h2 class="govuk-heading-m">Refresh in progress...</h2>
+   @message
+   <p class="govuk-body"><span class="govuk-!-font-weight-bold">@progress</span> out of <span class="govuk-!-font-weight-bold">@total</span> templates downloaded from Github (refresh manually to see the progress)</p>
+}
+
+@noCommitWhileInProgress() = {
+    <p class="govuk-body">
+      Something's wrong happened
+    </p>
+}
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+    @{cacheStatus match {
+        case CacheStatus.Refreshed(commit) => ready(commitInfo(commit))
+        case CacheStatus.Uninitialized => refreshCache(uninitialized())
+        case CacheStatus.Failed => refreshCache(failed())
+        case CacheStatus.RefreshInProgress(progress, total, Some(commit)) => inProgress(progress, total, commitInfo(commit))
+        case CacheStatus.RefreshInProgress(progress, total, None) => inProgress(progress, total, noCommitWhileInProgress())
+      }
+    }
+}

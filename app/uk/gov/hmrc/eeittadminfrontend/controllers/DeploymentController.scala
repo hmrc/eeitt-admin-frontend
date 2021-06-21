@@ -18,21 +18,20 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats._
 import cats.syntax.all._
-import cats.data.{ EitherT, NonEmptyList }
+import cats.data.EitherT
 import cats.effect.IO
-import github4s.domain.Content
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
-import play.api.mvc.MessagesControllerComponents
+import play.api.mvc.{ MessagesControllerComponents, Result }
 import play.twirl.api.Html
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename, MongoContent, Reconciliation, ReconciliationLookup }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.github.PrettyPrintJson
-import uk.gov.hmrc.eeittadminfrontend.services.{ GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ CachingService, GformService, GithubService }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 class DeploymentController(
@@ -40,6 +39,7 @@ class DeploymentController(
   authAction: AuthAction,
   gformService: GformService,
   githubService: GithubService,
+  cachingService: CachingService,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
@@ -57,24 +57,29 @@ class DeploymentController(
     )
   }
 
-  def deployFilename(downloadUrl: DownloadUrl, filename: Filename) = authAction.async { implicit request =>
+  def deployFilename(filename: Filename) = authAction.async { implicit request =>
     def logDeploymentStatus(message: String): Unit =
       logger.info(s"${request.userData} deployment of filename ${filename.value} " + message)
 
-    logDeploymentStatus("started")
-    (for {
-      githubContent <- githubService.retrieveFormTemplate(downloadUrl).mapK(ioToFuture)
-      _             <- gformService.saveTemplate(githubContent)
-    } yield githubContent.formTemplateId).fold(
-      error => {
-        logDeploymentStatus(s"failed with: $error")
-        BadRequest(error)
-      },
-      formTemplateId => {
-        logDeploymentStatus(formTemplateId.value + " successfully deployed")
-        Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success(formTemplateId, filename))
+    cachingService
+      .githubContent(filename)
+      .fold[Future[Result]](BadRequest(s"No file: ${filename.value} found in cache").pure[Future]) { githubContent =>
+        logDeploymentStatus("started")
+
+        gformService
+          .saveTemplate(githubContent)
+          .fold(
+            error => {
+              logDeploymentStatus(s"failed with: $error")
+              BadRequest(error)
+            },
+            unit => {
+              val formTemplateId = githubContent.formTemplateId
+              logDeploymentStatus(formTemplateId.value + " successfully deployed")
+              Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success(formTemplateId, filename))
+            }
+          )
       }
-    )
   }
 
   def deploymentExisting(
@@ -129,104 +134,100 @@ class DeploymentController(
         .fold(error => BadRequest(error), identity)
     }
 
+  def refreshCache = authAction.async { request =>
+    cachingService.refreshCache
+    Future.successful(Redirect(routes.DeploymentController.deploymentHome))
+  }
+
+  def deploymentHome = authAction.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home(cachingService.cacheStatus)))
+  }
+
   def deployments =
     authAction.async { implicit request =>
       EitherT(gformService.getAllGformsTemplates)
         .flatMap { mongoTemplateIds =>
           logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
-          val mongoTemplates: EitherT[Future, String, List[MongoContent]] =
+          val mongoTemplatesM: EitherT[Future, String, List[MongoContent]] =
             mongoTemplateIds.parTraverse { formTemplateId =>
               EitherT(gformService.getFormTemplate(formTemplateId))
             }
 
-          (mongoTemplates, githubService.listTemplates().mapK(ioToFuture))
-            .parMapN((_, _))
-            .flatMap { case (mongoTemplates, githubTemplates) =>
-              logger.info(s"${request.userData} Loading ${githubTemplates.size} templates from Github")
+          mongoTemplatesM.map { mongoTemplates =>
+            val reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
 
-              toReconciliationLookup(mongoTemplates, githubTemplates)
-                .mapK(ioToFuture)
-                .map(reconciliationLookup =>
-                  Ok(
-                    uk.gov.hmrc.eeittadminfrontend.views.html
-                      .deployments(
-                        reconciliationLookup,
-                        existingTemplatesTable(reconciliationLookup.existingTemplates),
-                        newTemplatesTable(reconciliationLookup.newTemplates)
-                      )
-                  )
+            Ok(
+              uk.gov.hmrc.eeittadminfrontend.views.html
+                .deployments(
+                  reconciliationLookup,
+                  existingTemplatesTable(reconciliationLookup.existingTemplates),
+                  newTemplatesTable(reconciliationLookup.newTemplates)
                 )
-            }
+            )
+          }
         }
         .fold(error => BadRequest(error), identity)
     }
 
   private def toReconciliationLookup(
     mongoTemplates: List[MongoContent],
-    githubTemplates: NonEmptyList[Content]
-  ): EitherT[IO, String, ReconciliationLookup] = {
+    githubTemplates: List[(Filename, GithubContent)]
+  ): ReconciliationLookup = {
 
     val mongoLookup: Map[FormTemplateId, MongoContent] =
       mongoTemplates.map(a => a.formTemplateId -> a).toMap
 
-    val reconciliationsNel: EitherT[IO, String, NonEmptyList[Reconciliation]] =
-      githubTemplates
-        .parTraverse { githubTemplate =>
-          EitherT.fromEither[IO](DownloadUrl.fromContent(githubTemplate)).flatMap { downloadUrl =>
-            reconciliation(
-              mongoLookup,
-              downloadUrl.stripTokenQueryParam,
-              Filename(githubTemplate.name)
-            )
-          }
-        }
-
-    reconciliationsNel.map { reconciliations =>
-      val n: List[Reconciliation.New] = reconciliations.collect { case r: Reconciliation.New => r }
-      val e: List[Reconciliation.Existing] = reconciliations.collect { case r: Reconciliation.Existing => r }
-
-      val allGithubTemplatesId: NonEmptyList[FormTemplateId] = reconciliations.map(_.formTemplateId)
-      val deletedTemplates: List[Reconciliation.Deleted] =
-        mongoLookup.keys.toList
-          .filter(ftId => !allGithubTemplatesId.contains_(ftId))
-          .sortBy(_.value)
-          .map(formTemplateId =>
-            Reconciliation
-              .Deleted(formTemplateId, routes.DeploymentController.deploymentDeleted(formTemplateId))
-          )
-
-      ReconciliationLookup(n.groupBy(_.formTemplateId), e.groupBy(_.formTemplateId), deletedTemplates)
+    val reconciliations: List[Reconciliation] = githubTemplates.map { case (filename, githubContent) =>
+      reconciliation(
+        mongoLookup,
+        githubContent,
+        filename
+      )
     }
+
+    val n: List[Reconciliation.New] = reconciliations.collect { case r: Reconciliation.New => r }
+    val e: List[Reconciliation.Existing] = reconciliations.collect { case r: Reconciliation.Existing => r }
+
+    val allGithubTemplatesId: List[FormTemplateId] = reconciliations.map(_.formTemplateId)
+    val deletedTemplates: List[Reconciliation.Deleted] =
+      mongoLookup.keys.toList
+        .filter(ftId => !allGithubTemplatesId.contains_(ftId))
+        .sortBy(_.value)
+        .map(formTemplateId =>
+          Reconciliation
+            .Deleted(formTemplateId, routes.DeploymentController.deploymentDeleted(formTemplateId))
+        )
+    ReconciliationLookup(n.groupBy(_.formTemplateId), e.groupBy(_.formTemplateId), deletedTemplates)
   }
 
   private def reconciliation(
     mongoLookup: Map[FormTemplateId, MongoContent],
-    downloadUrl: DownloadUrl,
+    githubContent: GithubContent,
     filename: Filename
-  ): EitherT[IO, String, Reconciliation] =
-    githubService.retrieveFormTemplate(downloadUrl).map { githubContent =>
-      val formTemplateId = githubContent.formTemplateId
-      mongoLookup.get(formTemplateId) match {
-        case None =>
-          Reconciliation.New(
+  ): Reconciliation = {
+
+    val formTemplateId = githubContent.formTemplateId
+    mongoLookup.get(formTemplateId) match {
+      case None =>
+        Reconciliation.New(
+          formTemplateId,
+          filename,
+          routes.DeploymentController.deploymentNew(
             formTemplateId,
-            filename,
-            routes.DeploymentController.deploymentNew(
-              formTemplateId,
-              filename
-            )
+            filename
           )
-        case Some(mongoContent) =>
-          val inSync = DiffMaker.inSync(mongoContent, githubContent)
-          Reconciliation.Existing(
-            formTemplateId,
-            filename,
-            routes.DeploymentController
-              .deploymentExisting(formTemplateId, filename),
-            inSync
-          )
-      }
+        )
+      case Some(mongoContent) =>
+        val inSync = DiffMaker.inSync(mongoContent, githubContent)
+        Reconciliation.Existing(
+          formTemplateId,
+          filename,
+          routes.DeploymentController
+            .deploymentExisting(formTemplateId, filename),
+          inSync
+        )
     }
+  }
   import uk.gov.hmrc.govukfrontend.views.html.components._
 
   private def existingTemplatesTable(existing: Map[FormTemplateId, List[Reconciliation.Existing]]): Table =

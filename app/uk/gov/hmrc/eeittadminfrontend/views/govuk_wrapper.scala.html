@@ -79,7 +79,7 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
                 active = if(tab == "gforms") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments.path),
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentHome.path),
                 content = Text("Deployment"),
                 active = if(tab == "deployment") true else false
             ),

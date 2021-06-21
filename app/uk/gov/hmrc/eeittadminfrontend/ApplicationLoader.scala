@@ -39,7 +39,7 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, CachingService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
@@ -192,6 +192,7 @@ class ApplicationModule(context: Context)
 
   val gformService: GformService = new GformService(gformConnector)
   val githubService: GithubService = new GithubService(githubConnector)
+  val cachingService: CachingService = new CachingService(githubService)
 
   val hmrcEmailRendererConnector =
     new HMRCEmailRendererConnector(
@@ -222,6 +223,7 @@ class ApplicationModule(context: Context)
       authAction,
       gformService,
       githubService,
+      cachingService,
       messagesControllerComponents
     )(
       executionContext,

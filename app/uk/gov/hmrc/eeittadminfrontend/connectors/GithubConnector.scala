@@ -20,7 +20,7 @@ import cats.syntax.all._
 import cats.data.NonEmptyList
 import cats.effect.{ Blocker, ContextShift, IO }
 import github4s.{ GHError, GHResponse, Github }
-import github4s.domain.{ Commit, Content }
+import github4s.domain.{ Commit, Content, Pagination }
 import github4s.Decoders._
 import io.circe._
 import java.net.Proxy
@@ -52,6 +52,15 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
   }
 
   val gh = Github[IO](httpClient, Some(authorization.accessToken))
+
+  def lastCommit: IO[Either[String, Commit]] =
+    gh.repos.listCommits(repoOwner, repoName, pagination = Some(Pagination(1, 1))).map { response =>
+      response.result match {
+        case Right(r) => Right(r.head)
+        case Left(e) =>
+          logError(s"Error when fetching last commit: ${e.getMessage}", e)
+      }
+    }
 
   def getCommit(filename: String): IO[Either[String, Commit]] = {
     // We can't use gh.repos.listCommits() since it is not handling '&' character in filename correctly.

@@ -36,9 +36,14 @@ class GithubService(maybeGithubConnector: Option[GithubConnector]) {
     maybeGithubConnector.fold(noGithubEnabled)(f)
   }
 
-  def listTemplates(): EitherT[IO, String, NonEmptyList[Content]] =
+  def listTemplates: EitherT[IO, String, NonEmptyList[Content]] =
     withGithubConnector { githubConnector =>
       EitherT(githubConnector.listTemplates)
+    }
+
+  def lastCommit: EitherT[IO, String, Commit] =
+    withGithubConnector { githubConnector =>
+      EitherT(githubConnector.lastCommit)
     }
 
   def getCommit(filename: Filename): EitherT[IO, String, Commit] =

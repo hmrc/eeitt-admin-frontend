@@ -44,13 +44,13 @@
             <a class="govuk-link" target="_blank" href="@commit.url">Github commit</a> where @filename.value was last edited
         </li>
         <li>
-            <a class="govuk-link" target="_blank" href="@downloadUrl.uri.renderString">Github content</a> of @filename.value
+            <a class="govuk-link" target="_blank" href="@downloadUrl.uri.renderString">Github content (beware, version in the Github may be newer)</a> of @filename.value
         </li>
     </ul>
 
     <div id="destination-elem-id"></div>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(downloadUrl, filename), args = 'class -> "js-form") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
         @govukButton(Button(
             preventDoubleClick = true,
             content = Text("Deploy")
