@@ -14,18 +14,19 @@
  * limitations under the License.
  *@
 
-@import github4s.domain.RefCommit
-@import uk.gov.hmrc.eeittadminfrontend.deployment.GithubContent
-@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+@import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
 @import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 
-@(authorization: Authorization,
-  githubContent: GithubContent,
-  commit: RefCommit
-)
+@(maybeDeploymentRecord: Option[DeploymentRecord])
 
-<h3 class="govuk-heading-m">Commit information</h3>
-<p class="govuk-body">Last modified by
-    <span class="govuk-!-font-weight-bold">@commit.author.name</span> on
-    <span class="govuk-!-font-weight-bold">@DateUtils.formatAsInstant(commit.author.date)</span> in commit @deployment_link_github_commit(authorization, githubContent.commitSha): @commit.message
-</p>
+<h3 class="govuk-heading-m">Last deployment information</h3>
+
+@noInfo() = {
+    <p class="govuk-body">No Deployment information available</p>
+}
+
+@deploymenInfo(deploymentRecord: DeploymentRecord) = {
+    <p class="govuk-body">Last deployed by <span class="govuk-!-font-weight-bold">@{deploymentRecord.username.value}</span> on <span class="govuk-!-font-weight-bold">@{DateUtils.formatInstant(deploymentRecord.createdAt)}</span>
+ }
+
+@maybeDeploymentRecord.fold(noInfo)(deploymenInfo)

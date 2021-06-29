@@ -18,12 +18,15 @@ package uk.gov.hmrc.eeittadminfrontend.models
 
 import cats.Order
 import play.api.libs.json._
+import reactivemongo.api.bson.{ BSONHandler, Macros }
 
 case class FormTemplateId(value: String) extends AnyVal {
   override def toString = value
 }
 
 object FormTemplateId {
+  implicit val handler: BSONHandler[FormTemplateId] = Macros.valueHandler[FormTemplateId]
+
   implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
 
   implicit val ordered: Order[FormTemplateId] = Order.by(_.value)

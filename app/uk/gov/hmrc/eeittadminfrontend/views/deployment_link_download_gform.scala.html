@@ -14,12 +14,6 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@(formTemplateId: FormTemplateId)
 
-@(reconciliation: Reconciliation.Existing)
-
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
-}
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>
+<a class="govuk-link" target="_blank" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.download(formTemplateId)">@formTemplateId</a>

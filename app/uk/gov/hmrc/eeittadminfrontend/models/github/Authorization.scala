@@ -25,9 +25,11 @@ case class Authorization(
 )
 
 object Authorization {
-  def apply(configuration: Configuration): Option[Authorization] = for {
-    repoOwner   <- configuration.getOptional[String]("github.repo-owner")
-    repoName    <- configuration.getOptional[String]("github.repo-name")
-    accessToken <- configuration.getOptional[String]("github.access-token")
-  } yield Authorization(repoOwner, repoName, accessToken)
+  def apply(configuration: Configuration): Authorization = {
+    val repoOwner = configuration.get[String]("github.repo-owner")
+    val repoName = configuration.get[String]("github.repo-name")
+    val accessToken = configuration.get[String]("github.access-token")
+
+    Authorization(repoOwner, repoName, accessToken)
+  }
 }

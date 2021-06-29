@@ -14,12 +14,16 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@import uk.gov.hmrc.eeittadminfrontend.deployment.CommitSha
+@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-@(reconciliation: Reconciliation.Existing)
+@(authorization: Authorization,
+  commitSha: CommitSha
+)
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
-}
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>
+<a target="_blank"
+   title="Show Github commit"
+   class="sha"
+   href="https://github.com/@authorization.repoOwner/@authorization.repoName/commit/@commitSha.value">
+    @commitSha.short
+</a>

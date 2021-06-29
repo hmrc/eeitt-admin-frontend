@@ -39,7 +39,8 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, CachingService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.repo.DeploymentRepo
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, CachingService, DeploymentService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
@@ -82,8 +83,10 @@ class CustomHttpRequestHandler(
     }
 }
 
+import play.modules.reactivemongo.ReactiveMongoApiFromContext
+
 class ApplicationModule(context: Context)
-    extends BuiltInComponentsFromContext(context) with AssetsComponents with AhcWSComponents with I18nComponents
+    extends ReactiveMongoApiFromContext(context) with AssetsComponents with AhcWSComponents with I18nComponents
     with CSRFComponents { self =>
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -155,6 +158,8 @@ class ApplicationModule(context: Context)
   val wSHttpModule = new WSHttpModule(auditingModule, configModule, akkaModule, this)
   val authModule = new AuthModule(configModule, wSHttpModule)
 
+  val deploymentRepo = new DeploymentRepo(reactiveMongoApi)
+
   val authService = new AuthService()
   val securedActions = new SecuredActionsImpl(configuration, authModule.authConnector)
   val authController =
@@ -186,11 +191,13 @@ class ApplicationModule(context: Context)
 
   private val proxyModule = new ProxyModule(configModule)
 
-  val githubConnector: Option[GithubConnector] = Authorization(configuration).map(auth =>
-    new GithubConnector(auth, proxyModule.maybeProxy, wSHttpModule.auditableWSHttp)
-  )
+  val githubAuthorization = Authorization(configuration)
+
+  val githubConnector: GithubConnector =
+    new GithubConnector(githubAuthorization, proxyModule.maybeProxy, wSHttpModule.auditableWSHttp)
 
   val gformService: GformService = new GformService(gformConnector)
+  val deploymentService: DeploymentService = new DeploymentService(deploymentRepo)
   val githubService: GithubService = new GithubService(githubConnector)
   val cachingService: CachingService = new CachingService(githubService)
 
@@ -223,7 +230,9 @@ class ApplicationModule(context: Context)
       authAction,
       gformService,
       githubService,
+      deploymentService,
       cachingService,
+      githubAuthorization,
       messagesControllerComponents
     )(
       executionContext,

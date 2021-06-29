@@ -16,11 +16,16 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import github4s.domain.Committer
+import play.api.libs.json.Format
+import reactivemongo.api.bson.{ BSONHandler, Macros }
 
 case class UserData(username: Username, email: Email) {
   override def toString = username.value + " <" + email.value.replace(".hmrc.gov.", "***") + ">"
-  def toCommitter: Committer = Committer(username.value, email.value)
 }
 
 case class Username(value: String) extends AnyVal
+
+object Username {
+  implicit val handler: BSONHandler[Username] = Macros.valueHandler[Username]
+  implicit val format: Format[Username] = ValueClassFormatter.format(Username.apply)(_.value)
+}

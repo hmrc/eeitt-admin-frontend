@@ -17,21 +17,24 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats._
+import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.data.EitherT
 import cats.effect.IO
+import java.time.Instant
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
-import play.api.mvc.{ MessagesControllerComponents, Result }
-import play.twirl.api.Html
+import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
+import play.twirl.api.{ Html, HtmlFormat }
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
+import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-import uk.gov.hmrc.eeittadminfrontend.models.github.PrettyPrintJson
-import uk.gov.hmrc.eeittadminfrontend.services.{ CachingService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
+import uk.gov.hmrc.govukfrontend.views.html.components._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 class DeploymentController(
@@ -39,7 +42,9 @@ class DeploymentController(
   authAction: AuthAction,
   gformService: GformService,
   githubService: GithubService,
+  deploymentService: DeploymentService,
   cachingService: CachingService,
+  authorization: Authorization,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
@@ -57,29 +62,96 @@ class DeploymentController(
     )
   }
 
+  private def mkDeploymentDiff(deploymentRecords: List[DeploymentRecord]): NonEmptyList[DeploymentDiff] = {
+    val deploymentDiffsDouble: List[DeploymentDiff.Double] = deploymentRecords
+      .sliding(2)
+      .toList
+      .collect { case sha1 :: sha2 :: Nil => DeploymentDiff.Double(sha2, sha1) }
+
+    val lastDeploymentDiff =
+      deploymentRecords.lastOption.fold[DeploymentDiff](DeploymentDiff.None)(lastDeploymentDiff =>
+        DeploymentDiff.Single(lastDeploymentDiff)
+      )
+    (NonEmptyList.one(lastDeploymentDiff) ++ deploymentDiffsDouble.reverse).reverse
+  }
+
+  private def compareDeploymentDiff(sha1: BlobSha, sha2: BlobSha): EitherT[IO, String, Html] = for {
+    blob1 <- githubService.getBlob(sha1)
+    blob2 <- githubService.getBlob(sha2)
+  } yield {
+    val diff = DiffMaker.getDiff(sha1.value, sha2.value, blob1, blob2)
+    uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
+  }
+
+  def history1(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
+    deploymentService.find(formTemplateId).flatMap { deploymentRecords =>
+      val deploymentDiffs = mkDeploymentDiff(deploymentRecords)
+      val (sha1, sha2) = deploymentDiffs.head.toSha
+      hist(formTemplateId, deploymentDiffs, sha1, sha2)
+    }
+  }
+
+  def history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha) = authAction.async { implicit request =>
+    deploymentService.find(formTemplateId).flatMap { deploymentRecords =>
+      val deploymentDiffs = mkDeploymentDiff(deploymentRecords)
+      hist(formTemplateId, deploymentDiffs, sha1, sha2)
+    }
+  }
+
+  def hist(formTemplateId: FormTemplateId, deploymentDiffs: NonEmptyList[DeploymentDiff], sha1: BlobSha, sha2: BlobSha)(
+    implicit request: Request[AnyContent]
+  ): Future[Result] = {
+
+    val noDiff = EitherT.rightT[IO, String](HtmlFormat.empty)
+
+    val diff = deploymentDiffs.head
+      .fold(_ => noDiff)(_ => noDiff) { _ =>
+        compareDeploymentDiff(sha1, sha2)
+      }
+
+    diff
+      .map { diffHtmlData =>
+        val diffData = deploymentDiffs.map(_.toTableRow(authorization, sha1, sha2))
+        val table: Table = historyTable(diffData)
+        Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history(formTemplateId, table, diffHtmlData))
+      }
+      .mapK(ioToFuture)
+      .fold(error => BadRequest(error), identity)
+  }
+
   def deployFilename(filename: Filename) = authAction.async { implicit request =>
     def logDeploymentStatus(message: String): Unit =
       logger.info(s"${request.userData} deployment of filename ${filename.value} " + message)
 
-    cachingService
-      .githubContent(filename)
-      .fold[Future[Result]](BadRequest(s"No file: ${filename.value} found in cache").pure[Future]) { githubContent =>
-        logDeploymentStatus("started")
+    withGithubContentFromCache(filename) { githubContent =>
+      logDeploymentStatus("started")
 
-        gformService
-          .saveTemplate(githubContent)
-          .fold(
-            error => {
-              logDeploymentStatus(s"failed with: $error")
-              BadRequest(error)
-            },
-            unit => {
-              val formTemplateId = githubContent.formTemplateId
-              logDeploymentStatus(formTemplateId.value + " successfully deployed")
-              Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success(formTemplateId, filename))
-            }
-          )
-      }
+      val deploymentRecord = DeploymentRecord(
+        username = request.userData.username,
+        createdAt = Instant.now(),
+        filename = filename,
+        formTemplateId = githubContent.formTemplateId,
+        blobSha = githubContent.blobSha,
+        commitSha = githubContent.commitSha
+      )
+
+      gformService
+        .saveTemplate(githubContent.formTemplateId, githubContent.json)
+        .flatMap { unit =>
+          EitherT.rightT[Future, String](deploymentService.save(deploymentRecord))
+        }
+        .bimap(
+          error => {
+            logDeploymentStatus(s"failed with: $error")
+            error
+          },
+          writeResult => {
+            val formTemplateId = githubContent.formTemplateId
+            logDeploymentStatus(formTemplateId.value + " successfully deployed")
+            Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success(formTemplateId, filename))
+          }
+        )
+    }.fold(error => BadRequest(error), identity)
   }
 
   def deploymentExisting(
@@ -87,24 +159,33 @@ class DeploymentController(
     filename: Filename
   ) =
     authAction.async { implicit request =>
-      (
-        EitherT(gformService.getFormTemplate(formTemplateId)),
-        githubService.getCommit(filename).mapK(ioToFuture),
-        githubService.retrieveFilenameData(filename).mapK(ioToFuture)
-      ).parMapN { case (mongoTemplate, commit, (downloadUrl, githubTemplate)) =>
-        val diff = DiffMaker.getDiff(filename, mongoTemplate, githubTemplate).replace("'", "\\'")
-
-        Ok(
-          uk.gov.hmrc.eeittadminfrontend.views.html
-            .deployment_existing(
-              formTemplateId,
-              Html(diff),
-              commit,
-              downloadUrl,
-              filename
+      withLastCommit { lastCommitCheck =>
+        withGithubContentFromCache(filename) { githubContent =>
+          (
+            EitherT(gformService.getFormTemplate(formTemplateId)),
+            githubService.getCommit(githubContent.commitSha).mapK(ioToFuture),
+            EitherT.right[String](deploymentService.find(formTemplateId))
+          ).parMapN { case (mongoTemplate, commit, deploymentRecords) =>
+            val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent)
+            val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
+            val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
+            Ok(
+              uk.gov.hmrc.eeittadminfrontend.views.html
+                .deployment_existing(
+                  formTemplateId,
+                  diffHtml,
+                  commit,
+                  githubContent,
+                  filename,
+                  inSync,
+                  deploymentRecords.headOption,
+                  lastCommitCheck,
+                  authorization
+                )
             )
-        )
-      }.fold(error => BadRequest(error), identity)
+          }
+        }
+      }
     }
 
   def delete(formTemplateId: FormTemplateId) =
@@ -114,59 +195,90 @@ class DeploymentController(
     }
 
   def deploymentDeleted(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted(formTemplateId)))
+    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted(formTemplateId)).pure[Future]
   }
 
   def deploymentNew(
     formTemplateId: FormTemplateId,
-    filename: Filename
+    filename: Filename,
+    sha: BlobSha
   ) =
     authAction.async { implicit request =>
-      (
-        githubService.getCommit(filename),
-        githubService.retrieveFilenameData(filename)
-      ).parMapN { case (commit, (downloadUrl, githubTemplate)) =>
-        Ok(
-          uk.gov.hmrc.eeittadminfrontend.views.html
-            .deployment_new(formTemplateId, commit, downloadUrl, filename)
-        )
-      }.mapK(ioToFuture)
-        .fold(error => BadRequest(error), identity)
+      withLastCommit { lastCommitCheck =>
+        withGithubContentFromCache(filename) { githubContent =>
+          githubService
+            .getCommit(githubContent.commitSha)
+            .map { commit =>
+              Ok(
+                uk.gov.hmrc.eeittadminfrontend.views.html
+                  .deployment_new(formTemplateId, commit, githubContent, filename, lastCommitCheck, authorization)
+              )
+            }
+            .mapK(ioToFuture)
+        }
+      }
     }
+
+  private def withGithubContentFromCache(
+    filename: Filename
+  )(f: GithubContent => EitherT[Future, String, Result]): EitherT[Future, String, Result] =
+    cachingService
+      .githubContent(filename)
+      .fold(EitherT.leftT[Future, Result](s"No ${filename.value} found in the cache")) { githubContent =>
+        f(githubContent)
+      }
 
   def refreshCache = authAction.async { request =>
     cachingService.refreshCache
-    Future.successful(Redirect(routes.DeploymentController.deploymentHome))
+    Redirect(routes.DeploymentController.deploymentHome).pure[Future]
   }
 
   def deploymentHome = authAction.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home(cachingService.cacheStatus)))
+    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home(authorization, cachingService.cacheStatus))
+      .pure[Future]
+  }
+
+  private def withLastCommit(f: LastCommitCheck => EitherT[Future, String, Result]): Future[Result] = {
+    val resultE: EitherT[Future, String, Result] = cachingService.cacheStatus match {
+      case r @ CacheStatus.Refreshed(cacheCommit) =>
+        githubService.lastCommit
+          .mapK(ioToFuture)
+          .flatMap { lastCommit =>
+            f(LastCommitCheck(r, lastCommit))
+          }
+
+      case _ => EitherT.leftT("Cache of Github templates needs refreshing")
+    }
+    resultE.fold(error => BadRequest(error), identity)
   }
 
   def deployments =
     authAction.async { implicit request =>
-      EitherT(gformService.getAllGformsTemplates)
-        .flatMap { mongoTemplateIds =>
-          logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
-          val mongoTemplatesM: EitherT[Future, String, List[MongoContent]] =
-            mongoTemplateIds.parTraverse { formTemplateId =>
-              EitherT(gformService.getFormTemplate(formTemplateId))
+      withLastCommit { lastCommitCheck =>
+        EitherT(gformService.getAllGformsTemplates)
+          .flatMap { mongoTemplateIds =>
+            logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
+            val mongoTemplatesM: EitherT[Future, String, List[MongoContent]] =
+              mongoTemplateIds.parTraverse { formTemplateId =>
+                EitherT(gformService.getFormTemplate(formTemplateId))
+              }
+
+            mongoTemplatesM.map { mongoTemplates =>
+              val reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
+
+              Ok(
+                uk.gov.hmrc.eeittadminfrontend.views.html
+                  .deployments(
+                    reconciliationLookup,
+                    existingTemplatesTable(reconciliationLookup.existingTemplates),
+                    newTemplatesTable(reconciliationLookup.newTemplates),
+                    lastCommitCheck,
+                    authorization
+                  )
+              )
             }
-
-          mongoTemplatesM.map { mongoTemplates =>
-            val reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
-
-            Ok(
-              uk.gov.hmrc.eeittadminfrontend.views.html
-                .deployments(
-                  reconciliationLookup,
-                  existingTemplatesTable(reconciliationLookup.existingTemplates),
-                  newTemplatesTable(reconciliationLookup.newTemplates)
-                )
-            )
           }
-        }
-        .fold(error => BadRequest(error), identity)
+      }
     }
 
   private def toReconciliationLookup(
@@ -214,7 +326,8 @@ class DeploymentController(
           filename,
           routes.DeploymentController.deploymentNew(
             formTemplateId,
-            filename
+            filename,
+            githubContent.blobSha
           )
         )
       case Some(mongoContent) =>
@@ -228,7 +341,6 @@ class DeploymentController(
         )
     }
   }
-  import uk.gov.hmrc.govukfrontend.views.html.components._
 
   private def existingTemplatesTable(existing: Map[FormTemplateId, List[Reconciliation.Existing]]): Table =
     Table(
@@ -290,4 +402,32 @@ class DeploymentController(
       firstCellIsHeader = true
     )
 
+  private def historyTable(
+    rows: NonEmptyList[Seq[TableRow]]
+  ): Table = {
+    val head = Some(
+      Seq(
+        HeadCell(
+          content = Text("Username")
+        ),
+        HeadCell(
+          content = Text("Deployed at")
+        ),
+        HeadCell(
+          content = Text("Commit sha")
+        ),
+        HeadCell(
+          content = Text("Filename")
+        ),
+        HeadCell(
+          content = Text("Blob sha")
+        )
+      )
+    )
+    Table(
+      rows = rows.toList,
+      head = head,
+      firstCellIsHeader = false
+    )
+  }
 }

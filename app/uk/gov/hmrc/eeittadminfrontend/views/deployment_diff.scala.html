@@ -14,12 +14,22 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@(
+  diff: Html
+)
 
-@(reconciliation: Reconciliation.Existing)
+<div id="destination-elem-id"></div>
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
-}
+<script>
 
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>
+  const unified = '@diff';
+
+  document.addEventListener('DOMContentLoaded', () => {
+      var diffHtml = Diff2Html.html(unified, {
+          drawFileList: false,
+          matching: 'lines'
+      });
+
+      document.getElementById('destination-elem-id').innerHTML = diffHtml;
+  });
+</script>

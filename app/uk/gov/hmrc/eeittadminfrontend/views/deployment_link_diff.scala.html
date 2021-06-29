@@ -14,12 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@import uk.gov.hmrc.eeittadminfrontend.deployment.BlobSha
 
-@(reconciliation: Reconciliation.Existing)
+@(formTemplateId: FormTemplateId,
+  sha1: BlobSha,
+  sha2: BlobSha
+)
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
-}
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>
+<a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.history(formTemplateId, sha1, sha2)" class="govuk-link">
+    @deployment_sha(sha2)
+</a>

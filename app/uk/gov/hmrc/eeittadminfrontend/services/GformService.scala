@@ -17,12 +17,13 @@
 package uk.gov.hmrc.eeittadminfrontend.services
 
 import cats.data.EitherT
+import io.circe.Json
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.Result
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ GithubContent, MongoContent }
+import uk.gov.hmrc.eeittadminfrontend.deployment.MongoContent
 import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId }
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -54,13 +55,14 @@ class GformService(gformConnector: GformConnector) {
   }
 
   def saveTemplate(
-    githubContent: GithubContent
+    formTemplateId: FormTemplateId,
+    json: Json
   )(implicit
     ec: ExecutionContext
   ): EitherT[Future, String, Unit] = EitherT(
     gformConnector.saveTemplate(
-      githubContent.formTemplateId,
-      CircePlayHelpers.circeToPlayUnsafe(githubContent.json)
+      formTemplateId,
+      CircePlayHelpers.circeToPlayUnsafe(json)
     )
   )
 

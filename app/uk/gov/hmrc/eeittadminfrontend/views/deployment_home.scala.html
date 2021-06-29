@@ -16,11 +16,13 @@
 
 @import github4s.domain.Commit
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @(
+    authorization: Authorization,
     cacheStatus: CacheStatus
 )(
     implicit request : Request[_], messages: Messages, appConfig: AppConfig
@@ -43,21 +45,18 @@
 
 @ready(message: Html) = {
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
-    <h2 class="govuk-heading-m">Deployments is ready</h2>
     @govukButton(Button(
         preventDoubleClick = true,
-        content = Text("Go to deployments")
+        content = Text("Show available deployments")
     ))
     }
     @refreshCache(message)
  }
 
 @commitInfo(commit: Commit) = {
-    <h2 class="govuk-heading-m">Commit info</h2>
-    <p class="govuk-body">Author: @commit.login.getOrElse("")</p>
-    <p class="govuk-body">Message:</p>
-    <pre>@commit.message</pre>
-    <p class="govuk-body"><a href="@commit.url">View commit @commit.sha</a></p>
+
+    <h2 class="govuk-heading-m">Cache commit info</h2>
+    @deployment_commit_info(authorization, commit)
 }
 
 @uninitialized() = {
@@ -71,9 +70,9 @@
 }
 
 @inProgress(progress: Int, total: Int, message: Html) = {
-   <h2 class="govuk-heading-m">Refresh in progress...</h2>
+   <h2 class="govuk-heading-m">Refresh in progress... (refresh this page manually to see the progress)</h2>
    @message
-   <p class="govuk-body"><span class="govuk-!-font-weight-bold">@progress</span> out of <span class="govuk-!-font-weight-bold">@total</span> templates downloaded from Github (refresh manually to see the progress)</p>
+   <p class="govuk-body"><span class="govuk-!-font-weight-bold">@progress</span> out of <span class="govuk-!-font-weight-bold">@total</span> templates downloaded from Github.</p>
 }
 
 @noCommitWhileInProgress() = {

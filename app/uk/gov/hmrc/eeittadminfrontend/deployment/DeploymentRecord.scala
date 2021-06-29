@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+package uk.gov.hmrc.eeittadminfrontend.deployment
 
-@(reconciliation: Reconciliation.Existing)
+import java.time.Instant
+import reactivemongo.api.bson.{ BSONDocumentHandler, Macros }
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
+case class DeploymentRecord(
+  username: Username,
+  createdAt: Instant,
+  filename: Filename,
+  formTemplateId: FormTemplateId,
+  blobSha: BlobSha,
+  commitSha: CommitSha
+)
+
+object DeploymentRecord {
+  implicit val deploymentHandler: BSONDocumentHandler[DeploymentRecord] = Macros.handler[DeploymentRecord]
 }
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>

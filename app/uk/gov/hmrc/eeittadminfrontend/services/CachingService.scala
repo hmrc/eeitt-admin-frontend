@@ -23,7 +23,7 @@ import github4s.domain.{ Commit, Content }
 import java.util.concurrent.atomic.{ AtomicInteger }
 import java.util.concurrent.CountDownLatch
 import org.slf4j.{ Logger, LoggerFactory }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename, GithubContent }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename, GithubContent }
 import scala.collection.concurrent.TrieMap
 
 sealed trait CacheStatus
@@ -72,11 +72,14 @@ class CachingService(githubService: GithubService) {
     countDownLatch.countDown()
     githubTemplates.parTraverse { githubTemplate =>
       val filename = Filename(githubTemplate.name)
-      EitherT.fromEither[IO](DownloadUrl.fromContent(githubTemplate)).flatMap { downloadUrl =>
-        githubService.retrieveFormTemplate(downloadUrl.stripTokenQueryParam).map { githubContent =>
-          logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
-          cache.put(filename, githubContent)
-        }
+      val blobSha = BlobSha(githubTemplate.sha)
+      (
+        githubService.retrieveFormTemplate(blobSha),
+        githubService.getCommitByFilename(filename)
+      ).parMapN { case ((formTemplateId, json), commit) =>
+        val githubContent = GithubContent(formTemplateId, json, blobSha, CommitSha(commit.sha))
+        logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
+        cache.put(filename, githubContent)
       }
     }
   }

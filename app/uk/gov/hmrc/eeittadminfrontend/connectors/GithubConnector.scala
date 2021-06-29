@@ -16,13 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import cats.syntax.all._
 import cats.data.NonEmptyList
 import cats.effect.{ Blocker, ContextShift, IO }
 import github4s.{ GHError, GHResponse, Github }
-import github4s.domain.{ Commit, Content, Pagination }
 import github4s.Decoders._
-import io.circe._
+import github4s.domain.{ BlobContent, Commit, Content, Pagination, RefCommit }
 import java.net.Proxy
 import java.util.concurrent.Executors
 import org.http4s.{ Header, Request, Uri }
@@ -30,7 +28,7 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
 import scala.concurrent.ExecutionContext.global
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
@@ -62,13 +60,22 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
       }
     }
 
-  def getCommit(filename: String): IO[Either[String, Commit]] = {
+  def getCommit(commitSha: CommitSha): IO[Either[String, RefCommit]] =
+    gh.gitData.getCommit(repoOwner, repoName, commitSha.value).map { response =>
+      response.result match {
+        case Right(r) => Right(r)
+        case Left(e) =>
+          logError(s"Error when fetching commit ${commitSha.value}: ${e.getMessage}", e)
+      }
+    }
+
+  def getCommitByFilename(filename: Filename): IO[Either[String, Commit]] = {
     // We can't use gh.repos.listCommits() since it is not handling '&' character in filename correctly.
     val uri = Uri(
       scheme = Some(Uri.Scheme.https),
       authority = Some(Uri.Authority(host = Uri.RegName("api.github.com"))),
       path = s"repos/$repoOwner/$repoName/commits"
-    ).withQueryParam("path", filename)
+    ).withQueryParam("path", filename.value)
 
     httpClient
       .expect[List[Commit]](
@@ -83,31 +90,6 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
         case Left(e) =>
           logError(s"Failed to query commits $uri because ${e.getMessage} ", e)
       }
-  }
-
-  def fetchDownloadUrl(url: DownloadUrl): IO[Either[String, Json]] = {
-    logger.debug(s"Downloading url ${url.uri.renderString} from Github")
-    httpClient
-      .expect[Json](
-        Request[IO]()
-          .withUri(url.uri)
-          .withHeaders(List(Header("Authorization", s"Bearer ${authorization.accessToken}")): _*)
-      )
-      .attempt
-      .map(_.leftMap(error => s"Error when downloading ${url.uri}\n\n${error.getMessage()}"))
-  }
-
-  def fetchFilenameContent(filename: Filename): IO[Either[String, Content]] = {
-    val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
-      gh.repos.getContents(repoOwner, repoName, filename.value, master)
-
-    searchResults.map { response =>
-      response.result match {
-        case Right(r) => Right(r.head)
-        case Left(e) =>
-          logError(s"Templates search failed because ${e.getMessage}", e)
-      }
-    }
   }
 
   def listTemplates(): IO[Either[String, NonEmptyList[Content]]] = {
@@ -130,6 +112,14 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
       }
     }
   }
+
+  def getBlob(sha: BlobSha): IO[Either[String, BlobContent]] =
+    gh.gitData.getBlob(repoOwner, repoName, sha.value).map { response =>
+      response.result match {
+        case Right(r) => Right(r)
+        case Left(e)  => logError(s"Cannot download blob $sha: ${e.getMessage}", e)
+      }
+    }
 
   private def logError[A](errorMessage: String, e: Throwable): Either[String, A] = {
     logger.error(errorMessage, e)

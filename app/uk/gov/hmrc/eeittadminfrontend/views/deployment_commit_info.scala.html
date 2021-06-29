@@ -14,12 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@import github4s.domain.Commit
+@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+@import uk.gov.hmrc.eeittadminfrontend.views.commitToTable
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@(reconciliation: Reconciliation.Existing)
+@(authorization: Authorization,
+  commit: Commit
+)
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
-}
+@govukTable = @{new govukTable()}
 
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>
+@govukTable(commitToTable(authorization, commit))

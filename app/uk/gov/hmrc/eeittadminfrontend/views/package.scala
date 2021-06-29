@@ -16,8 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend
 
+import github4s.domain.Commit
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import uk.gov.hmrc.eeittadminfrontend.deployment.CommitSha
+import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
+import uk.gov.hmrc.govukfrontend.views.html.components.{ HeadCell, HtmlContent, Table, TableRow, Text }
 
 package object views {
 
@@ -25,5 +30,45 @@ package object views {
     .ofPattern("dd MMM yyyy HH:mm:ss")
 
   def formatLocalDate(localDateTime: LocalDateTime): String = dtf.format(localDateTime)
+
+  def commitToTable(authorization: Authorization, commit: Commit) =
+    Table(
+      rows = Seq(
+        Seq(
+          TableRow(
+            content = Text(commit.login.getOrElse("Unknown login"))
+          ),
+          TableRow(
+            content = Text(DateUtils.formatAsInstant(commit.date))
+          ),
+          TableRow(
+            content = Text(commit.message)
+          ),
+          TableRow(
+            content = HtmlContent(
+              uk.gov.hmrc.eeittadminfrontend.views.html
+                .deployment_link_github_commit(authorization, CommitSha(commit.sha))
+            )
+          )
+        )
+      ),
+      head = Some(
+        Seq(
+          HeadCell(
+            content = Text("Author")
+          ),
+          HeadCell(
+            content = Text("Date")
+          ),
+          HeadCell(
+            content = Text("Message")
+          ),
+          HeadCell(
+            content = Text("Link")
+          )
+        )
+      ),
+      firstCellIsHeader = false
+    )
 
 }

@@ -20,9 +20,7 @@ import cats.data.EitherT
 import cats.syntax.all._
 import io.circe.{ DecodingFailure, ParsingFailure }
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
-import java.time.format.DateTimeFormatter
-import java.time.{ Instant, ZoneId }
-import java.util.Locale
+import java.time.Instant
 import java.util.zip.{ ZipEntry, ZipOutputStream }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
@@ -38,8 +36,8 @@ import play.api.mvc.{ AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.deployment.GithubContent
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.services.{ GformService, GithubService }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -117,18 +115,13 @@ class GformsController(
         val now = Instant.now()
         Ok.chunked(StreamConverters.fromInputStream(() => fileByteData(blob)))
           .withHeaders(
-            CONTENT_TYPE        -> "application/zip",
-            CONTENT_DISPOSITION -> s"""attachment; filename = "gform-prod-blob-${formatInstant(now)}.zip""""
+            CONTENT_TYPE -> "application/zip",
+            CONTENT_DISPOSITION -> s"""attachment; filename = "gform-prod-blob-${DateUtils.formatInstantNoSpace(
+              now
+            )}.zip""""
           )
       }
     }
-
-  private val dtf = DateTimeFormatter
-    .ofPattern("dd-MM-yyyy-HH:mm:ss")
-    .withLocale(Locale.UK)
-    .withZone(ZoneId.of("Europe/London"))
-
-  private def formatInstant(instant: Instant): String = dtf.format(instant)
 
   def getGformByFormType =
     authAction.async { implicit request =>
@@ -170,9 +163,7 @@ class GformsController(
     }
 
   private def saveTemplate(formTemplateId: FormTemplateId, formTemplate: io.circe.Json) =
-    gformService.saveTemplate(
-      GithubContent(formTemplateId, formTemplate)
-    )
+    gformService.saveTemplate(formTemplateId, formTemplate)
 
   private def parseRawJson(rawJson: String): EitherT[Future, ParsingFailure, io.circe.Json] =
     EitherT.fromEither[Future](io.circe.parser.parse(rawJson))

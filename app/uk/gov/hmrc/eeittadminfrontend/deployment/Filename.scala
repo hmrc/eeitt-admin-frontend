@@ -17,10 +17,12 @@
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
 import play.api.libs.json.Format
+import reactivemongo.api.bson.{ BSONHandler, Macros }
 import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 
 case class Filename(value: String) extends AnyVal
 
 object Filename {
+  implicit val handler: BSONHandler[Filename] = Macros.valueHandler[Filename]
   implicit val format: Format[Filename] = ValueClassFormatter.format(Filename.apply)(_.value)
 }

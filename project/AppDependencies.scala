@@ -13,6 +13,7 @@ object AppDependencies {
     "uk.gov.hmrc"              %% "play-partials"              % "8.1.0-play-27",
     "uk.gov.hmrc"              %% "play-frontend-govuk"        % "0.71.0-play-27",
     "uk.gov.hmrc"              %% "play-frontend-hmrc"         % "0.60.0-play-27",
+    "org.reactivemongo"        %% "play2-reactivemongo"        % "1.0.4-play27",
     "com.github.pureconfig"    %% "pureconfig"                 % "0.15.0",
     "org.typelevel"            %% "cats-core"                  % "2.6.1",
     "org.julienrf"             %% "play-json-derived-codecs"   % "9.0.0",

@@ -14,12 +14,23 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@(reconciliation: Reconciliation.Existing)
+@(
+    formTemplateId: FormTemplateId,
+    deploymentTable: Table,
+    diff: Html
+)(
+    implicit messages: Messages, appConfig: AppConfig
+)
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
+@govukTable = @{new govukTable()}
+
+@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+    <h2 class="govuk-heading-m">Deployment History of @formTemplateId</h2>
+    @govukTable(deploymentTable)
+
+    @diff
+
 }
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>

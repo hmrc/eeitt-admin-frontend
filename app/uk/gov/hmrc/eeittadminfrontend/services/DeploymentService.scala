@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.Reconciliation
+package uk.gov.hmrc.eeittadminfrontend.services
 
-@(reconciliation: Reconciliation.Existing)
+import reactivemongo.api.commands.WriteResult
+import scala.concurrent.Future
+import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
+import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
+import uk.gov.hmrc.eeittadminfrontend.repo.DeploymentRepo
 
-@syncClass(b: Boolean) = {
-    @if(b) {in-sync} else {out-of-sync}
+class DeploymentService(deploymentRepo: DeploymentRepo) {
+  def find(formTemplateId: FormTemplateId): Future[List[DeploymentRecord]] = deploymentRepo.get(formTemplateId)
+  def save(deploymentRecord: DeploymentRecord): Future[WriteResult] = deploymentRepo.save(deploymentRecord)
 }
-
-<a href="@reconciliation.call" target="_blank" class="govuk-link @syncClass(reconciliation.inSync)">@reconciliation.formTemplateId</a>

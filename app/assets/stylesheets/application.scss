@@ -39,3 +39,15 @@ $hmrc-assets-path: "/eeitt-admin-frontend/assets/lib/hmrc-frontend/hmrc/";
     background-size: 16px 16px;
     background-position-y: 4px;
 }
+
+.highlightMinus {
+    background-color: #fdf2d0;
+}
+
+.highlightPlus {
+    background-color: #ded;
+}
+
+.sha {
+    font-family: monospace;
+}

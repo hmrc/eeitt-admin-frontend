@@ -19,14 +19,13 @@ package uk.gov.hmrc.eeittadminfrontend.binders
 import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ DownloadUrl, Filename }
+import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 
 object ValueClassBinders {
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
   implicit val envelopeIdBinder: PathBindable[EnvelopeId] = valueClassBinder(_.value)
-  implicit val downloadUrlBinder: PathBindable[DownloadUrl] = valueClassBinder(_.uri.renderString)
   implicit val filenameBinder: PathBindable[Filename] = valueClassBinder(_.value)
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(

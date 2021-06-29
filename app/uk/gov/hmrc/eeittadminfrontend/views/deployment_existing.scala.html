@@ -14,62 +14,63 @@
  * limitations under the License.
  *@
 
-@import github4s.domain.Commit
+@import github4s.domain.RefCommit
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
-@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-@import uk.gov.hmrc.eeittadminfrontend.deployment.{DownloadUrl, Filename}
+@import uk.gov.hmrc.eeittadminfrontend.models.github.{Authorization, LastCommitCheck}
+@import uk.gov.hmrc.eeittadminfrontend.deployment.{DeploymentRecord, Filename, GithubContent}
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @(formTemplateId: FormTemplateId,
   diff: Html,
-  commit: Commit,
-  downloadUrl: DownloadUrl,
-  filename: Filename
+  commit: RefCommit,
+  githubContent: GithubContent,
+  filename: Filename,
+  inSync: Boolean,
+  maybeDeploymentRecord: Option[DeploymentRecord],
+  lastCommitCheck: LastCommitCheck,
+  authorization: Authorization
 )(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukButton = @{new govukButton()}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
-    <h2 class="govuk-heading-m">Existing deployment @formTemplateId</h2>
 
-    @last_modified(commit)
+    @deployment_last_commit_check(lastCommitCheck, authorization)
+
+    <h2 class="govuk-heading-l">Deployment of @formTemplateId from file @filename.value</h2>
+
+    @last_modified(authorization, githubContent, commit)
+
+    @last_deployment(maybeDeploymentRecord)
 
     <ul class="govuk-list govuk-list--bullet">
         <li>
-            <a class="govuk-link" target="_blank" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.download(formTemplateId)">Production version</a> of @formTemplateId
+            Show Gform content of @uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId)
         </li>
         <li>
-            <a class="govuk-link" target="_blank" href="@commit.url">Github commit</a> where @filename.value was last edited
+            Show Github content of @deployment_link_github_commit_blob(authorization, githubContent.commitSha, filename)
         </li>
         <li>
-            <a class="govuk-link" target="_blank" href="@downloadUrl.uri.renderString">Github content (beware, version in the Github may be newer)</a> of @filename.value
+            <a class="govuk-link" target="_blank" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.history1(formTemplateId)">Deployment History</a>
         </li>
     </ul>
 
-    <div id="destination-elem-id"></div>
-
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
+    @if(inSync) {
+        <h3 class="govuk-heading-m">Template is up to date</h3>
         @govukButton(Button(
-            preventDoubleClick = true,
+            disabled = true,
             content = Text("Deploy")
         ))
+     } else {
+        @diff
+
+        @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
+            @govukButton(Button(
+                preventDoubleClick = true,
+                content = Text("Deploy")
+            ))
+        }
     }
-
-    <script>
-
-     const unified = '@diff';
-
-     document.addEventListener('DOMContentLoaded', () => {
-         var diffHtml = Diff2Html.html(unified, {
-             drawFileList: true,
-             matching: 'lines'
-         });
-
-     document.getElementById('destination-elem-id').innerHTML = diffHtml;
-     });
-    </script>
-
-
 }

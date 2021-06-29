@@ -38,14 +38,24 @@ object DiffMaker {
 
   }
 
-  def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent): String = {
-
-    val json1Lines = toLines(mongo.json).asJava
-    val json2Lines = toLines(github.json).asJava
+  def getDiff(originalFilename: String, revisedFilename: String, json1: Json, json2: Json): String = {
+    val json1Lines = toLines(json1).asJava
+    val json2Lines = toLines(json2).asJava
 
     val patch: Patch[String] = DiffUtils.diff(json1Lines, json2Lines)
 
-    UnifiedDiffUtils.generateUnifiedDiff(filename.value, filename.value, json1Lines, patch, 5).asScala.mkString("\\n")
+    UnifiedDiffUtils
+      .generateUnifiedDiff(originalFilename, revisedFilename, json1Lines, patch, 5)
+      .asScala
+      .mkString("\\n")
+      .replace("'", "\\'")
+      .replaceAllLiterally(
+        "</script>",
+        "＜/script>"
+      ) // </script> in json causes html parser to end script block, we need to prevent that
   }
+
+  def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent): String =
+    getDiff(filename.value, filename.value, mongo.json, github.json)
 
 }
