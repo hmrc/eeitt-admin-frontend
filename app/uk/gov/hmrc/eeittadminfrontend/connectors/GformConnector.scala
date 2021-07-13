@@ -38,15 +38,25 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   def getGformsTemplate(
     formTemplateId: FormTemplateId
-  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] =
+  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = gformUrl + s"/formtemplates/$formTemplateId/raw"
     wsHttp
-      .doGet(gformUrl + s"/formtemplates/$formTemplateId/raw")
+      .doGet(url)
       .map { response =>
-        if (response.status == 200) Right(response.json) else Left(response.body)
+        logger.info(s"Get $formTemplateId from gform ${response.status}")
+        if (response.status == 200) Right(response.json)
+        else {
+          logger.error(s"Wrong status code ${response.body} when calling $url, response body ${response.body}")
+          Left(response.body)
+        }
       }
       .recover { case ex =>
-        Left(s"Unknown problem when trying to retrieve template $formTemplateId: " + ex.getMessage)
+        val message =
+          s"Unknown problem when trying to retrieve template $formTemplateId, by calling $url, exception: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
       }
+  }
 
   def getAllSubmissons(formTemplateId: FormTemplateId, page: Int, pageSize: Int)(implicit
     hc: HeaderCarrier,
