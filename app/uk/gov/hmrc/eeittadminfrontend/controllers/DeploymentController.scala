@@ -257,13 +257,15 @@ class DeploymentController(
       withLastCommit { lastCommitCheck =>
         EitherT(gformService.getAllGformsTemplates)
           .flatMap { mongoTemplateIds =>
-            logger.info(s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB")
+            val message = s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB"
+            logger.info(message + " - Start")
             val mongoTemplatesM: EitherT[Future, String, List[MongoContent]] =
               mongoTemplateIds.parTraverse { formTemplateId =>
                 EitherT(gformService.getFormTemplate(formTemplateId))
               }
 
             mongoTemplatesM.map { mongoTemplates =>
+              logger.info(message + " - Done")
               val reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
 
               Ok(
