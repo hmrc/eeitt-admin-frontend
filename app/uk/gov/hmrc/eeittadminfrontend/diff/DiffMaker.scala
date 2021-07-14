@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.diff
 
+import cats.syntax.eq._
 import com.github.difflib.{ DiffUtils, UnifiedDiffUtils }
 import com.github.difflib.patch.Patch
 import collection.JavaConverters._
@@ -28,15 +29,7 @@ object DiffMaker {
   private def toLines(json: Json): List[String] =
     PrettyPrintJson.asString(json).split("\n").toList
 
-  def inSync(mongo: MongoContent, github: GithubContent): Boolean = {
-
-    val json1Lines = toLines(mongo.json).asJava
-    val json2Lines = toLines(github.json).asJava
-
-    val patch: Patch[String] = DiffUtils.diff(json1Lines, json2Lines)
-    patch.getDeltas().asScala.isEmpty
-
-  }
+  def inSync(mongo: MongoContent, github: GithubContent): Boolean = mongo.json === github.json
 
   def getDiff(originalFilename: String, revisedFilename: String, json1: Json, json2: Json): String = {
     val json1Lines = toLines(json1).asJava
