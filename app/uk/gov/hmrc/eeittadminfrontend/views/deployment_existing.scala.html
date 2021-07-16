@@ -57,20 +57,15 @@
         </li>
     </ul>
 
-    @if(inSync) {
-        <h3 class="govuk-heading-m">Template is up to date</h3>
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
+        @if(inSync) {
+            <h3 class="govuk-heading-m">Template is up to date</h3>
+        } else {
+            @diff
+        }
         @govukButton(Button(
-            disabled = true,
+            preventDoubleClick = true,
             content = Text("Deploy")
         ))
-     } else {
-        @diff
-
-        @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
-            @govukButton(Button(
-                preventDoubleClick = true,
-                content = Text("Deploy")
-            ))
-        }
     }
 }
