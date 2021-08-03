@@ -76,8 +76,9 @@ class CachingService(githubService: GithubService) {
       (
         githubService.retrieveFormTemplate(blobSha),
         githubService.getCommitByFilename(filename)
-      ).parMapN { case ((formTemplateId, json), commit) =>
-        val githubContent = GithubContent(formTemplateId, json, blobSha, CommitSha(commit.sha))
+      ).parMapN { case ((formTemplateId, rawAndParsedJson), commit) =>
+        val githubContent =
+          GithubContent(formTemplateId, rawAndParsedJson.parsed, rawAndParsedJson.raw, blobSha, CommitSha(commit.sha))
         logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
         cache.put(filename, githubContent)
       }

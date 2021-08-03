@@ -79,7 +79,7 @@ class DeploymentController(
     blob1 <- githubService.getBlob(sha1)
     blob2 <- githubService.getBlob(sha2)
   } yield {
-    val diff = DiffMaker.getDiff(sha1.value, sha2.value, blob1, blob2)
+    val diff = DiffMaker.getDiff(sha1.value, sha2.value, blob1.parsed, blob2.parsed)
     uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
   }
 
@@ -228,9 +228,9 @@ class DeploymentController(
         f(githubContent)
       }
 
-  def refreshCache = authAction.async { request =>
+  def refreshCache(redirectUrl: String) = authAction.async { request =>
     cachingService.refreshCache
-    Redirect(routes.DeploymentController.deploymentHome).pure[Future]
+    Redirect(redirectUrl).pure[Future]
   }
 
   def deploymentHome = authAction.async { implicit request =>

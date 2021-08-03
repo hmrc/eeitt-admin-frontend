@@ -19,6 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import cats.Order
 import play.api.libs.json._
 import reactivemongo.api.bson.{ BSONHandler, Macros }
+import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 
 case class FormTemplateId(value: String) extends AnyVal {
   override def toString = value
@@ -47,3 +48,31 @@ object DbLookupId {
 }
 
 case class GformServiceError(statusCode: Int, message: String) extends Exception(message)
+
+case class FormTemplatesWithPIIInTitleForm(filters: String)
+case class FormTemplateWithPIIInTitleForm(filters: String, formTemplateId: FormTemplateId)
+
+case class FormTemplateWithPIIInTitle(
+  fileName: Filename,
+  json: String,
+  formTemplateId: FormTemplateId,
+  piiDetails: List[PIIDetails],
+  error: Option[String] = None
+) {
+  private val piiLineNumbers = piiDetails.map(_.pos)
+
+  def jsonAsLines = json.split("\\n").zipWithIndex.map { case (line, lineNo) =>
+    (line, lineNo + 1)
+  }
+
+  def lineContainsPII(index: Int) = piiLineNumbers.find(pos => index >= pos.start && index <= pos.end)
+}
+
+case class Pos(start: Int, end: Int)
+object Pos {
+  implicit val format: Format[Pos] = Json.format[Pos]
+}
+case class PIIDetails(pos: Pos, title: String, fcIds: List[String])
+object PIIDetails {
+  implicit val format: Format[PIIDetails] = Json.format[PIIDetails]
+}

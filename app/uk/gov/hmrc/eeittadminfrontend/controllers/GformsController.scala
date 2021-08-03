@@ -36,10 +36,11 @@ import play.api.mvc.{ AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, FormTemplateWithPIIInTitle, FormTemplateWithPIIInTitleForm, FormTemplatesWithPIIInTitleForm, GformId }
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
-import uk.gov.hmrc.eeittadminfrontend.services.{ GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ CachingService, GformService, GithubService }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -72,7 +73,9 @@ class GformsController(
   gformService: GformService,
   githubService: GithubService,
   formTemplateValidator: FormTemplateValidator,
-  messagesControllerComponents: MessagesControllerComponents
+  messagesControllerComponents: MessagesControllerComponents,
+  cachingService: CachingService,
+  authorization: Authorization
 )(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
@@ -235,6 +238,108 @@ class GformsController(
       Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
     }
 
+  private def filtersOrDefault(filters: String) =
+    if (filters.isEmpty) List("name", "email", "business") else filters.split(",").toList
+
+  def gformFormTemplatesWithPIIInTitleHome() = authAction.async { implicit request =>
+    Future.successful(
+      Ok(
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .gform_formtemplates_pii_home(List.empty, authorization, cachingService.cacheStatus)
+      )
+    )
+  }
+
+  def gformFormTemplatesWithPIIInTitle = authAction.async { implicit request =>
+    gformFormTemplatesWithPIIInTitleForm
+      .bindFromRequest()
+      .fold(
+        error => {
+          logger.error("Failed to bind request to form for gformFormTemplatesWithPIIInTitle", error)
+          Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome()))
+        },
+        form =>
+          cachingService.githubContents
+            .map { case (filename, content) =>
+              val json = content.json.toString
+              gformConnector
+                .getTitlesWithPII(json, filtersOrDefault(form.filters))
+                .map { piiDetails =>
+                  FormTemplateWithPIIInTitle(filename, json, content.formTemplateId, piiDetails)
+                }
+                .recover { case e =>
+                  FormTemplateWithPIIInTitle(filename, json, content.formTemplateId, List.empty, Some(e.getMessage))
+                }
+            }
+            .sequence
+            .map(formTemplatesWithPII =>
+              Ok(
+                uk.gov.hmrc.eeittadminfrontend.views.html
+                  .gform_formtemplates_pii(
+                    formTemplatesWithPII.sortBy(_.piiDetails.size).reverse,
+                    form.filters,
+                    authorization
+                  )
+              )
+            )
+      )
+
+  }
+
+  def gformFormTemplateWithPIIInTitleHome(formTemplateId: FormTemplateId, filters: String) = authAction.async {
+    implicit request =>
+      cachingService.githubContents
+        .find { case (_, content) =>
+          content.formTemplateId == formTemplateId
+        }
+        .map { case (filename, content) =>
+          val json = content.json.toString
+          gformConnector
+            .getTitlesWithPII(json, filtersOrDefault(filters))
+            .map { piiDetails =>
+              Ok(
+                uk.gov.hmrc.eeittadminfrontend.views.html
+                  .gform_formtemplate_pii(
+                    FormTemplateWithPIIInTitle(filename, json, content.formTemplateId, piiDetails),
+                    authorization,
+                    formTemplateId,
+                    filters
+                  )
+              )
+            }
+        }
+        .getOrElse(Future.successful(BadRequest(s"Form template with id $formTemplateId not found")))
+  }
+
+  def gformFormTemplateWithPIIInTitle = authAction.async { implicit request =>
+    gformFormTemplateWithPIIInTitleForm
+      .bindFromRequest()
+      .fold(
+        _ => Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome())),
+        form =>
+          cachingService.githubContents
+            .find { case (_, content) =>
+              content.formTemplateId == form.formTemplateId
+            }
+            .map { case (filename, content) =>
+              gformConnector
+                .getTitlesWithPII(content.rawJson, filtersOrDefault(form.filters))
+                .map { piiDetails =>
+                  Ok(
+                    uk.gov.hmrc.eeittadminfrontend.views.html
+                      .gform_formtemplate_pii(
+                        FormTemplateWithPIIInTitle(filename, content.rawJson, content.formTemplateId, piiDetails),
+                        authorization,
+                        form.formTemplateId,
+                        form.filters
+                      )
+                  )
+                }
+            }
+            .getOrElse(Future.successful(BadRequest(s"Form template with id ${form.formTemplateId} not found")))
+      )
+  }
+
   def gformAnalytics =
     authAction.async { implicit request =>
       Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.analytics()))
@@ -283,5 +388,18 @@ class GformsController(
     mapping("formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply))(GformId.apply)(
       GformId.unapply
     )
+  )
+
+  val gformFormTemplatesWithPIIInTitleForm: Form[FormTemplatesWithPIIInTitleForm] = Form(
+    play.api.data.Forms.mapping("filters" -> text)(FormTemplatesWithPIIInTitleForm.apply)(
+      FormTemplatesWithPIIInTitleForm.unapply
+    )
+  )
+
+  val gformFormTemplateWithPIIInTitleForm: Form[FormTemplateWithPIIInTitleForm] = Form(
+    play.api.data.Forms.mapping(
+      "filters"        -> text,
+      "formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply)
+    )(FormTemplateWithPIIInTitleForm.apply)(FormTemplateWithPIIInTitleForm.unapply)
   )
 }

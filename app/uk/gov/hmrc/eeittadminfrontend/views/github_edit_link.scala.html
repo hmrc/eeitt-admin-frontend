@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.eeittadminfrontend.deployment
+@import uk.gov.hmrc.eeittadminfrontend.deployment.{Filename, CommitSha}
+@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-import io.circe.Json
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-
-case class GithubContent(
-  formTemplateId: FormTemplateId,
-  json: Json,
-  rawJson: String,
-  blobSha: BlobSha,
-  commitSha: CommitSha
+@(authorization: Authorization,
+filename: Filename
 )
+
+<a target="_blank"
+   class='govuk-link'
+   title="Show Github content"
+   href="https://github.com/@authorization.repoOwner/@authorization.repoName/edit/master/@filename.value">
+    @filename.value
+</a>

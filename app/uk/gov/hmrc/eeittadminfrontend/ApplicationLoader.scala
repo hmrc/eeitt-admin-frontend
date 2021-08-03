@@ -217,7 +217,9 @@ class ApplicationModule(context: Context)
       gformService,
       githubService,
       formTemplateValidator,
-      messagesControllerComponents
+      messagesControllerComponents,
+      cachingService,
+      githubAuthorization
     )(
       executionContext,
       configModule.frontendAppConfig,

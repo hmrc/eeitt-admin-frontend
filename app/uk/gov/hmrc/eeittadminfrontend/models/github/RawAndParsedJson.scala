@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.deployment
+package uk.gov.hmrc.eeittadminfrontend.models.github
 
 import io.circe.Json
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-case class GithubContent(
-  formTemplateId: FormTemplateId,
-  json: Json,
-  rawJson: String,
-  blobSha: BlobSha,
-  commitSha: CommitSha
-)
+case class RawAndParsedJson(parsed: Json, raw: String)

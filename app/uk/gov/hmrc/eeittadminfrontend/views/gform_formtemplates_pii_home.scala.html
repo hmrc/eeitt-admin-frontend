@@ -1,0 +1,63 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
+@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+@import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
+@import uk.gov.hmrc.eeittadminfrontend.controllers.routes
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
+
+@(
+  formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle],
+  authorization: Authorization,
+  cacheStatus: CacheStatus
+)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+
+@formWithCSRF = @{new formWithCSRF()}
+@govukButton = @{new govukButton()}
+@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
+
+@ready = {
+
+    <h2 class="govuk-heading-m">Search for forms with PII in page titles</h2>
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
+        @govukInput(Input(
+                id = "filters",
+                name = "filters",
+                value = Some("name,email,business"),
+                hint = Some(Hint(content = Text("Comma separated list of form component ids (partial or full) which may have sensitive PII values. Only form templates having tiles containing references to matching form component ids will be shown"))),
+                label = Label(
+                    isPageHeading = false,
+                    classes = "govuk-label--s",
+                    content = Text("Filters:"
+                )
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = true,
+            content = Text("Submit")
+        ))
+    }
+}
+
+@main_template(title = "Gform", tab = "gforms", backLink = Some(routes.GformsController.gformPage.path)) {
+    @formtemplates_cache_status(authorization, cacheStatus, routes.GformsController.gformFormTemplatesWithPIIInTitleHome.path, false) {
+        @ready
+    }
+}

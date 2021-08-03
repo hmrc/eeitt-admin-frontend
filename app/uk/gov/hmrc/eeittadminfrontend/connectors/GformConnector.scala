@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import play.api.mvc.{ Result, Results }
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformServiceError, PIIDetails, SubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -114,4 +114,13 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
             throw GformServiceError(response.status, message)
         }
       }
+
+  def getTitlesWithPII(
+    formTemplateJson: String,
+    filters: List[String]
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[List[PIIDetails]] =
+    wsHttp.POSTString[List[PIIDetails]](
+      gformUrl + s"/formtemplates/get-titles-with-pii${if (filters.isEmpty) "" else "?filters=" + filters.mkString(",")}",
+      formTemplateJson
+    )
 }

@@ -21,7 +21,8 @@
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
-  scriptElem: Option[Html] = None)(mainContent: Html)(implicit messages: Messages, appConfig: AppConfig)
+  scriptElem: Option[Html] = None,
+  backLink: Option[String] = None)(mainContent: Html)(implicit messages: Messages, appConfig: AppConfig)
 
 @analyticsScripts = {
   <script src='@routes.Assets.versioned("javascripts/jquery.min.js")'></script>
@@ -44,5 +45,6 @@
   bodyClasses = bodyClasses,
   contentHeader = contentHeader,
   mainContent = mainContent,
-  scriptElem = Some(analyticsScripts)
+  scriptElem = Some(analyticsScripts),
+  backLink = backLink
 )

@@ -20,6 +20,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.controllers.routes
 
 @(
     authorization: Authorization,
@@ -31,63 +32,18 @@
 @formWithCSRF = @{new formWithCSRF()}
 @govukButton = @{new govukButton()}
 
-
-@refreshCache(message: Html) = {
-    @message
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache) {
-    <h2 class="govuk-heading-m">Refresh cache</h2>
-    @govukButton(Button(
-        preventDoubleClick = true,
-        content = Text("Refresh")
-    ))
-    }
- }
-
-@ready(message: Html) = {
+@ready = {
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
-    @govukButton(Button(
-        preventDoubleClick = true,
-        content = Text("Show available deployments")
-    ))
+        @govukButton(Button(
+            preventDoubleClick = true,
+            content = Text("Show available deployments")
+        ))
     }
-    @refreshCache(message)
  }
 
-@commitInfo(commit: Commit) = {
-
-    <h2 class="govuk-heading-m">Cache commit info</h2>
-    @deployment_commit_info(authorization, commit)
-}
-
-@uninitialized() = {
-    <p class="govuk-body">Github templates cache has not yet been initialized.</p>
-}
-
-@failed() = {
-    <p class="govuk-body">
-    Github templates cache refresh has failed. Most probably new commit has been merged while refresh has been in progress.
-    </p>
-}
-
-@inProgress(progress: Int, total: Int, message: Html) = {
-   <h2 class="govuk-heading-m">Refresh in progress... (refresh this page manually to see the progress)</h2>
-   @message
-   <p class="govuk-body"><span class="govuk-!-font-weight-bold">@progress</span> out of <span class="govuk-!-font-weight-bold">@total</span> templates downloaded from Github.</p>
-}
-
-@noCommitWhileInProgress() = {
-    <p class="govuk-body">
-      Something's wrong happened
-    </p>
-}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
-    @{cacheStatus match {
-        case CacheStatus.Refreshed(commit) => ready(commitInfo(commit))
-        case CacheStatus.Uninitialized => refreshCache(uninitialized())
-        case CacheStatus.Failed => refreshCache(failed())
-        case CacheStatus.RefreshInProgress(progress, total, Some(commit)) => inProgress(progress, total, commitInfo(commit))
-        case CacheStatus.RefreshInProgress(progress, total, None) => inProgress(progress, total, noCommitWhileInProgress())
-      }
+    @formtemplates_cache_status(authorization, cacheStatus, routes.DeploymentController.deploymentHome.path, true) {
+        @ready
     }
 }

@@ -3,22 +3,26 @@
 ->            /govuk-frontend    govuk.Routes
 ->            /hmrc-frontend     hmrcfrontend.Routes
 
-GET        /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
-POST       /login                    uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
-GET        /logout                   uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
+GET        /login                                           uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
+POST       /login                                           uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
+GET        /logout                                          uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
 
-GET        /get-blob                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
-POST       /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
-GET        /get-all-templates        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
-GET        /reload-templates         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
-GET        /get-all-schema           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
-POST       /save-template            uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
-POST       /template                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
-GET        /gform-analytics          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
-GET        /get-gform                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
-POST       /db-lookup-file-upload    uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
+GET        /get-blob                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
+POST       /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
+GET        /get-all-templates                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
+GET        /form-templates-pii-home                         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplatesWithPIIInTitleHome
+POST       /form-templates-pii                              uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplatesWithPIIInTitle
+GET        /form-template-pii-home/:formTemplateId          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitleHome(formTemplateId: FormTemplateId, filters: String)
+POST       /form-template-pii                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitle
+GET        /reload-templates                                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
+GET        /get-all-schema                                  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
+POST       /save-template                                   uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
+POST       /template                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
+GET        /gform-analytics                                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
+GET        /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
+POST       /db-lookup-file-upload                           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 
-GET        /download/:formTemplateId            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
+GET        /download/:formTemplateId                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
 
 GET        /deployments                                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
 GET        /deployment/home                                 uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentHome
@@ -27,7 +31,7 @@ GET        /deployment/new/:formTemplateId                  uk.gov.hmrc.eeittadm
 GET        /deployment/deleted/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId)
 GET        /deployment/history/:formTemplateId/:sha1/:sha2  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha)
 GET        /deployment/history/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history1(formTemplateId: FormTemplateId)
-POST       /deployment/refresh-cache                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache()
+POST       /deployment/refresh-cache                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache(redirectUrl: String)
 POST       /deployment/delete/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
 POST       /deployment/:filename                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
 
