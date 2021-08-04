@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
+@import uk.gov.hmrc.eeittadminfrontend.models.{ Github, Mongo }
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
@@ -29,13 +30,24 @@
 @govukButton = @{new govukButton()}
 @govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
 @govukTable = @{new govukTable()}
+
+@getDetailsLink(piiCount: Option[Int], formTemplateId: FormTemplateId, filters: String, source: TemplateSource) = @{
+    piiCount match {
+      case None    => Text("")
+      case Some(0) => Text("0")
+      case Some(count) =>
+        HtmlContent(gform_formtemplate_pii_link(count.toString, formTemplateId, filters, source))
+    }
+}
+
 @tableRows = @{
     formTemplatesWithPIIInTitles.map { ftWithPII =>
         Seq(
-            TableRow(content = HtmlContent(gform_formtemplate_pii_link(ftWithPII.formTemplateId, filters))),
+            TableRow(content = Text(ftWithPII.formTemplateId.value)),
             TableRow(content = HtmlContent(github_edit_link(authorization, ftWithPII.fileName))),
-            TableRow(content = Text(ftWithPII.piiDetails.size.toString)),
-            TableRow(content = Text(ftWithPII.error.getOrElse("")))
+            TableRow(content = getDetailsLink(ftWithPII.githubPIICount, ftWithPII.formTemplateId, filters, Github)),
+            TableRow(content = getDetailsLink(ftWithPII.mongoPIICount, ftWithPII.formTemplateId, filters, Mongo)),
+            TableRow(content = Text(ftWithPII.errors.mkString(",")))
         )
     }
 }
@@ -65,7 +77,8 @@
                     Seq(
                         HeadCell(content = Text("FormTemplate ID")),
                         HeadCell(content = Text("File Name")),
-                        HeadCell(content = Text("No of titles with PII")),
+                        HeadCell(content = Text("Titles with PII in github")),
+                        HeadCell(content = Text("Titles with PII in mongo")),
                         HeadCell(content = Text("Errors"))
                     )
                 ),

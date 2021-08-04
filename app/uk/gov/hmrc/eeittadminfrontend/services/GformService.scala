@@ -51,7 +51,10 @@ class GformService(gformConnector: GformConnector) {
     logger.debug(s"Loading $formTemplateId from MongoDB")
     gformConnector
       .getGformsTemplate(formTemplateId)
-      .map(_.map(json => MongoContent(formTemplateId, CircePlayHelpers.playToCirceUnsafe(json))))
+      .map {
+        case Left(error) => Left(error.error)
+        case Right(json) => Right(MongoContent(formTemplateId, CircePlayHelpers.playToCirceUnsafe(json)))
+      }
   }
 
   def saveTemplate(

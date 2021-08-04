@@ -12,7 +12,7 @@ POST       /get-gform                                       uk.gov.hmrc.eeittadm
 GET        /get-all-templates                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
 GET        /form-templates-pii-home                         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplatesWithPIIInTitleHome
 POST       /form-templates-pii                              uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplatesWithPIIInTitle
-GET        /form-template-pii-home/:formTemplateId          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitleHome(formTemplateId: FormTemplateId, filters: String)
+GET        /form-template-pii-home/:formTemplateId/:source  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitleHome(formTemplateId: FormTemplateId, filters: String, source: TemplateSource)
 POST       /form-template-pii                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitle
 GET        /reload-templates                                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
 GET        /get-all-schema                                  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema

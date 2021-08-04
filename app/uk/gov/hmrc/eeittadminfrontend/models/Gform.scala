@@ -50,14 +50,25 @@ object DbLookupId {
 case class GformServiceError(statusCode: Int, message: String) extends Exception(message)
 
 case class FormTemplatesWithPIIInTitleForm(filters: String)
-case class FormTemplateWithPIIInTitleForm(filters: String, formTemplateId: FormTemplateId)
+case class FormTemplateWithPIIInTitleForm(
+  filters: String,
+  formTemplateId: FormTemplateId,
+  templateSource: TemplateSource
+)
 
 case class FormTemplateWithPIIInTitle(
   fileName: Filename,
+  formTemplateId: FormTemplateId,
+  githubPIICount: Option[Int],
+  mongoPIICount: Option[Int],
+  errors: List[String] = List.empty
+)
+
+case class FormTemplateWithPIIInTitleDetails(
+  fileName: Filename,
   json: String,
   formTemplateId: FormTemplateId,
-  piiDetails: List[PIIDetails],
-  error: Option[String] = None
+  piiDetails: List[PIIDetails]
 ) {
   private val piiLineNumbers = piiDetails.map(_.pos)
 
@@ -66,13 +77,35 @@ case class FormTemplateWithPIIInTitle(
   }
 
   def lineContainsPII(index: Int) = piiLineNumbers.find(pos => index >= pos.start && index <= pos.end)
+
 }
 
 case class Pos(start: Int, end: Int)
 object Pos {
   implicit val format: Format[Pos] = Json.format[Pos]
 }
+
 case class PIIDetails(pos: Pos, title: String, fcIds: List[String])
 object PIIDetails {
   implicit val format: Format[PIIDetails] = Json.format[PIIDetails]
 }
+
+sealed trait TemplateSource {
+  override def toString = this match {
+    case Github => "github"
+    case Mongo  => "mongo"
+  }
+}
+case object Github extends TemplateSource
+case object Mongo extends TemplateSource
+
+object TemplateSource {
+
+  def fromString(value: String): TemplateSource = value match {
+    case "github" => Github
+    case "mongo"  => Mongo
+    case other    => throw new IllegalArgumentException(s"'$other' is not a valid TemplateSource")
+  }
+}
+
+case class ErrorResponse(error: String, status: Option[Int] = None)

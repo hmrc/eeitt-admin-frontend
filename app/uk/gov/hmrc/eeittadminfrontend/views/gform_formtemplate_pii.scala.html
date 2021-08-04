@@ -16,10 +16,10 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
+@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitleDetails
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-@(formTemplatesWithPIIInTitle: FormTemplateWithPIIInTitle, authorization: Authorization, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, authorization: Authorization, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @govukTable = @{new govukTable()}
 
@@ -29,7 +29,7 @@
 }
 
 @tableRows = @{
-    formTemplatesWithPIIInTitle.piiDetails.map { pii =>
+    formTemplateWithPIIInTitleDetails.piiDetails.map { pii =>
         Seq(
             TableRow(content = HtmlContent(getPosLink(pii.pos))),
             TableRow(content = Text(pii.title)),
@@ -39,12 +39,12 @@
 }
 
 @rowStyle(index: Int) = @{
-    if(formTemplatesWithPIIInTitle.lineContainsPII(index)) "background: #ffdce0" else ""
+    if(formTemplateWithPIIInTitleDetails.lineContainsPII(index)) "background: #ffdce0" else ""
 }
 
 @main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome().path)) {
 
-    <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplatesWithPIIInTitle.formTemplateId.value}' (@{github_edit_link(authorization, formTemplatesWithPIIInTitle.fileName)}) with filters '@{filters}'</h2>
+    <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' (@{github_edit_link(authorization, formTemplateWithPIIInTitleDetails.fileName)}) with filters '@{filters}'</h2>
 
     @govukTable(
         Table(
@@ -62,7 +62,7 @@
 
     <pre style="white-space: pre-wrap;">
         <table style="border: 1px solid #C5C6C6; border-radius: 6px; color: #032f62; width: 100%">
-          @formTemplatesWithPIIInTitle.jsonAsLines.map { case (jsonLine, lineNo) =>
+          @formTemplateWithPIIInTitleDetails.jsonAsLines.map { case (jsonLine, lineNo) =>
              <tr id="line@{lineNo}" style="@{rowStyle(lineNo)}">
                  <td style="text-align: right; color: #C5C6C6">@{lineNo}</td>
                  <td style="padding-left:5px">@{jsonLine}</td>

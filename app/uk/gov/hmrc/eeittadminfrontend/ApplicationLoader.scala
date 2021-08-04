@@ -215,7 +215,6 @@ class ApplicationModule(context: Context)
       authAction,
       gformConnector,
       gformService,
-      githubService,
       formTemplateValidator,
       messagesControllerComponents,
       cachingService,
