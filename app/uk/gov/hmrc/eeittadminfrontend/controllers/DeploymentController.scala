@@ -79,7 +79,7 @@ class DeploymentController(
     blob1 <- githubService.getBlob(sha1)
     blob2 <- githubService.getBlob(sha2)
   } yield {
-    val diff = DiffMaker.getDiff(sha1.value, sha2.value, blob1.parsed, blob2.parsed)
+    val diff = DiffMaker.getDiff(sha1.value, sha2.value, blob1, blob2)
     uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
   }
 
