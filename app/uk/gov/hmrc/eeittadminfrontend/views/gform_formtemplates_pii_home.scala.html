@@ -25,16 +25,14 @@
 @(
   formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle],
   defaultFilters: Option[String],
-  authorization: Authorization,
-  cacheStatus: CacheStatus
+  authorization: Authorization
 )(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukButton = @{new govukButton()}
 @govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
 
-@ready = {
-
+@main_template(title = "Gform", tab = "gforms", backLink = Some(routes.GformsController.gformPage.path)) {
     <h2 class="govuk-heading-m">Search for forms with PII in page titles</h2>
 
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
@@ -44,9 +42,9 @@
                 value = defaultFilters,
                 hint = Some(Hint(content = Text("Comma separated list of form component ids (partial or full) which may have sensitive PII values. Only form templates having tiles containing references to matching form component ids will be shown"))),
                 label = Label(
-                    isPageHeading = false,
-                    classes = "govuk-label--s",
-                    content = Text("Filters:"
+                isPageHeading = false,
+                classes = "govuk-label--s",
+                content = Text("Filters:"
                 )
             )
         ))
@@ -54,11 +52,5 @@
             preventDoubleClick = true,
             content = Text("Submit")
         ))
-    }
-}
-
-@main_template(title = "Gform", tab = "gforms", backLink = Some(routes.GformsController.gformPage.path)) {
-    @formtemplates_cache_status(authorization, cacheStatus, routes.GformsController.gformFormTemplatesWithPIIInTitleHome.path, false) {
-        @ready
     }
 }

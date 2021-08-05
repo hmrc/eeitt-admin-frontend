@@ -44,7 +44,7 @@
 
 @main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome().path)) {
 
-    <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' (@{github_edit_link(authorization, formTemplateWithPIIInTitleDetails.fileName)}) with filters '@{filters}'</h2>
+    <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' with filters '@{filters}'</h2>
 
     @govukTable(
         Table(

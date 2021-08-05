@@ -52,7 +52,7 @@ class GformService(gformConnector: GformConnector) {
     gformConnector
       .getGformsTemplate(formTemplateId)
       .map {
-        case Left(error) => Left(error.error)
+        case Left(error) => Left(error)
         case Right(json) => Right(MongoContent(formTemplateId, CircePlayHelpers.playToCirceUnsafe(json)))
       }
   }

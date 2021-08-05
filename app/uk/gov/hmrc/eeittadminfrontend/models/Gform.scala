@@ -19,10 +19,11 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import cats.Order
 import play.api.libs.json._
 import reactivemongo.api.bson.{ BSONHandler, Macros }
-import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 
 case class FormTemplateId(value: String) extends AnyVal {
   override def toString = value
+
+  def formTemplateRawId = FormTemplateRawId(value)
 }
 
 object FormTemplateId {
@@ -31,6 +32,11 @@ object FormTemplateId {
   implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
 
   implicit val ordered: Order[FormTemplateId] = Order.by(_.value)
+}
+
+case class FormTemplateRawId(value: String)
+object FormTemplateRawId {
+  implicit val format: Format[FormTemplateRawId] = Json.format[FormTemplateRawId]
 }
 
 case class GformId(formTemplateId: FormTemplateId)
@@ -52,20 +58,16 @@ case class GformServiceError(statusCode: Int, message: String) extends Exception
 case class FormTemplatesWithPIIInTitleForm(filters: String)
 case class FormTemplateWithPIIInTitleForm(
   filters: String,
-  formTemplateId: FormTemplateId,
-  templateSource: TemplateSource
+  formTemplateId: FormTemplateId
 )
 
 case class FormTemplateWithPIIInTitle(
-  fileName: Filename,
   formTemplateId: FormTemplateId,
-  githubPIICount: Option[Int],
-  mongoPIICount: Option[Int],
+  piiCount: Option[Int],
   errors: List[String] = List.empty
 )
 
 case class FormTemplateWithPIIInTitleDetails(
-  fileName: Filename,
   json: String,
   formTemplateId: FormTemplateId,
   piiDetails: List[PIIDetails]
@@ -90,22 +92,7 @@ object PIIDetails {
   implicit val format: Format[PIIDetails] = Json.format[PIIDetails]
 }
 
-sealed trait TemplateSource {
-  override def toString = this match {
-    case Github => "github"
-    case Mongo  => "mongo"
-  }
+case class PIIDetailsResponse(piis: List[PIIDetails], json: Option[String])
+object PIIDetailsResponse {
+  implicit val format: Format[PIIDetailsResponse] = Json.format[PIIDetailsResponse]
 }
-case object Github extends TemplateSource
-case object Mongo extends TemplateSource
-
-object TemplateSource {
-
-  def fromString(value: String): TemplateSource = value match {
-    case "github" => Github
-    case "mongo"  => Mongo
-    case other    => throw new IllegalArgumentException(s"'$other' is not a valid TemplateSource")
-  }
-}
-
-case class ErrorResponse(error: String, status: Option[Int] = None)

@@ -20,23 +20,13 @@ import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, TemplateSource }
+import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-
-import scala.util.Try
 
 object ValueClassBinders {
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
   implicit val envelopeIdBinder: PathBindable[EnvelopeId] = valueClassBinder(_.value)
   implicit val filenameBinder: PathBindable[Filename] = valueClassBinder(_.value)
-
-  implicit val templateSourceBinder: PathBindable[TemplateSource] = new PathBindable[TemplateSource] {
-    override def bind(key: String, value: String): Either[String, TemplateSource] =
-      Try(TemplateSource.fromString(value))
-        .fold[Either[String, TemplateSource]](e => Left(e.getMessage), Right(_))
-
-    override def unbind(key: String, value: TemplateSource): String = value.toString
-  }
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(
     uri => Uri.fromString(uri).right.get,
