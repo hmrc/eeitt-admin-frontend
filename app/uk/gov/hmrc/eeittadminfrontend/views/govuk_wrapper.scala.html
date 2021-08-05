@@ -37,7 +37,8 @@ sidebar: Html = HtmlFormat.empty,
 contentHeader: Option[Html] = None,
 mainContent: Html = HtmlFormat.empty,
 serviceInfoContent: Html = HtmlFormat.empty,
-scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConfig)
+scriptElem: Option[Html] = None,
+backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConfig)
 
 @govukHeader = @{new govukHeader()}
 @govukFooter = @{new govukFooter()}
@@ -109,11 +110,11 @@ scriptElem: Option[Html] = None)(implicit messages: Messages, appConfig: AppConf
 )}
 
 
-@backLink = @{govukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = "javascript:window.history.back()", content = new Text(messages("linkText.back"))))}
+@bLink = @{govukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
 
 @beforeContentBlock = {
     @hmrcBanner(Banner())
-    @backLink
+    @bLink
 }
 
 @govuk_layout(

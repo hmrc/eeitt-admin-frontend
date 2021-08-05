@@ -1,0 +1,82 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
+@import uk.gov.hmrc.eeittadminfrontend.controllers.routes
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
+
+@(
+  formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle], filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+
+@formWithCSRF = @{new formWithCSRF()}
+@govukButton = @{new govukButton()}
+@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
+@govukTable = @{new govukTable()}
+
+@getDetailsLink(piiCount: Option[Int], linkText: String, formTemplateId: FormTemplateId, filters: String) = @{
+    piiCount match {
+      case None    => Text(linkText)
+      case Some(0) => Text(linkText)
+      case Some(count) =>
+        HtmlContent(gform_formtemplate_pii_link(linkText, formTemplateId, filters))
+    }
+}
+
+@tableRows = @{
+    formTemplatesWithPIIInTitles.map { ftWithPII =>
+        Seq(
+            TableRow(content = getDetailsLink(ftWithPII.piiCount, ftWithPII.formTemplateId.value, ftWithPII.formTemplateId, filters)),
+            TableRow(content = Text(ftWithPII.piiCount.map(_.toString).getOrElse(""))),
+            TableRow(content = Text(ftWithPII.errors.mkString(",")))
+        )
+    }
+}
+
+@main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome.path)) {
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
+        @govukInput(Input(
+            id = "filters",
+            name = "filters",
+            value = Some(filters),
+            hint = Some(Hint(content = Text("Comma separated list of form component ids (partial or full) which may have sensitive PII values. Only form templates having tiles containing references to matching form component ids will be shown"))),
+            label = Label(
+                isPageHeading = false,
+                classes = "govuk-label--s",
+                content = Text("Filters:")
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = true,
+            content = Text("Submit")
+        ))
+        @govukTable(
+            Table(
+                rows = tableRows,
+                head = Some(
+                    Seq(
+                        HeadCell(content = Text("FormTemplate ID")),
+                        HeadCell(content = Text("Titles with PII")),
+                        HeadCell(content = Text("Errors"))
+                    )
+                ),
+                firstCellIsHeader = false
+            )
+        )
+    }
+}

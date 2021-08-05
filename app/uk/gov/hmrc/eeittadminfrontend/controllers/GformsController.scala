@@ -16,15 +16,12 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import cats.data.EitherT
-import cats.syntax.all._
-import io.circe.{ DecodingFailure, ParsingFailure }
-import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
-import java.time.Instant
-import java.util.zip.{ ZipEntry, ZipOutputStream }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
 import akka.util.ByteString
+import cats.data.EitherT
+import cats.syntax.all._
+import io.circe.{ DecodingFailure, ParsingFailure }
 import julienrf.json.derived
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.{ Logger, LoggerFactory }
@@ -32,16 +29,19 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import play.api.libs.json._
-import play.api.mvc.{ AnyContent, MessagesControllerComponents, Result }
+import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, GformId }
+import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.eeittadminfrontend.services.GformService
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
-import uk.gov.hmrc.eeittadminfrontend.services.{ GformService, GithubService }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
+import java.time.Instant
+import java.util.zip.{ ZipEntry, ZipOutputStream }
 import scala.concurrent.{ ExecutionContext, Future }
 sealed trait RefreshTemplateResult extends Product with Serializable
 case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
@@ -70,7 +70,6 @@ class GformsController(
   authAction: AuthAction,
   gformConnector: GformConnector,
   gformService: GformService,
-  githubService: GithubService,
   formTemplateValidator: FormTemplateValidator,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
@@ -235,6 +234,114 @@ class GformsController(
       Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
     }
 
+  private def getFilterList(filters: String) = filters.split(",").toList
+
+  def gformFormTemplatesWithPIIInTitleHome() = authAction.async { implicit request =>
+    Future.successful(
+      Ok(
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .gform_formtemplates_pii_home(
+            List.empty,
+            Some("name,email,business,auth.")
+          )
+      )
+    )
+  }
+
+  def gformFormTemplatesWithPIIInTitle = authAction.async { implicit request =>
+    gformFormTemplatesWithPIIInTitleForm
+      .bindFromRequest()
+      .fold(
+        error => {
+          logger.error("Failed to bind request to form for gformFormTemplatesWithPIIInTitle", error)
+          Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome()))
+        },
+        form =>
+          (for {
+            templateIds <- gformConnector.getAllGformsTemplates
+                             .map(_.as[List[FormTemplateId]].filterNot(_.value.startsWith("specimen-")))
+            formTemplatesWithPIIInTitle <-
+              Future.traverse(templateIds) { formTemplateId =>
+                gformConnector
+                  .getTitlesWithPII(formTemplateId.formTemplateRawId, getFilterList(form.filters), false)
+                  .map(p =>
+                    FormTemplateWithPIIInTitle(
+                      formTemplateId,
+                      Some(p.piis.size)
+                    )
+                  )
+                  .recover { case e =>
+                    FormTemplateWithPIIInTitle(
+                      formTemplateId,
+                      None,
+                      List(e.getMessage)
+                    )
+                  }
+              }
+          } yield Ok(
+            uk.gov.hmrc.eeittadminfrontend.views.html
+              .gform_formtemplates_pii(
+                formTemplatesWithPIIInTitle.sortBy(_.piiCount).reverse,
+                form.filters
+              )
+          )).recover { case e =>
+            InternalServerError("Failed to gformFormTemplatesWithPIIInTitle: " + e)
+          }
+      )
+  }
+
+  def gformFormTemplateWithPIIInTitleHome(
+    formTemplateId: FormTemplateId,
+    filters: String
+  ) = authAction.async { implicit request =>
+    getFormTemplatePIIDetails(formTemplateId, filters).map { formTemplateWithPIIInTitleDetails =>
+      Ok(
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .gform_formtemplate_pii(
+            formTemplateWithPIIInTitleDetails,
+            formTemplateId,
+            filters
+          )
+      )
+    }
+
+  }
+
+  def gformFormTemplateWithPIIInTitle = authAction.async { implicit request =>
+    gformFormTemplateWithPIIInTitleForm
+      .bindFromRequest()
+      .fold(
+        _ => Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome())),
+        form =>
+          getFormTemplatePIIDetails(form.formTemplateId, form.filters).map { formTemplateWithPIIInTitleDetails =>
+            Ok(
+              uk.gov.hmrc.eeittadminfrontend.views.html
+                .gform_formtemplate_pii(
+                  formTemplateWithPIIInTitleDetails,
+                  form.formTemplateId,
+                  form.filters
+                )
+            )
+          }
+      )
+  }
+
+  private def getFormTemplatePIIDetails(
+    formTemplateId: FormTemplateId,
+    filters: String
+  )(implicit
+    request: Request[AnyContent]
+  ): Future[FormTemplateWithPIIInTitleDetails] =
+    gformConnector
+      .getTitlesWithPII(formTemplateId.formTemplateRawId, getFilterList(filters), true)
+      .map(p =>
+        FormTemplateWithPIIInTitleDetails(
+          p.json.getOrElse("{}"),
+          formTemplateId,
+          p.piis
+        )
+      )
+
   def gformAnalytics =
     authAction.async { implicit request =>
       Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.analytics()))
@@ -283,5 +390,18 @@ class GformsController(
     mapping("formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply))(GformId.apply)(
       GformId.unapply
     )
+  )
+
+  val gformFormTemplatesWithPIIInTitleForm: Form[FormTemplatesWithPIIInTitleForm] = Form(
+    mapping("filters" -> text)(FormTemplatesWithPIIInTitleForm.apply)(
+      FormTemplatesWithPIIInTitleForm.unapply
+    )
+  )
+
+  val gformFormTemplateWithPIIInTitleForm: Form[FormTemplateWithPIIInTitleForm] = Form(
+    mapping(
+      "filters"        -> text,
+      "formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply)
+    )(FormTemplateWithPIIInTitleForm.apply)(FormTemplateWithPIIInTitleForm.unapply)
   )
 }

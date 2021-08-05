@@ -115,6 +115,14 @@
     ))
 }
 
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome) {
+    <h2 class="govuk-heading-m">List All Templates having PII in page titles</h2>
+    @govukButton(Button(
+        preventDoubleClick = true,
+        content = Text("List All Templates")
+    ))
+}
+
 @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.reloadTemplates) {
     <h2 class="govuk-heading-m">Reload all Gform Templates</h2>
     @govukButton(Button(
