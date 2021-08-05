@@ -261,25 +261,23 @@ class GformsController(
             templateIds <- gformConnector.getAllGformsTemplates
                              .map(_.as[List[FormTemplateId]].filterNot(_.value.startsWith("specimen-")))
             formTemplatesWithPIIInTitle <-
-              templateIds
-                .map(formTemplateId =>
-                  gformConnector
-                    .getTitlesWithPII(formTemplateId.formTemplateRawId, getFilterList(form.filters), false)
-                    .map(p =>
-                      FormTemplateWithPIIInTitle(
-                        formTemplateId,
-                        Some(p.piis.size)
-                      )
+              Future.traverse(templateIds) { formTemplateId =>
+                gformConnector
+                  .getTitlesWithPII(formTemplateId.formTemplateRawId, getFilterList(form.filters), false)
+                  .map(p =>
+                    FormTemplateWithPIIInTitle(
+                      formTemplateId,
+                      Some(p.piis.size)
                     )
-                    .recover { case e =>
-                      FormTemplateWithPIIInTitle(
-                        formTemplateId,
-                        None,
-                        List(e.getMessage)
-                      )
-                    }
-                )
-                .sequence
+                  )
+                  .recover { case e =>
+                    FormTemplateWithPIIInTitle(
+                      formTemplateId,
+                      None,
+                      List(e.getMessage)
+                    )
+                  }
+              }
           } yield Ok(
             uk.gov.hmrc.eeittadminfrontend.views.html
               .gform_formtemplates_pii(
