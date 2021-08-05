@@ -17,13 +17,11 @@
 @import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
-@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
-@import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
 @import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 
 @(
-  formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle], filters: String, authorization: Authorization)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+  formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle], filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukButton = @{new govukButton()}

@@ -19,7 +19,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitleDetails
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-@(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, authorization: Authorization, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @govukTable = @{new govukTable()}
 

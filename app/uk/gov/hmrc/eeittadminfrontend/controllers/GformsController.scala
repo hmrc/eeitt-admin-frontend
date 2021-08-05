@@ -33,9 +33,8 @@ import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result 
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.{ CachingService, GformService }
+import uk.gov.hmrc.eeittadminfrontend.services.GformService
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -72,9 +71,7 @@ class GformsController(
   gformConnector: GformConnector,
   gformService: GformService,
   formTemplateValidator: FormTemplateValidator,
-  messagesControllerComponents: MessagesControllerComponents,
-  cachingService: CachingService,
-  authorization: Authorization
+  messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
@@ -245,8 +242,7 @@ class GformsController(
         uk.gov.hmrc.eeittadminfrontend.views.html
           .gform_formtemplates_pii_home(
             List.empty,
-            Some("name,email,business,auth."),
-            authorization
+            Some("name,email,business,auth.")
           )
       )
     )
@@ -288,8 +284,7 @@ class GformsController(
             uk.gov.hmrc.eeittadminfrontend.views.html
               .gform_formtemplates_pii(
                 formTemplatesWithPIIInTitle.sortBy(_.piiCount).reverse,
-                form.filters,
-                authorization
+                form.filters
               )
           )).recover { case e =>
             InternalServerError("Failed to gformFormTemplatesWithPIIInTitle: " + e)
@@ -306,7 +301,6 @@ class GformsController(
         uk.gov.hmrc.eeittadminfrontend.views.html
           .gform_formtemplate_pii(
             formTemplateWithPIIInTitleDetails,
-            authorization,
             formTemplateId,
             filters
           )
@@ -326,7 +320,6 @@ class GformsController(
               uk.gov.hmrc.eeittadminfrontend.views.html
                 .gform_formtemplate_pii(
                   formTemplateWithPIIInTitleDetails,
-                  authorization,
                   form.formTemplateId,
                   form.filters
                 )
