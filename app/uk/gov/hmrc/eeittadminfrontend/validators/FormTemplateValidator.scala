@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.validators
 
 import cats.implicits._
+import cats.data.Validated
 import io.circe.optics.JsonPath._
 import io.circe.Json
 import uk.gov.hmrc.eeittadminfrontend.connectors.HMRCEmailRendererConnector
@@ -28,20 +29,31 @@ import scala.concurrent.{ ExecutionContext, Future }
 class FormTemplateValidator(hmrcEmailRendererConnector: HMRCEmailRendererConnector)(implicit ec: ExecutionContext) {
 
   def validate(json: Json)(implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
-    val maybeEmailTemplateId: Option[String] = root.emailTemplateId.string.getOption(json)
+    val maybeEmailTemplateIds: Option[List[String]] =
+      root.emailTemplateId.obj
+        .getOption(json)
+        .map(_.toMap.flatMap(_._2.asString.toList).filter(_.nonEmpty).toList)
+        .orElse(
+          root.emailTemplateId.string.getOption(json).map(List(_))
+        )
+
     val emailTemplateParams: Map[String, String] =
       root.emailParameters.each.emailTemplateVariable.string.getAll(json).map(v => (v, v)).toMap
 
-    maybeEmailTemplateId.fold(Future.successful(().asRight[String])) { emailTemplateId =>
-      hmrcEmailRendererConnector
-        .renderTemplate(EmailRenderRequest(emailTemplateId, emailTemplateParams))
-        .map {
-          case Successful => ().asRight[String]
-          case NotFound   => s"Email template '$emailTemplateId' not found".asLeft[Unit]
-          case ParametersNotFound(reason) =>
-            s"Email template parameters are missing: $reason".asLeft[Unit]
-          case Unexpected(reason) => reason.asLeft[Unit]
-        }
+    maybeEmailTemplateIds.fold(Future.successful(().asRight[String])) { emailTemplateIds =>
+      Future
+        .sequence(emailTemplateIds.map { emailTemplateId =>
+          hmrcEmailRendererConnector
+            .renderTemplate(EmailRenderRequest(emailTemplateId, emailTemplateParams))
+            .map {
+              case Successful => ().asRight[String]
+              case NotFound   => s"Email template '$emailTemplateId' not found. ".asLeft[Unit]
+              case ParametersNotFound(reason) =>
+                s"Email template parameters are missing: $reason. ".asLeft[Unit]
+              case Unexpected(reason) => s"$reason. ".asLeft[Unit]
+            }
+        })
+        .map(_.traverse(Validated.fromEither).toEither.right.map(_.head))
     }
   }
 }
