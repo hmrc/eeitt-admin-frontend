@@ -24,6 +24,7 @@ import cats.effect.IO
 import java.time.Instant
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
+import play.api.libs.json.Json
 import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
 import play.twirl.api.{ Html, HtmlFormat }
 import scala.concurrent.{ ExecutionContext, Future }
@@ -191,7 +192,10 @@ class DeploymentController(
   def delete(formTemplateId: FormTemplateId) =
     authAction.async { implicit request =>
       logger.info(s"${request.userData} is deleting ${formTemplateId.value}")
-      gformService.deleteTemplate(formTemplateId)
+      gformService.deleteTemplate(formTemplateId).map { deleteResults =>
+        logger.info(s"${request.userData} deleted ${formTemplateId.value}: $deleteResults")
+        Ok(Json.toJson(deleteResults))
+      }
     }
 
   def deploymentDeleted(formTemplateId: FormTemplateId) = authAction.async { implicit request =>

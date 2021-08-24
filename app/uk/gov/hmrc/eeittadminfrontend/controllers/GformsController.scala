@@ -224,7 +224,9 @@ class GformsController(
             Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm))),
           gformId => {
             logger.info(s"${request.userData} deleted ${gformId.formTemplateId} ")
-            gformConnector.deleteTemplate(gformId.formTemplateId)
+            gformConnector.deleteTemplate(gformId.formTemplateId).map { deleteResults =>
+              Ok(Json.toJson(deleteResults))
+            }
           }
         )
     }
