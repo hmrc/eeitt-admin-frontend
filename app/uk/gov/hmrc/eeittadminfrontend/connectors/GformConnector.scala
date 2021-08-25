@@ -19,12 +19,12 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import akka.http.scaladsl.model.StatusCodes
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import play.api.mvc.{ Result, Results }
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
+import uk.gov.hmrc.eeittadminfrontend.models.DeleteResults
 import scala.concurrent.{ ExecutionContext, Future }
 
 class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
@@ -90,13 +90,9 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
 
   def deleteTemplate(
     formTemplateId: FormTemplateId
-  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResults] =
     wsHttp
-      .DELETE[HttpResponse](gformUrl + s"/formtemplates/$formTemplateId")
-      .map(_ => Results.Ok(s"${formTemplateId.value} successfully deleted"))
-      .recover { case uk.gov.hmrc.http.Upstream4xxResponse(message, upstreamResponseCode, reportAs, headers) =>
-        Results.Ok(message)
-      }
+      .DELETE[DeleteResults](gformUrl + s"/formtemplates/$formTemplateId")
 
   def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(implicit
     ec: ExecutionContext

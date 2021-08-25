@@ -20,11 +20,10 @@ import cats.data.EitherT
 import io.circe.Json
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json.{ JsArray, JsString }
-import play.api.mvc.Result
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.MongoContent
-import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId }
+import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, DeleteResults, FormTemplateId }
 import uk.gov.hmrc.http.HeaderCarrier
 
 class GformService(gformConnector: GformConnector) {
@@ -69,6 +68,6 @@ class GformService(gformConnector: GformConnector) {
   def deleteTemplate(formTemplateId: FormTemplateId)(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): Future[Result] = gformConnector.deleteTemplate(formTemplateId)
+  ): Future[DeleteResults] = gformConnector.deleteTemplate(formTemplateId)
 
 }
