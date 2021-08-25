@@ -39,7 +39,7 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   def getGformsTemplate(
     formTemplateId: FormTemplateId
   )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = gformUrl + s"/formtemplates/$formTemplateId/raw"
+    val url = gformUrl + s"/formtemplates/$formTemplateId/raw/sensitive"
     wsHttp
       .doGet(url)
       .map { response =>
@@ -92,7 +92,7 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResults] =
     wsHttp
-      .DELETE[DeleteResults](gformUrl + s"/formtemplates/$formTemplateId")
+      .DELETE[DeleteResults](gformUrl + s"/formtemplates/$formTemplateId/sensitive")
 
   def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(implicit
     ec: ExecutionContext
