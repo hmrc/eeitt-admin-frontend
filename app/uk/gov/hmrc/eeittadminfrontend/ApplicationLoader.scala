@@ -231,6 +231,7 @@ class ApplicationModule(context: Context)
       githubService,
       deploymentService,
       cachingService,
+      formTemplateValidator,
       githubAuthorization,
       messagesControllerComponents
     )(
