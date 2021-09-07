@@ -35,6 +35,7 @@ import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.govukfrontend.views.html.components._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
@@ -45,6 +46,7 @@ class DeploymentController(
   githubService: GithubService,
   deploymentService: DeploymentService,
   cachingService: CachingService,
+  formTemplateValidator: FormTemplateValidator,
   authorization: Authorization,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig)
@@ -165,8 +167,10 @@ class DeploymentController(
           (
             EitherT(gformService.getFormTemplate(formTemplateId)),
             githubService.getCommit(githubContent.commitSha).mapK(ioToFuture),
-            EitherT.right[String](deploymentService.find(formTemplateId))
-          ).parMapN { case (mongoTemplate, commit, deploymentRecords) =>
+            EitherT.right[String](deploymentService.find(formTemplateId)),
+            EitherT.liftF[Future, String, Either[String, Unit]](formTemplateValidator.validate(githubContent.json))
+          ).parMapN { case (mongoTemplate, commit, deploymentRecords, validationResult) =>
+            val validationWarning: Option[String] = validationResult.swap.toOption
             val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent)
             val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
             val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
@@ -181,7 +185,8 @@ class DeploymentController(
                   inSync,
                   deploymentRecords.headOption,
                   lastCommitCheck,
-                  authorization
+                  authorization,
+                  validationWarning
                 )
             )
           }
