@@ -35,7 +35,6 @@
 
 @formWithCSRF = @{new formWithCSRF()}
 @govukButton = @{new govukButton()}
-@govukErrorSummary = @{new govukErrorSummary()}
 
 @uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
 
@@ -47,10 +46,7 @@
 
     @last_deployment(maybeDeploymentRecord)
 
-    @validationWarning.fold(HtmlFormat.empty)(warning => govukErrorSummary(ErrorSummary(
-        title = Text("Email template validation problem"),
-        description = Text(warning)
-    )))
+    @validation_problem(validationWarning)
 
     <ul class="govuk-list govuk-list--bullet">
         <li>

@@ -215,15 +215,24 @@ class DeploymentController(
     authAction.async { implicit request =>
       withLastCommit { lastCommitCheck =>
         withGithubContentFromCache(filename) { githubContent =>
-          githubService
-            .getCommit(githubContent.commitSha)
-            .map { commit =>
-              Ok(
-                uk.gov.hmrc.eeittadminfrontend.views.html
-                  .deployment_new(formTemplateId, commit, githubContent, filename, lastCommitCheck, authorization)
-              )
-            }
-            .mapK(ioToFuture)
+          (
+            githubService.getCommit(githubContent.commitSha).mapK(ioToFuture),
+            EitherT.liftF[Future, String, Either[String, Unit]](formTemplateValidator.validate(githubContent.json))
+          ).parMapN { case (commit, validationResult) =>
+            val validationWarning: Option[String] = validationResult.swap.toOption
+            Ok(
+              uk.gov.hmrc.eeittadminfrontend.views.html
+                .deployment_new(
+                  formTemplateId,
+                  commit,
+                  githubContent,
+                  filename,
+                  lastCommitCheck,
+                  authorization,
+                  validationWarning
+                )
+            )
+          }
         }
       }
     }
