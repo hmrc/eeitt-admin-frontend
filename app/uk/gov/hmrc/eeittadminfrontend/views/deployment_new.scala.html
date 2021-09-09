@@ -26,7 +26,8 @@
   githubContent: GithubContent,
   filename: Filename,
   lastCommitCheck: LastCommitCheck,
-  authorization: Authorization
+  authorization: Authorization,
+  validationWarning: Option[String]
 )(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
 
 @formWithCSRF = @{new formWithCSRF()}
@@ -39,6 +40,8 @@
     <h2 class="govuk-heading-m">New deployment @formTemplateId</h2>
 
     @last_modified(authorization, githubContent, commit)
+
+    @validation_problem(validationWarning)
 
     <ul class="govuk-list govuk-list--bullet">
         <li>
