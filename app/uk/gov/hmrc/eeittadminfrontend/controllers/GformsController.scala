@@ -326,6 +326,8 @@ class GformsController(
           .map { filePart =>
             FileIO
               .fromPath(filePart.ref.getAbsoluteFile.toPath)
+              .map(_.utf8String.replaceAll("\r\n", "\n"))
+              .map(ByteString(_))
               .via(
                 Framing
                   .delimiter(ByteString("\n"), 100, true)
@@ -334,7 +336,10 @@ class GformsController(
               .mapAsync(1)((lines: Seq[ByteString]) =>
                 gformConnector.saveDBLookupIds(
                   collectionName,
-                  lines.map(_.utf8String).filter(_.trim().nonEmpty).map(DbLookupId.apply)
+                  lines
+                    .map(_.utf8String)
+                    .filter(_.trim().nonEmpty)
+                    .map(DbLookupId.apply)
                 )
               )
               .toMat(Sink.ignore)(Keep.right)
