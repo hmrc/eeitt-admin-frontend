@@ -19,17 +19,14 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
 import akka.util.ByteString
-import cats.data.EitherT
 import cats.syntax.all._
-import io.circe.{ DecodingFailure, ParsingFailure }
 import julienrf.json.derived
-import org.apache.commons.codec.binary.Base64
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import play.api.libs.json._
-import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
+import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -139,38 +136,6 @@ class GformsController(
           }
         )
     }
-
-  def saveGformSchema =
-    authAction.async(parse.multipartFormData) { implicit request =>
-      val rawJson = new String(Base64.decodeBase64(request.body.dataParts("template").mkString), "UTF-8")
-
-      val result: EitherT[Future, String, Result] =
-        for {
-          formTemplate   <- parseRawJson(rawJson).leftMap(e => "Not a valid json: " + e.getMessage + "\n\n" + rawJson)
-          _              <- EitherT(formTemplateValidator.validate(formTemplate))
-          formTemplateId <- getFormTemplateId(formTemplate).leftMap(decodingFailure => "No '_id' field defined.")
-          _              <- saveTemplate(formTemplateId, formTemplate)
-        } yield {
-          logger.info(s"${request.userData} saved ID: ${formTemplateId.value}")
-          Ok("Saved")
-        }
-
-      result
-        .leftMap(error => Redirect(routes.GformsController.gformPage()).flashing("error" -> error))
-        .value
-        .map(_.merge)
-    }
-
-  private def saveTemplate(formTemplateId: FormTemplateId, formTemplate: io.circe.Json) =
-    gformService.saveTemplate(formTemplateId, formTemplate)
-
-  private def parseRawJson(rawJson: String): EitherT[Future, ParsingFailure, io.circe.Json] =
-    EitherT.fromEither[Future](io.circe.parser.parse(rawJson))
-
-  private def getFormTemplateId(
-    formTemplate: io.circe.Json
-  ): EitherT[Future, DecodingFailure, FormTemplateId] =
-    EitherT.fromEither[Future](formTemplate.hcursor.downField("_id").as[String].map(FormTemplateId.apply))
 
   def getAllTemplates =
     authAction.async { implicit request =>

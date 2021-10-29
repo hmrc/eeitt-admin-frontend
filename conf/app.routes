@@ -16,7 +16,6 @@ GET        /form-template-pii-home/:formTemplateId          uk.gov.hmrc.eeittadm
 POST       /form-template-pii                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplateWithPIIInTitle
 GET        /reload-templates                                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
 GET        /get-all-schema                                  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
-POST       /save-template                                   uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.saveGformSchema
 POST       /template                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
 GET        /gform-analytics                                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 GET        /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage

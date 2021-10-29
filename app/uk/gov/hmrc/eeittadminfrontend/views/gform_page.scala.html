@@ -80,33 +80,6 @@
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.saveGformSchema, args = 'class -> "js-form", 'enctype -> "multipart/form-data", 'autocomplete -> "off") {
-    <h2 class="govuk-heading-m">Save a template (disabled)</h2>
-
-    <p class="govuk-body">
-        <a class="govuk-link" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentHome.path">Use Deployment tab</a>
-    </p>
-
-    @govukTextarea(Textarea(
-        id = "template",
-        name = "template",
-        rows = 8,
-        value= Some(""),
-        label = Label(
-            isPageHeading = true,
-            classes = "govuk-label--s",
-            content = Text("Json Template:")
-        ),
-        attributes = Map("disabled" -> "true")
-    ))
-    @govukButton(Button(
-        disabled = true,
-        preventDoubleClick = true,
-        content = Text("Save"),
-        attributes = Map("onclick" -> "encode()")
-    ))
-}
-
 @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates) {
     <h2 class="govuk-heading-m">List all Gform Templates</h2>
     @govukButton(Button(
