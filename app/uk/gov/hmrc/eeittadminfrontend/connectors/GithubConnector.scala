@@ -38,7 +38,7 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
 
   val repoOwner = authorization.repoOwner
   val repoName = authorization.repoName
-  val master = Some("master")
+  val main = Some("main")
 
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
   val httpClient: Client[IO] = {
@@ -97,7 +97,7 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
     logger.debug(s"Fetching list of templates from Github")
 
     val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
-      gh.repos.getContents(repoOwner, repoName, ".", master)
+      gh.repos.getContents(repoOwner, repoName, ".", main)
 
     searchResults.map { response =>
       response.result match {
