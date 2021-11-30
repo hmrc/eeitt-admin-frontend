@@ -40,7 +40,7 @@ import uk.gov.hmrc.eeittadminfrontend.metrics.MetricsModule
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.playcomponents.{ FrontendFiltersModule, PlayBuiltInsModule }
 import uk.gov.hmrc.eeittadminfrontend.repo.DeploymentRepo
-import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, CachingService, DeploymentService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.services.{ AuthService, BatchUploadService, CachingService, DeploymentService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.testonly._
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttpModule
@@ -48,7 +48,7 @@ import uk.gov.hmrc.play.health.HealthController
 import uk.gov.hmrc.play.language.LanguageUtils
 import uk.gov.hmrc.govukfrontend.controllers.{ Assets => GovukAssets }
 import uk.gov.hmrc.hmrcfrontend.config.LanguageConfig
-import uk.gov.hmrc.hmrcfrontend.controllers.{ Assets => HmrcAssets, KeepAliveController, LanguageController }
+import uk.gov.hmrc.hmrcfrontend.controllers.{ KeepAliveController, LanguageController, Assets => HmrcAssets }
 import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyModule
 
 class ApplicationLoader extends play.api.ApplicationLoader {
@@ -200,6 +200,7 @@ class ApplicationModule(context: Context)
   val deploymentService: DeploymentService = new DeploymentService(deploymentRepo)
   val githubService: GithubService = new GithubService(githubConnector)
   val cachingService: CachingService = new CachingService(githubService)
+  val batchUploadService: BatchUploadService = new BatchUploadService(gformConnector)
 
   val hmrcEmailRendererConnector =
     new HMRCEmailRendererConnector(
@@ -216,6 +217,7 @@ class ApplicationModule(context: Context)
       gformConnector,
       gformService,
       formTemplateValidator,
+      batchUploadService,
       messagesControllerComponents
     )(
       executionContext,
