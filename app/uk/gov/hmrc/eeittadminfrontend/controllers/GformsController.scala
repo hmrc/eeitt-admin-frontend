@@ -25,13 +25,14 @@ import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
+import play.api.libs.Files.TemporaryFile.temporaryFileToPath
 import play.api.libs.json._
 import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request }
 import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
 import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.services.GformService
+import uk.gov.hmrc.eeittadminfrontend.services.{ BatchUploadService, GformService }
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -68,6 +69,7 @@ class GformsController(
   gformConnector: GformConnector,
   gformService: GformService,
   formTemplateValidator: FormTemplateValidator,
+  batchUploadService: BatchUploadService,
   messagesControllerComponents: MessagesControllerComponents
 )(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
@@ -357,6 +359,22 @@ class GformsController(
           .getOrElse(Future.successful(BadRequest("'file' param is missing")))
       }
     }
+
+  def uploadGformTemplates() = authAction.async(parse.multipartFormData) { implicit request =>
+    val file = temporaryFileToPath(request.body.file("file").get.ref)
+    batchUploadService.uploadZip(file.toFile).map { result =>
+      Redirect(routes.GformsController.uploadGformTemplatesStatus())
+    }
+  }
+
+  def uploadGformTemplatesStatus() = authAction.async { implicit request =>
+    Future.successful {
+      Ok(
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .batch_upload(batchUploadService.processedTemplates.toList, batchUploadService.done)
+      )
+    }
+  }
 
   val gFormForm: Form[GformId] = Form(
     mapping("formTemplateId" -> mapping("value" -> text)(FormTemplateId.apply)(FormTemplateId.unapply))(GformId.apply)(

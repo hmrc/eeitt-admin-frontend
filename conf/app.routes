@@ -20,6 +20,8 @@ POST       /template                                        uk.gov.hmrc.eeittadm
 GET        /gform-analytics                                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 GET        /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 POST       /db-lookup-file-upload                           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
+POST       /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplates
+GET        /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplatesStatus
 
 GET        /download/:formTemplateId                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
 

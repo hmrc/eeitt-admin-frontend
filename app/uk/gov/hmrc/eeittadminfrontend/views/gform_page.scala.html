@@ -145,4 +145,22 @@
     ))
 }
 
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.uploadGformTemplates, args = 'enctype -> "multipart/form-data") {
+        <h2 class="govuk-heading-m">Upload all Gform templates from a zip</h2>
+
+        @govukFileUpload(FileUpload(
+            name = "file",
+            id = "file",
+            label = Label(
+                classes = "govuk-label--s",
+                content = Text("")
+            )
+        ))
+
+        @govukButton(Button(
+            preventDoubleClick = true,
+            content = Text("Upload templates")
+        ))
+    }
+
 }
