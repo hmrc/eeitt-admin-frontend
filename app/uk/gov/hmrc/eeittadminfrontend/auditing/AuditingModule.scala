@@ -20,8 +20,9 @@ import com.kenshoo.play.metrics.Metrics
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.eeittadminfrontend.akka.AkkaModule
 import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
+import uk.gov.hmrc.play.audit.{ DefaultAuditChannel, DefaultAuditConnector }
 import uk.gov.hmrc.play.audit.http.connector.{ AuditChannel, AuditConnector, DatastreamMetrics }
-import uk.gov.hmrc.play.bootstrap.audit.{ DefaultAuditChannel, DefaultAuditConnector, DisabledDatastreamMetricsProvider }
+import uk.gov.hmrc.play.bootstrap.audit.DisabledDatastreamMetricsProvider
 
 import scala.concurrent.ExecutionContext
 

@@ -18,8 +18,10 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{ aResponse, post, stubFor, urlEqualTo }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.time.{ Millis, Seconds, Span }
-import org.scalatest.{ BeforeAndAfterAll, FlatSpecLike, Matchers }
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
 import uk.gov.hmrc.eeittadminfrontend.common.{ WSHttpForWiremockSupport, WiremockSupport }
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, NotFound, ParametersNotFound, Successful, Unexpected }
 import uk.gov.hmrc.http.HeaderCarrier
@@ -27,7 +29,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class HMRCEmailRendererConnectorSpec
-    extends FlatSpecLike with Matchers with ScalaFutures with WiremockSupport with WSHttpForWiremockSupport
+    extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with WSHttpForWiremockSupport
     with BeforeAndAfterAll {
 
   override implicit val patienceConfig = PatienceConfig(Span(5, Seconds), Span(500, Millis))

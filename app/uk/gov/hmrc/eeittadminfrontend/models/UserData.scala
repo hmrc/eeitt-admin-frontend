@@ -26,6 +26,6 @@ case class UserData(username: Username, email: Email) {
 case class Username(value: String) extends AnyVal
 
 object Username {
-  implicit val handler: BSONHandler[Username] = Macros.valueHandler[Username]
+  implicit val handler: BSONHandler[Username] = Macros.handler[Username]
   implicit val format: Format[Username] = ValueClassFormatter.format(Username.apply)(_.value)
 }

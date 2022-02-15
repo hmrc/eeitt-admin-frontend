@@ -18,8 +18,9 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.Validated
 import cats.syntax.all._
-import org.scalatest.{ Matchers, WordSpec }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.http.Status
 import play.api.mvc.{ AnyContentAsEmpty, Headers, Result }
 import play.api.test.Helpers.stubMessagesControllerComponents
@@ -29,7 +30,7 @@ import uk.gov.hmrc.eeittadminfrontend.controllers.auth.SecuredActionsImpl
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.AuthService
 
-class AuthControllerSpec extends WordSpec with ApplicationComponentsOnePerSuite with ScalaFutures with Matchers {
+class AuthControllerSpec extends AnyWordSpec with ApplicationComponentsOnePerSuite with ScalaFutures with Matchers {
 
   override def additionalConfiguration: Map[String, Any] =
     Map("basicAuth.whitelist" -> "192.168.1.1", "feature.basicAuthEnabled" -> true)

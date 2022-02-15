@@ -30,13 +30,14 @@ class DeploymentRepo(
 )(implicit ec: ExecutionContext) {
 
   private val collectionName: String = "deployment"
+  private val projection = BSONDocument("_id" -> false)
 
   private def collection: Future[BSONCollection] =
     reactiveMongoApi.database.map(_.collection[BSONCollection](collectionName))
 
   def get(formTemplateId: FormTemplateId): Future[List[DeploymentRecord]] =
     collection.flatMap(
-      _.find(BSONDocument("formTemplateId" -> formTemplateId.value))
+      _.find(BSONDocument("formTemplateId" -> formTemplateId.value), Some(projection))
         .sort(BSONDocument("createdAt" -> -1))
         .cursor[DeploymentRecord]()
         .collect[List](-1, Cursor.FailOnError[List[DeploymentRecord]]())
