@@ -37,7 +37,7 @@ trait ApplicationComponentsOnePerSuite extends BaseOneAppPerSuite with FakeAppli
 
   protected implicit val materializer = app.materializer
 
-  protected lazy val initialConfig = context.initialConfiguration ++ additionalConfig
+  protected lazy val initialConfig = context.initialConfiguration withFallback additionalConfig
 
   override def fakeApplication = new ApplicationLoader().load(context.copy(initialConfiguration = initialConfig))
 

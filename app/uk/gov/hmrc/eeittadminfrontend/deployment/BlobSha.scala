@@ -25,6 +25,6 @@ case class BlobSha(value: String) extends AnyVal {
 }
 
 object BlobSha {
-  implicit val handler: BSONHandler[BlobSha] = Macros.valueHandler[BlobSha]
+  implicit val handler: BSONHandler[BlobSha] = Macros.handler[BlobSha]
   implicit val format: Format[BlobSha] = ValueClassFormatter.format(BlobSha.apply)(_.value)
 }

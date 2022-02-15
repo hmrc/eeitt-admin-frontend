@@ -23,6 +23,6 @@ import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 case class Filename(value: String) extends AnyVal
 
 object Filename {
-  implicit val handler: BSONHandler[Filename] = Macros.valueHandler[Filename]
+  implicit val handler: BSONHandler[Filename] = Macros.handler[Filename]
   implicit val format: Format[Filename] = ValueClassFormatter.format(Filename.apply)(_.value)
 }

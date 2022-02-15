@@ -35,6 +35,5 @@ class ConfigModule(val context: ApplicationLoader.Context) {
 
   val controllerConfigs = ControllerConfigs.fromConfig(playConfiguration)
 
-  val auditingConfig: AuditingConfig =
-    new AuditingConfigProvider(playConfiguration, frontendAppConfig.appName).get()
+  val auditingConfig: AuditingConfig = AuditingConfig.fromConfig(playConfiguration)
 }
