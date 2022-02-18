@@ -19,12 +19,12 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import akka.http.scaladsl.model.StatusCodes
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
-import uk.gov.hmrc.eeittadminfrontend.models.DeleteResults
+
 import scala.concurrent.{ ExecutionContext, Future }
 
 class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
@@ -120,4 +120,9 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
       gformUrl + s"/formtemplates/get-titles-with-pii/${formTemplateRawId.value}?includeJson=$includeJson${if (filters.isEmpty) ""
       else "&filters=" + filters.mkString(",")}"
     )
+
+  def getFormCount(
+    formTemplateId: FormTemplateId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[SavedForm] =
+    wsHttp.GET[SavedForm](gformUrl + s"/forms-data/${formTemplateId.value}")
 }

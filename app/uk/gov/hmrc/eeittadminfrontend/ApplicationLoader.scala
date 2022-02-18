@@ -260,6 +260,13 @@ class ApplicationModule(context: Context)
     messagesControllerComponents
   )(executionContext, configModule.frontendAppConfig)
 
+  val savedDataController = new SavedDataController(
+    authModule.authConnector,
+    authAction,
+    gformConnector,
+    messagesControllerComponents
+  )(executionContext, configModule.frontendAppConfig)
+
   val appRoutes = new app.Routes(
     httpErrorHandler,
     govukRoutes,
@@ -270,6 +277,7 @@ class ApplicationModule(context: Context)
     fileUploadController,
     submissionController,
     submissionConsolidatorController,
+    savedDataController,
     this.assets
   )
 

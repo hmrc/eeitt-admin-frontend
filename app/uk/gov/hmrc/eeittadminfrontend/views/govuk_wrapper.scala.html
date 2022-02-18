@@ -95,6 +95,11 @@ backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConf
                 active = if(tab == "submissions") true else false
             ),
             HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.savedData().path),
+                content = Text("Saved Data"),
+                active = if(tab == "saved-data") true else false
+            ),
+            HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformAnalytics.path),
                 content = Text("Analytics"),
                 active = if(tab == "analytics") true else false
