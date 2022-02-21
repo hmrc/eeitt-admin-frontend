@@ -124,5 +124,5 @@ class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
   def getFormCount(
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[SavedForm] =
-    wsHttp.GET[SavedForm](gformUrl + s"/forms-data/${formTemplateId.value}")
+    wsHttp.GET[SavedForm](gformUrl + s"/formStatistics/${formTemplateId.value}")
 }
