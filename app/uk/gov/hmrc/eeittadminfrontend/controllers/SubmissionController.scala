@@ -17,29 +17,29 @@
 package uk.gov.hmrc.eeittadminfrontend
 package controllers
 
+import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 
 import java.time.{ LocalDateTime, ZoneId }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.{ FileUploadConnector, GformConnector }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ Envelope, EnvelopeId }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AttachmentCheck, FormTemplateId, Pagination, Submission }
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class SubmissionController(
-  val authConnector: AuthConnector,
-  authAction: AuthAction,
+class SubmissionController @Inject() (
+  frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   fileUploadConnector: FileUploadConnector,
-  messagesControllerComponents: MessagesControllerComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+  messagesControllerComponents: MessagesControllerComponents,
+  submissionView: uk.gov.hmrc.eeittadminfrontend.views.html.submission,
+  submissionsView: uk.gov.hmrc.eeittadminfrontend.views.html.submissions
+)(implicit ec: ExecutionContext)
+    extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -50,7 +50,7 @@ class SubmissionController(
           val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
             case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
           }
-          Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submissions(ftIds.sortBy(_.value)))
+          Ok(submissionsView(ftIds.sortBy(_.value)))
         case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
       }
     }
@@ -60,8 +60,9 @@ class SubmissionController(
 
   def submission(formTemplateId: FormTemplateId, page: Int) =
     authAction.async { implicit request =>
+      val username = request.retrieval.value
       val checkedPage = Math.max(0, page)
-      logger.info(s"${request.userData} looking at submissions for $formTemplateId page $checkedPage")
+      logger.info(s"$username looking at submissions for $formTemplateId page $checkedPage")
       gformConnector.getAllSubmissons(formTemplateId, Math.max(0, checkedPage), Pagination.pageSize).flatMap {
         case submissionPageData =>
           val submissions = submissionPageData.submissions
@@ -78,11 +79,11 @@ class SubmissionController(
                         (submission, envelope, AttachmentCheck.CountDoesNotMatch(envelope.files.size))
                     case None =>
                       logger
-                        .warn(s"${request.userData} failed to parse envelopeId $envelopeId. Json payload: $jsValue")
+                        .warn(s"$username failed to parse envelopeId $envelopeId. Json payload: $jsValue")
                       (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.CannotParseEnvelope)
                   }
                 case Left(error) =>
-                  logger.warn(s"${request.userData} failed to retrieve envelopeId $envelopeId. Error: $error")
+                  logger.warn(s"$username failed to retrieve envelopeId $envelopeId. Error: $error")
                   (submission, Envelope.nonExistentEnvelope(envelopeId), AttachmentCheck.EnvelopeDoesNotExists)
               }
             }
@@ -90,7 +91,7 @@ class SubmissionController(
           val pagination = Pagination(submissionPageData.count, checkedPage, submissions.size)
 
           submissionsWithCheck.map { data =>
-            Ok(uk.gov.hmrc.eeittadminfrontend.views.html.submission(formTemplateId, pagination, data))
+            Ok(submissionView(formTemplateId, pagination, data))
           }
       }
     }

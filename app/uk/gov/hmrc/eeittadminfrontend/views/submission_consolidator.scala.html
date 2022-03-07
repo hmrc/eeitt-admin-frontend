@@ -14,24 +14,21 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.submissionconsolidator.ManualConsolidationForm
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@(form: Form[ManualConsolidationForm])(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@this(
+  main_template: main_template
+)
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
-@govukButton = @{new govukButton()}
-@govukSelect = @{new govukSelect(new govukErrorMessage, new govukHint, new govukLabel)}
+@(form: Form[ManualConsolidationForm])(implicit request : Request[_], messages: Messages)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Submission Consolidator", tab = "submissionconsolidator") {
+@main_template(title = "Submission Consolidator", tab = "submissionconsolidator") {
 
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.consolidate) {
+@FormWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.consolidate) {
 <h2 class="govuk-heading-m">Consolidate Submissions</h2>
 
-@govukSelect(
+@GovukSelect(
   Select(
         id = "consolidatorJobId",
         name = "consolidatorJobId",
@@ -60,7 +57,7 @@
   )
 )
 
-@govukInput(Input(
+@GovukInput(Input(
     id = "value",
     name = "startDate",
     label = Label(
@@ -70,7 +67,7 @@
     )
 ))
 
-@govukInput(Input(
+@GovukInput(Input(
     id = "value",
     name = "endDate",
     label = Label(
@@ -80,7 +77,7 @@
     )
 ))
 
-@govukButton(Button(
+@GovukButton(Button(
     preventDoubleClick = true,
     content = Text("Consolidate")
 ))

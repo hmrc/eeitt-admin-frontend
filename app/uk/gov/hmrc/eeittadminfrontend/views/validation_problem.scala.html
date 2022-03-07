@@ -14,16 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this()
 
 @(
     validationWarning: Option[String]
-)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+)(implicit request : Request[_], messages: Messages)
 
-@govukErrorSummary = @{new govukErrorSummary()}
-
-@validationWarning.fold(HtmlFormat.empty)(warning => govukErrorSummary(ErrorSummary(
+@validationWarning.fold(HtmlFormat.empty)(warning => GovukErrorSummary(ErrorSummary(
     title = Text("Email template validation problem"),
     description = Text(warning)
 )))

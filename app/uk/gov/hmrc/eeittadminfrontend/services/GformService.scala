@@ -18,6 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.services
 
 import cats.data.EitherT
 import io.circe.Json
+import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json.{ JsArray, JsString }
 import scala.concurrent.{ ExecutionContext, Future }
@@ -26,7 +27,7 @@ import uk.gov.hmrc.eeittadminfrontend.deployment.MongoContent
 import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, DeleteResults, FormTemplateId }
 import uk.gov.hmrc.http.HeaderCarrier
 
-class GformService(gformConnector: GformConnector) {
+class GformService @Inject() (gformConnector: GformConnector) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 

@@ -16,24 +16,24 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import javax.inject.Inject
 import play.api.i18n.I18nSupport
 import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import scala.concurrent.ExecutionContext
 
-class SavedDataController(
-  val authConnector: AuthConnector,
-  authAction: AuthAction,
+class SavedDataController @Inject() (
+  frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
-  messagesControllerComponents: MessagesControllerComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+  messagesControllerComponents: MessagesControllerComponents,
+  saved_data: uk.gov.hmrc.eeittadminfrontend.views.html.saved_data,
+  saved_data_formtemplates: uk.gov.hmrc.eeittadminfrontend.views.html.saved_data_formtemplates
+)(implicit ec: ExecutionContext)
+    extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def savedData() =
     authAction.async { implicit request =>
@@ -42,7 +42,7 @@ class SavedDataController(
           val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
             case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
           }
-          Ok(uk.gov.hmrc.eeittadminfrontend.views.html.saved_data_formtemplates(ftIds.sortBy(_.value)))
+          Ok(saved_data_formtemplates(ftIds.sortBy(_.value)))
         case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
       }
     }
@@ -50,7 +50,7 @@ class SavedDataController(
   def findSavedData(formTemplateId: FormTemplateId) =
     authAction.async { implicit request =>
       gformConnector.getFormCount(formTemplateId).map { case savedData =>
-        Ok(uk.gov.hmrc.eeittadminfrontend.views.html.saved_data(savedData))
+        Ok(saved_data(savedData))
       }
     }
 

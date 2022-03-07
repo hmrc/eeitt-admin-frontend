@@ -14,11 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@this(
+  main_template: main_template
+)
 
-@(savedForm: SavedForm)(implicit messages: Messages, appConfig: AppConfig)
+@(savedForm: SavedForm)(implicit messages: Messages)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = s"Saved Data for ${savedForm.formTemplateId.value}", tab = "saved-data"){
+@main_template(title = s"Saved Data for ${savedForm.formTemplateId.value}", tab = "saved-data"){
 
     <table class="govuk-table stats-table">
         <thead class="govuk-table__head">

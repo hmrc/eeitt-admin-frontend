@@ -14,14 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitleDetails
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
-@(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+@this(
+  main_template: main_template
+)
 
-@govukTable = @{new govukTable()}
+@(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages)
 
 @getPosLink(pos: Pos) = @{
    val posValue = if(pos.start == pos.end) pos.start.toString else s"${pos.start} - ${pos.end}"
@@ -46,7 +47,7 @@
 
     <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' with filters '@{filters}'</h2>
 
-    @govukTable(
+    @GovukTable(
         Table(
             rows = tableRows,
             head = Some(

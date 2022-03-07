@@ -15,11 +15,15 @@
  *@
 
 @import github4s.domain.RefCommit
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.github.{Authorization, LastCommitCheck}
 @import uk.gov.hmrc.eeittadminfrontend.deployment.{DeploymentRecord, Filename, GithubContent}
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  deployment_last_commit_check: deployment_last_commit_check,
+  validation_problem: validation_problem,
+  main_template: main_template
+)
 
 @(formTemplateId: FormTemplateId,
   diff: Html,
@@ -31,12 +35,9 @@
   lastCommitCheck: LastCommitCheck,
   authorization: Authorization,
   validationWarning: Option[String]
-)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+)(implicit request : Request[_], messages: Messages)
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukButton = @{new govukButton()}
-
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+@main_template(title = "Deployment ", tab = "deployment") {
 
     @deployment_last_commit_check(lastCommitCheck, authorization)
 
@@ -60,13 +61,13 @@
         </li>
     </ul>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
         @if(inSync) {
             <h3 class="govuk-heading-m">Template is up to date</h3>
         } else {
             @diff
         }
-        @govukButton(Button(
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Deploy")
         ))

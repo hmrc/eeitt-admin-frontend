@@ -14,22 +14,23 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  main_template: main_template
+)
 
 @(
     formTemplateId: FormTemplateId,
     deploymentTable: Table,
     diff: Html
 )(
-    implicit messages: Messages, appConfig: AppConfig
+    implicit messages: Messages
 )
 
-@govukTable = @{new govukTable()}
-
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+@main_template(title = "Deployment ", tab = "deployment") {
     <h2 class="govuk-heading-m">Deployment History of @formTemplateId</h2>
-    @govukTable(deploymentTable)
+    @GovukTable(deploymentTable)
 
     @diff
 

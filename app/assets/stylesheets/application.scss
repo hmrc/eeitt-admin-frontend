@@ -4,26 +4,6 @@ $hmrc-assets-path: "/eeitt-admin-frontend/assets/lib/hmrc-frontend/hmrc/";
 @import "lib/govuk-frontend/govuk/all";
 @import "lib/hmrc-frontend/hmrc/all";
 
-.app-reference-number {
-  display: block;
-  font-weight: bold;
-}
-
-.hmrc-banner {
-    padding-bottom: 0px;
-}
-
-.hmrc-language-select__list {
-    margin-top: 0em;
-    margin-bottom: 0em;
-}
-
-.hmrc-page-heading {
-    margin-top: 0em;
-    margin-bottom: 0.75em;
-    padding-top: 0px;
-}
-
 .in-sync {
     background-image: url("icons/check.png");
     background-repeat: no-repeat;

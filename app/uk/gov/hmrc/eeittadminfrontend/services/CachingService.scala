@@ -22,6 +22,7 @@ import cats.syntax.all._
 import github4s.domain.{ Commit, Content }
 import java.util.concurrent.atomic.{ AtomicInteger }
 import java.util.concurrent.CountDownLatch
+import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename, GithubContent }
 import scala.collection.concurrent.TrieMap
@@ -39,7 +40,7 @@ object RefreshCache {
   case class Progress(progress: Int, total: Int, commit: Option[Commit])
 }
 
-class CachingService(githubService: GithubService) {
+class CachingService @Inject() (githubService: GithubService) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 

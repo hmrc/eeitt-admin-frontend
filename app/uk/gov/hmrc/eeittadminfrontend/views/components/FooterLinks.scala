@@ -17,41 +17,16 @@
 package uk.gov.hmrc.eeittadminfrontend.views.components
 
 import play.api.i18n.Messages
-import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.FooterItem
 
 object FooterLinks {
 
-  def cookieLink(appConfig: AppConfig)(implicit messages: Messages) =
-    FooterItem(
-      Some(messages("footer.links.Cookies")),
-      Some(appConfig.footerCookiesUrl)
-    )
-
-  def privacyLink(appConfig: AppConfig)(implicit messages: Messages) =
-    FooterItem(
-      Some(messages("footer.links.PrivacyPolicy")),
-      Some(appConfig.footerPrivacyPolicyUrl)
-    )
-
-  def termsConditionsLink(appConfig: AppConfig)(implicit messages: Messages) =
-    FooterItem(
-      Some(messages("footer.links.TermsConditions")),
-      Some(appConfig.footerTermsConditionsUrl)
-    )
-
-  def helpLink(appConfig: AppConfig)(implicit messages: Messages) =
-    FooterItem(
-      Some(messages("footer.links.Help")),
-      Some(appConfig.footerHelpUrl)
-    )
-
-  def items(appConfig: AppConfig)(implicit messages: Messages) =
+  def items(implicit messages: Messages) =
     Seq(
-      cookieLink(appConfig),
-      privacyLink(appConfig),
-      termsConditionsLink(appConfig),
-      helpLink(appConfig)
+      FooterItem(
+        Some(messages("footer.links.Help")),
+        Some("https://www.gov.uk/help")
+      )
     )
 
 }

@@ -15,60 +15,47 @@
  *@
 
 @import play.twirl.api.HtmlFormat
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
-
 @import uk.gov.hmrc.govukfrontend.views.html.layouts._
-@import uk.gov.hmrc.govukfrontend.views.html.components.{govukBackLink, govukHeader, govukFooter, govukSkipLink, govukTag}
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.{Footer, Meta}
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.banner.Banner
-@import uk.gov.hmrc.hmrcfrontend.views.html.components.hmrcBanner
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.header.HeaderNavigation
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.content.Text
 @import uk.gov.hmrc.eeittadminfrontend.views.components.FooterLinks
+@import uk.gov.hmrc.hmrcfrontend.views.html.components.HmrcBanner
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@(title: String,
-tab: String,
-mainClass: Option[String] = None,
-mainDataAttributes: Option[Html] = None,
-bodyClasses: Option[String] = None,
-sidebar: Html = HtmlFormat.empty,
-contentHeader: Option[Html] = None,
-mainContent: Html = HtmlFormat.empty,
-serviceInfoContent: Html = HtmlFormat.empty,
-scriptElem: Option[Html] = None,
-backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConfig)
+@this(
+  govuk_layout: govuk_layout
+)
 
-@govukHeader = @{new govukHeader()}
-@govukFooter = @{new govukFooter()}
-@govukBackLink = @{new govukBackLink()}
-@govukSkipLink = @{new govukSkipLink()}
-@govukTag = @{new govukTag()}
-@hmrcBanner = @{new hmrcBanner()}
-@govukTemplate = @{new govukTemplate(govukHeader, govukFooter, govukSkipLink)}
+@(
+  title: String,
+  tab: String,
+  mainClass: Option[String] = None,
+  mainDataAttributes: Option[Html] = None,
+  bodyClasses: Option[String] = None,
+  sidebar: Html = HtmlFormat.empty,
+  contentHeader: Option[Html] = None,
+  mainContent: Html = HtmlFormat.empty,
+  serviceInfoContent: Html = HtmlFormat.empty,
+  scriptElem: Option[Html] = None,
+  backLink: Option[String] = None
+)(implicit messages: Messages)
 
 @head = {
     <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/diff2html.min.css")" />
-    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/analytics.css")" />
     <!--[if lte IE 8]>
         <link href='@controllers.routes.Assets.versioned("stylesheets/application-ie-8.css")' rel="stylesheet" type="text/css" />
     <![endif]-->
     <!--[if gt IE 8]><!-->
         <link href='@controllers.routes.Assets.versioned("stylesheets/application.css")' media="screen" rel="stylesheet" type="text/css" />
     <!--<![endif]-->
-    @appConfig.optimizelyUrl.map{ url =>
-        <script src='@url' type='text/javascript'></script>
-    }
     <script src='@routes.Assets.versioned("javascripts/diff2html.min.js")'></script>
     <script src='@routes.Assets.versioned("javascripts/diff2html-ui.min.js")'></script>
-    <meta name="google-signin-client_id" content="414711673206-8c53ik1peqct770aaccmfkaih9hcb224.apps.googleusercontent.com">
-    <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
-    <meta name="format-detection" content="telephone=no" />
 }
 
-
-@headerBlock = @{govukHeader(
+@headerBlock = @{GovukHeader(
     uk.gov.hmrc.govukfrontend.views.viewmodels.header.Header(
         homepageUrl = Some("#"),
         serviceName = Some("EEITT Admin"),
@@ -100,11 +87,6 @@ backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConf
                 active = if(tab == "saved-data") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformAnalytics.path),
-                content = Text("Analytics"),
-                active = if(tab == "analytics") true else false
-            ),
-            HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path),
                 content = Text("Submission Consolidator"),
                 active = if(tab == "submissionconsolidator") true else false
@@ -115,10 +97,10 @@ backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConf
 )}
 
 
-@bLink = @{govukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
+@bLink = @{GovukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
 
 @beforeContentBlock = {
-    @hmrcBanner(Banner())
+    @HmrcBanner(Banner())
     @bLink
 }
 
@@ -129,5 +111,5 @@ backLink: Option[String] = None)(implicit messages: Messages, appConfig: AppConf
     beforeContentBlock = Some(beforeContentBlock),
     bodyEndBlock = None,
     scriptsBlock = scriptElem,
-    footerBlock = Some(govukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items(appConfig)))))))
+    footerBlock = Some(GovukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items))))))
 )(mainContent)

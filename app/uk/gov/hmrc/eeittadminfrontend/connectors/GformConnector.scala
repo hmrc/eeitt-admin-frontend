@@ -17,17 +17,17 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.http.scaladsl.model.StatusCodes
+import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SubmissionPageData }
-import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsInstances, HttpResponse }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class GformConnector(wsHttp: WSHttp, sc: ServicesConfig) {
+class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 

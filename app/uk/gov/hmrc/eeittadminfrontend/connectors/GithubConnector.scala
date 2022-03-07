@@ -21,18 +21,18 @@ import cats.effect.{ Blocker, ContextShift, IO }
 import github4s.{ GHError, GHResponse, Github }
 import github4s.Decoders._
 import github4s.domain.{ BlobContent, Commit, Content, Pagination, RefCommit }
-import java.net.Proxy
 import java.util.concurrent.Executors
+import javax.inject.Inject
 import org.http4s.{ Header, Request, Uri }
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
 import scala.concurrent.ExecutionContext.global
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
-import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyProvider
 
-class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], wsHttp: WSHttp) {
+class GithubConnector @Inject() (authorization: Authorization, proxyProvider: ProxyProvider) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -46,7 +46,7 @@ class GithubConnector(authorization: Authorization, maybeProxy: Option[Proxy], w
     val blocker = Blocker.liftExecutorService(blockingPool)
     val cb = JavaNetClientBuilder[IO](blocker)
 
-    maybeProxy.fold(cb)(cb.withProxy).create // use BlazeClientBuilder for production use
+    proxyProvider.maybeProxy.fold(cb)(cb.withProxy).create // use BlazeClientBuilder for production use
   }
 
   val gh = Github[IO](httpClient, Some(authorization.accessToken))

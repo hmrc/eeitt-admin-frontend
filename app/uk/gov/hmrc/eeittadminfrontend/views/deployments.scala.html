@@ -14,10 +14,14 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.deployment.ReconciliationLookup
 @import uk.gov.hmrc.eeittadminfrontend.models.github.{Authorization, LastCommitCheck}
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  deployment_last_commit_check: deployment_last_commit_check,
+  main_template: main_template
+)
 
 @(reconciliationLookup: ReconciliationLookup,
   tableExisting: Table,
@@ -25,16 +29,14 @@
   lastCommitCheck: LastCommitCheck,
   authorization: Authorization
 )(
-    implicit messages: Messages, appConfig: AppConfig
+    implicit messages: Messages
 )
 
 @gformTemplatesRepo = {
     <a class="govuk-link" target="_blank" href="https://github.com/hmrc/gform-templates">gform-templates</a>
 }
 
-@govukTable = @{new govukTable()}
-
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+@main_template(title = "Deployment ", tab = "deployment") {
 
     @deployment_last_commit_check(lastCommitCheck, authorization)
 
@@ -43,12 +45,12 @@
     <div class="govuk-hint">
         Templates available in @gformTemplatesRepo repository which are also deployed to gform microservice.
     </div>
-    @govukTable(tableExisting)
+    @GovukTable(tableExisting)
     <h2 class="govuk-heading-m">New - @reconciliationLookup.newTemplates.size templates</h2>
     <div class="govuk-hint">
         Templates available in @gformTemplatesRepo repository which are not deployed to gform microservice yet.
     </div>
-    @govukTable(tableNew)
+    @GovukTable(tableNew)
     <h2 class="govuk-heading-m">Orphans - @reconciliationLookup.deletedTemplates.size templates</h2>
     <div class="govuk-hint">
         Templates not available in @gformTemplatesRepo repository, but running in gform microservice.

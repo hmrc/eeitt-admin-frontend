@@ -21,13 +21,14 @@ import cats.data.{ EitherT, NonEmptyList }
 import cats.effect.IO
 import github4s.domain.{ Commit, Content, RefCommit }
 import io.circe.{ DecodingFailure, Json }
+import javax.inject.Inject
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GithubConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-class GithubService(githubConnector: GithubConnector) {
+class GithubService @Inject() (githubConnector: GithubConnector) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 

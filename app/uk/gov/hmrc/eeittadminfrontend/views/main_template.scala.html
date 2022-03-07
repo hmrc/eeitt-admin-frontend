@@ -14,7 +14,9 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@this(
+  govuk_wrapper: govuk_wrapper
+)
 
 @(title: String,
   tab: String,
@@ -22,17 +24,7 @@
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
   scriptElem: Option[Html] = None,
-  backLink: Option[String] = None)(mainContent: Html)(implicit messages: Messages, appConfig: AppConfig)
-
-@analyticsScripts = {
-  <script src='@routes.Assets.versioned("javascripts/jquery.min.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/base64.min.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/eeitt-admin.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/moment.min.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/Chart.js")'></script>
-  <script src='@routes.Assets.versioned("javascripts/analytics.js")'></script>
-  <script src='https://apis.google.com/js/client:platform.js'></script>
-}
+  backLink: Option[String] = None)(mainContent: Html)(implicit messages: Messages)
 
 @pageTitle = @{
   title + " - EEITT Admin"
@@ -45,6 +37,5 @@
   bodyClasses = bodyClasses,
   contentHeader = contentHeader,
   mainContent = mainContent,
-  scriptElem = Some(analyticsScripts),
   backLink = backLink
 )

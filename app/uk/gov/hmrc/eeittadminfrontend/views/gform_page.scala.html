@@ -14,21 +14,17 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.GformId
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.content
-@(form: Form[GformId])(implicit request : Request[_], flash: Flash, messages: Messages, appConfig: AppConfig)
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
-@govukTextarea = @{new govukTextarea(new govukErrorMessage(), new govukHint(), new govukLabel())}
-@govukButton = @{new govukButton()}
-@govukSelect = @{new govukSelect(new govukErrorMessage, new govukHint, new govukLabel)}
-@govukFileUpload = @{new govukFileUpload(new govukErrorMessage, new govukHint, new govukLabel)}
+@this(
+  main_template: main_template
+)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform", tab = "gforms") {
+@(form: Form[GformId])(implicit request : Request[_], flash: Flash, messages: Messages)
+
+@main_template(title = "Gform", tab = "gforms") {
 
 @{flash.get("error").fold(Html(""))(e =>
     new govukErrorSummary()(
@@ -38,16 +34,16 @@
 )}
 
 <h2 class="govuk-heading-m">Download all Gform templates in a zip</h2>
-@govukButton(Button(
+@GovukButton(Button(
     preventDoubleClick = true,
     element = Some("a"),
     href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getBlob.path),
     content = Text("Download")
 ))
 
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType) {
+@FormWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType) {
     <h2 class="govuk-heading-m">Find a Gform Template</h2>
-    @govukInput(Input(
+    @GovukInput(Input(
         id = "value",
         name = "formTemplateId.value",
         label = Label(
@@ -56,15 +52,15 @@
         content = Text("Form Template ID:")
         )
     ))
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("Search")
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate) {
+@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate) {
     <h2 class="govuk-heading-m">Delete A template</h2>
-    @govukInput(Input(
+    @GovukInput(Input(
         id = "templateValue",
         name = "formTemplateId.value",
         label = Label(
@@ -73,39 +69,39 @@
             content = Text("Form Template ID:")
         )
     ))
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("Delete")
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates) {
+@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getAllTemplates) {
     <h2 class="govuk-heading-m">List all Gform Templates</h2>
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("List All Templates")
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome) {
+@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome) {
     <h2 class="govuk-heading-m">List All Templates having PII in page titles</h2>
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("List All Templates")
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.reloadTemplates) {
+@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.reloadTemplates) {
     <h2 class="govuk-heading-m">Reload all Gform Templates</h2>
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("Reload all Templates")
     ))
 }
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.dbLookupFileUpload, args = 'enctype -> "multipart/form-data") {
+@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.dbLookupFileUpload, args = 'enctype -> "multipart/form-data") {
     <h2 class="govuk-heading-m">Upload DB Lookup Ids</h2>
-    @govukSelect(
+    @GovukSelect(
         Select(
             id = "collectionName",
             name = "collectionName",
@@ -129,7 +125,7 @@
             ))
     )
 
-    @govukFileUpload(FileUpload(
+    @GovukFileUpload(FileUpload(
         name = "file",
         id = "file",
         label = Label(
@@ -138,16 +134,16 @@
         )
     ))
 
-    @govukButton(Button(
+    @GovukButton(Button(
         preventDoubleClick = true,
         content = Text("Upload")
     ))
 }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.uploadGformTemplates, args = 'enctype -> "multipart/form-data") {
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.uploadGformTemplates, args = 'enctype -> "multipart/form-data") {
         <h2 class="govuk-heading-m">Upload all Gform templates from a zip</h2>
 
-        @govukFileUpload(FileUpload(
+        @GovukFileUpload(FileUpload(
             name = "file",
             id = "file",
             label = Label(
@@ -156,7 +152,7 @@
             )
         ))
 
-        @govukButton(Button(
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Upload templates")
         ))

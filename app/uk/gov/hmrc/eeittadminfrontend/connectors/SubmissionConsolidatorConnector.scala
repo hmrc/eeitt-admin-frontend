@@ -18,13 +18,14 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
-import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class SubmissionConsolidatorConnector(wsHttp: WSHttp, sc: ServicesConfig) {
+class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   val submissionConsolidatorUrl = s"${sc.baseUrl("submission-consolidator")}/submission-consolidator"
 
   val DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
