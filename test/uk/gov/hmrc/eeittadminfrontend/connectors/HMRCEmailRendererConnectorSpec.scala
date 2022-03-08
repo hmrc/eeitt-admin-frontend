@@ -22,12 +22,14 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
+import play.api.Configuration
 import uk.gov.hmrc.eeittadminfrontend.common.WiremockSupport
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, NotFound, ParametersNotFound, Successful, Unexpected }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.HttpClientSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class HMRCEmailRendererConnectorSpec
     extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with BeforeAndAfterAll
@@ -43,7 +45,14 @@ class HMRCEmailRendererConnectorSpec
 
   trait TestFixture {
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(mkHttpClient(), url)
+    private val servicesConfig =
+      new ServicesConfig(
+        Configuration(
+          "microservice.services.hmrc-email-renderer.host" -> "localhost",
+          "microservice.services.hmrc-email-renderer.port" -> wiremockPort.toString
+        )
+      )
+    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(mkHttpClient(), servicesConfig)
   }
 
   "renderTemplate" should "return a Successful response, when downstream service returns 200" in new TestFixture {
