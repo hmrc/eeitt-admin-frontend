@@ -17,6 +17,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.layouts._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
+@this()
+
 @(
   pageTitle: Option[String] = None,
   headBlock: Option[Html] = None,
@@ -28,15 +30,9 @@
   scriptsBlock: Option[Html] = None
 )(contentBlock: Html)(implicit messages: Messages)
 
-@govukHeader = @{new govukHeader()}
-@govukFooter = @{new govukFooter()}
-@govukBackLink = @{new govukBackLink()}
-@govukSkipLink = @{new govukSkipLink()}
-@govukTemplate = @{new govukTemplate(govukHeader, govukFooter, govukSkipLink)}
-
 @headerDefault = {
   @headerBlock.getOrElse {
-    @govukHeader(Header(
+    @GovukHeader(Header(
       homepageUrl = Some("https://www.gov.uk/"),
       serviceName = Some(messages("service.name")),
       serviceUrl = Some(messages("service.homePageUrl")),
@@ -46,7 +42,7 @@
 
 @footerDefault = {
   @footerBlock.getOrElse {
-    @govukFooter(new Footer(meta = Some(Meta(items = Some(footerItems)))))
+    @GovukFooter(new Footer(meta = Some(Meta(items = Some(footerItems)))))
   }
 }
 
@@ -63,7 +59,7 @@
   </div>
 }
 
-@govukTemplate(
+@GovukTemplate(
   htmlLang = Some(messages.lang.code),
   pageTitle = pageTitle,
   headBlock = headBlock,

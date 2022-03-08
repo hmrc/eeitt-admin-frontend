@@ -22,35 +22,41 @@ import cats.syntax.all._
 import cats.data.EitherT
 import cats.effect.IO
 import java.time.Instant
+import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
 import play.twirl.api.{ Html, HtmlFormat }
 import scala.concurrent.{ ExecutionContext, Future }
-import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction }
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
+import uk.gov.hmrc.eeittadminfrontend.models.Username
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.govukfrontend.views.html.components._
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
-class DeploymentController(
-  val authConnector: AuthConnector,
-  authAction: AuthAction,
+class DeploymentController @Inject() (
+  authorization: Authorization,
+  frontendAuthComponents: FrontendAuthComponents,
   gformService: GformService,
   githubService: GithubService,
   deploymentService: DeploymentService,
   cachingService: CachingService,
   formTemplateValidator: FormTemplateValidator,
-  authorization: Authorization,
-  messagesControllerComponents: MessagesControllerComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+  messagesControllerComponents: MessagesControllerComponents,
+  deployment_new: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_new,
+  deployment_existing: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_existing,
+  deploymentsView: uk.gov.hmrc.eeittadminfrontend.views.html.deployments,
+  deployment_home: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home,
+  deployment_deleted: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted,
+  deployment_history: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history,
+  deployment_success: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success
+)(implicit ec: ExecutionContext)
+    extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -116,21 +122,22 @@ class DeploymentController(
       .map { diffHtmlData =>
         val diffData = deploymentDiffs.map(_.toTableRow(authorization, sha1, sha2))
         val table: Table = historyTable(diffData)
-        Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history(formTemplateId, table, diffHtmlData))
+        Ok(deployment_history(formTemplateId, table, diffHtmlData))
       }
       .mapK(ioToFuture)
       .fold(error => BadRequest(error), identity)
   }
 
   def deployFilename(filename: Filename) = authAction.async { implicit request =>
+    val username = request.retrieval
     def logDeploymentStatus(message: String): Unit =
-      logger.info(s"${request.userData} deployment of filename ${filename.value} " + message)
+      logger.info(s"$username deployment of filename ${filename.value} " + message)
 
     withGithubContentFromCache(filename) { githubContent =>
       logDeploymentStatus("started")
 
       val deploymentRecord = DeploymentRecord(
-        username = request.userData.username,
+        username = Username.fromRetrieval(username),
         createdAt = Instant.now(),
         filename = filename,
         formTemplateId = githubContent.formTemplateId,
@@ -151,7 +158,7 @@ class DeploymentController(
           writeResult => {
             val formTemplateId = githubContent.formTemplateId
             logDeploymentStatus(formTemplateId.value + " successfully deployed")
-            Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success(formTemplateId, filename))
+            Ok(deployment_success(formTemplateId, filename))
           }
         )
     }.fold(error => BadRequest(error), identity)
@@ -175,19 +182,18 @@ class DeploymentController(
             val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
             val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
             Ok(
-              uk.gov.hmrc.eeittadminfrontend.views.html
-                .deployment_existing(
-                  formTemplateId,
-                  diffHtml,
-                  commit,
-                  githubContent,
-                  filename,
-                  inSync,
-                  deploymentRecords.headOption,
-                  lastCommitCheck,
-                  authorization,
-                  validationWarning
-                )
+              deployment_existing(
+                formTemplateId,
+                diffHtml,
+                commit,
+                githubContent,
+                filename,
+                inSync,
+                deploymentRecords.headOption,
+                lastCommitCheck,
+                authorization,
+                validationWarning
+              )
             )
           }
         }
@@ -196,15 +202,16 @@ class DeploymentController(
 
   def delete(formTemplateId: FormTemplateId) =
     authAction.async { implicit request =>
-      logger.info(s"${request.userData} is deleting ${formTemplateId.value}")
+      val username = request.retrieval.value
+      logger.info(s"$username is deleting ${formTemplateId.value}")
       gformService.deleteTemplate(formTemplateId).map { deleteResults =>
-        logger.info(s"${request.userData} deleted ${formTemplateId.value}: $deleteResults")
+        logger.info(s"$username deleted ${formTemplateId.value}: $deleteResults")
         Ok(Json.toJson(deleteResults))
       }
     }
 
   def deploymentDeleted(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
-    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted(formTemplateId)).pure[Future]
+    Ok(deployment_deleted(formTemplateId)).pure[Future]
   }
 
   def deploymentNew(
@@ -221,16 +228,15 @@ class DeploymentController(
           ).parMapN { case (commit, validationResult) =>
             val validationWarning: Option[String] = validationResult.swap.toOption
             Ok(
-              uk.gov.hmrc.eeittadminfrontend.views.html
-                .deployment_new(
-                  formTemplateId,
-                  commit,
-                  githubContent,
-                  filename,
-                  lastCommitCheck,
-                  authorization,
-                  validationWarning
-                )
+              deployment_new(
+                formTemplateId,
+                commit,
+                githubContent,
+                filename,
+                lastCommitCheck,
+                authorization,
+                validationWarning
+              )
             )
           }
         }
@@ -252,7 +258,7 @@ class DeploymentController(
   }
 
   def deploymentHome = authAction.async { implicit request =>
-    Ok(uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home(authorization, cachingService.cacheStatus))
+    Ok(deployment_home(authorization, cachingService.cacheStatus))
       .pure[Future]
   }
 
@@ -272,10 +278,11 @@ class DeploymentController(
 
   def deployments =
     authAction.async { implicit request =>
+      val username = request.retrieval.value
       withLastCommit { lastCommitCheck =>
         EitherT(gformService.getAllGformsTemplates)
           .flatMap { mongoTemplateIds =>
-            val message = s"${request.userData} Loading ${mongoTemplateIds.size} templates from MongoDB"
+            val message = s"$username Loading ${mongoTemplateIds.size} templates from MongoDB"
             logger.info(message + " - Start")
             val mongoTemplatesM: EitherT[Future, String, List[MongoContent]] =
               mongoTemplateIds.parTraverse { formTemplateId =>
@@ -287,14 +294,13 @@ class DeploymentController(
               val reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
 
               Ok(
-                uk.gov.hmrc.eeittadminfrontend.views.html
-                  .deployments(
-                    reconciliationLookup,
-                    existingTemplatesTable(reconciliationLookup.existingTemplates),
-                    newTemplatesTable(reconciliationLookup.newTemplates),
-                    lastCommitCheck,
-                    authorization
-                  )
+                deploymentsView(
+                  reconciliationLookup,
+                  existingTemplatesTable(reconciliationLookup.existingTemplates),
+                  newTemplatesTable(reconciliationLookup.newTemplates),
+                  lastCommitCheck,
+                  authorization
+                )
               )
             }
           }

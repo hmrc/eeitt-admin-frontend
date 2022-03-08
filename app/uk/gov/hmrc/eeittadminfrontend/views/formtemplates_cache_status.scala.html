@@ -15,26 +15,26 @@
  *@
 
 @import github4s.domain.Commit
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  deployment_commit_info: deployment_commit_info
+)
 
 @(
     authorization: Authorization,
     cacheStatus: CacheStatus,
     redirectUrl: String,
     displayCommitInfo: Boolean
-)(onReadyContent: Html)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+)(onReadyContent: Html)(implicit request : Request[_], messages: Messages)
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukButton = @{new govukButton()}
 
 @refreshCache(message: Html) = {
     @message
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(redirectUrl)) {
-        @govukButton(Button(
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(redirectUrl)) {
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Refresh Cache")
         ))

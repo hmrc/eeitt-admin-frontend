@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.services
 
 import akka.stream.Materializer
+import javax.inject.Inject
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -30,7 +31,10 @@ import collection.JavaConverters._
 import akka.stream.scaladsl._
 import cats.effect.{ IO, Resource }
 
-class BatchUploadService(gformConnector: GformConnector)(implicit ec: ExecutionContext, materializer: Materializer) {
+class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
+  ec: ExecutionContext,
+  materializer: Materializer
+) {
 
   val processedTemplates: mutable.MutableList[(FormTemplateId, String)] = mutable.MutableList()
   var done = true

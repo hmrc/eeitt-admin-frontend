@@ -25,7 +25,7 @@ case class Authorization(
 )
 
 object Authorization {
-  def apply(configuration: Configuration): Authorization = {
+  def fromConfig(configuration: Configuration): Authorization = {
     val repoOwner = configuration.get[String]("github.repo-owner")
     val repoName = configuration.get[String]("github.repo-name")
     val accessToken = configuration.get[String]("github.access-token")

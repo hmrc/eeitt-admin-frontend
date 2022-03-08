@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
 import akka.util.ByteString
 import cats.syntax.all._
+import javax.inject.Inject
 import julienrf.json.derived
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
@@ -28,19 +29,18 @@ import play.api.i18n.I18nSupport
 import play.api.libs.Files.TemporaryFile.temporaryFileToPath
 import play.api.libs.json._
 import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request }
-import uk.gov.hmrc.eeittadminfrontend.auth.AuthConnector
-import uk.gov.hmrc.eeittadminfrontend.config.{ AppConfig, AuthAction, RequestWithUser }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.services.{ BatchUploadService, GformService }
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
 import java.time.Instant
 import java.util.zip.{ ZipEntry, ZipOutputStream }
 import scala.concurrent.{ ExecutionContext, Future }
+
 sealed trait RefreshTemplateResult extends Product with Serializable
 case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
 case class RefreshError(formTemplateId: FormTemplateId, errorMessage: String) extends RefreshTemplateResult
@@ -63,16 +63,20 @@ object RefreshTemplateResults {
 }
 case object NoTempatesToRefresh extends RefreshResult
 
-class GformsController(
-  val authConnector: AuthConnector,
-  authAction: AuthAction,
+class GformsController @Inject() (
+  frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   gformService: GformService,
   formTemplateValidator: FormTemplateValidator,
   batchUploadService: BatchUploadService,
-  messagesControllerComponents: MessagesControllerComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig, m: Materializer)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+  messagesControllerComponents: MessagesControllerComponents,
+  gform_formtemplate_pii: uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplate_pii,
+  gform_formtemplates_pii: uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplates_pii,
+  gform_formtemplates_pii_home: uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplates_pii_home,
+  gform_page: uk.gov.hmrc.eeittadminfrontend.views.html.gform_page,
+  batch_upload: uk.gov.hmrc.eeittadminfrontend.views.html.batch_upload
+)(implicit ec: ExecutionContext, m: Materializer)
+    extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -92,7 +96,8 @@ class GformsController(
 
   def getBlob =
     authAction.async { implicit request =>
-      logger.info(s" ${request.userData} ask for all templates as a zip blob")
+      val username = request.retrieval.value
+      logger.info(s" $username ask for all templates as a zip blob")
       val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
         gformConnector.getAllGformsTemplates.flatMap {
           case JsArray(templates) =>
@@ -123,13 +128,13 @@ class GformsController(
 
   def getGformByFormType =
     authAction.async { implicit request =>
+      val username = request.retrieval.value
       gFormForm
         .bindFromRequest()
         .fold(
-          formWithErrors =>
-            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm))),
+          formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
           gformIdAndVersion => {
-            logger.info(s"${request.userData} Queried for ${gformIdAndVersion.formTemplateId}")
+            logger.info(s"$username Queried for ${gformIdAndVersion.formTemplateId}")
             gformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
               case Left(ex) =>
                 Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTemplateId}. Reason: $ex")
@@ -141,13 +146,15 @@ class GformsController(
 
   def getAllTemplates =
     authAction.async { implicit request =>
-      logger.info(s"${request.userData} Queried for all form templates")
+      val username = request.retrieval.value
+      logger.info(s"$username Queried for all form templates")
       gformConnector.getAllGformsTemplates.map(x => Ok(x))
     }
 
   def reloadTemplates =
     authAction.async { implicit request =>
-      logger.info(s"${request.userData} Reload all form templates")
+      val username = request.retrieval.value
+      logger.info(s"$username Reload all form templates")
 
       for {
         maybeTemplateIds <- gformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
@@ -157,9 +164,10 @@ class GformsController(
 
   def fetchAndSave(
     formTemplateIds: List[FormTemplateId]
-  )(implicit request: RequestWithUser[AnyContent]): Future[RefreshResult] =
+  )(implicit request: AuthenticatedRequest[AnyContent, Retrieval.Username]): Future[RefreshResult] =
     formTemplateIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) { case (resultsAcc, formTemplateId) =>
-      logger.info(s"${request.userData} Refreshing formTemplateId: $formTemplateId")
+      val username = request.retrieval.value
+      logger.info(s"$username Refreshing formTemplateId: $formTemplateId")
       for {
         results         <- resultsAcc
         templateOrError <- gformConnector.getGformsTemplate(formTemplateId)
@@ -168,7 +176,7 @@ class GformsController(
                     case Right(template) => gformConnector.saveTemplate(formTemplateId, template)
                   }
       } yield {
-        logger.info(s"${request.userData} Refreshing formTemplateId: $formTemplateId finished: " + result)
+        logger.info(s"$username Refreshing formTemplateId: $formTemplateId finished: " + result)
         result match {
           case Left(error) => results.addResult(RefreshError(formTemplateId, error))
           case Right(())   => results.addResult(RefreshSuccesful(formTemplateId))
@@ -178,19 +186,20 @@ class GformsController(
 
   def getAllSchema =
     authAction.async { implicit request =>
-      logger.info(s"${request.userData} Queried for all form Schema")
+      val username = request.retrieval.value
+      logger.info(s"$username Queried for all form Schema")
       gformConnector.getAllSchema.map(x => Ok(x))
     }
 
   def deleteGformTemplate =
     authAction.async { implicit request =>
+      val username = request.retrieval.value
       gFormForm
         .bindFromRequest()
         .fold(
-          formWithErrors =>
-            Future.successful(BadRequest(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm))),
+          formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
           gformId => {
-            logger.info(s"${request.userData} deleted ${gformId.formTemplateId} ")
+            logger.info(s"$username deleted ${gformId.formTemplateId} ")
             gformConnector.deleteTemplate(gformId.formTemplateId).map { deleteResults =>
               Ok(Json.toJson(deleteResults))
             }
@@ -200,7 +209,7 @@ class GformsController(
 
   def gformPage =
     authAction.async { implicit request =>
-      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.gform_page(gFormForm)))
+      Future.successful(Ok(gform_page(gFormForm)))
     }
 
   private def getFilterList(filters: String) = filters.split(",").toList
@@ -208,11 +217,10 @@ class GformsController(
   def gformFormTemplatesWithPIIInTitleHome() = authAction.async { implicit request =>
     Future.successful(
       Ok(
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .gform_formtemplates_pii_home(
-            List.empty,
-            Some("name,email,business,auth.")
-          )
+        gform_formtemplates_pii_home(
+          List.empty,
+          Some("name,email,business,auth.")
+        )
       )
     )
   }
@@ -248,11 +256,10 @@ class GformsController(
                   }
               }
           } yield Ok(
-            uk.gov.hmrc.eeittadminfrontend.views.html
-              .gform_formtemplates_pii(
-                formTemplatesWithPIIInTitle.sortBy(_.piiCount).reverse,
-                form.filters
-              )
+            gform_formtemplates_pii(
+              formTemplatesWithPIIInTitle.sortBy(_.piiCount).reverse,
+              form.filters
+            )
           )).recover { case e =>
             InternalServerError("Failed to gformFormTemplatesWithPIIInTitle: " + e)
           }
@@ -265,12 +272,11 @@ class GformsController(
   ) = authAction.async { implicit request =>
     getFormTemplatePIIDetails(formTemplateId, filters).map { formTemplateWithPIIInTitleDetails =>
       Ok(
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .gform_formtemplate_pii(
-            formTemplateWithPIIInTitleDetails,
-            formTemplateId,
-            filters
-          )
+        gform_formtemplate_pii(
+          formTemplateWithPIIInTitleDetails,
+          formTemplateId,
+          filters
+        )
       )
     }
 
@@ -284,12 +290,11 @@ class GformsController(
         form =>
           getFormTemplatePIIDetails(form.formTemplateId, form.filters).map { formTemplateWithPIIInTitleDetails =>
             Ok(
-              uk.gov.hmrc.eeittadminfrontend.views.html
-                .gform_formtemplate_pii(
-                  formTemplateWithPIIInTitleDetails,
-                  form.formTemplateId,
-                  form.filters
-                )
+              gform_formtemplate_pii(
+                formTemplateWithPIIInTitleDetails,
+                form.formTemplateId,
+                form.filters
+              )
             )
           }
       )
@@ -310,11 +315,6 @@ class GformsController(
           p.piis
         )
       )
-
-  def gformAnalytics =
-    authAction.async { implicit request =>
-      Future.successful(Ok(uk.gov.hmrc.eeittadminfrontend.views.html.analytics()))
-    }
 
   def dbLookupFileUpload() =
     authAction.async(parse.multipartFormData) { implicit request =>
@@ -370,8 +370,7 @@ class GformsController(
   def uploadGformTemplatesStatus() = authAction.async { implicit request =>
     Future.successful {
       Ok(
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .batch_upload(batchUploadService.processedTemplates.toList, batchUploadService.done)
+        batch_upload(batchUploadService.processedTemplates.toList, batchUploadService.done)
       )
     }
   }

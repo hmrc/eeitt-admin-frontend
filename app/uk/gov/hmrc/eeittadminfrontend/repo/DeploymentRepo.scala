@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.repo
 
+import javax.inject.Inject
 import play.modules.reactivemongo.ReactiveMongoApi
 import scala.concurrent.{ ExecutionContext, Future }
 import reactivemongo.api.Cursor
@@ -25,7 +26,7 @@ import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
 
-class DeploymentRepo(
+class DeploymentRepo @Inject() (
   val reactiveMongoApi: ReactiveMongoApi
 )(implicit ec: ExecutionContext) {
 

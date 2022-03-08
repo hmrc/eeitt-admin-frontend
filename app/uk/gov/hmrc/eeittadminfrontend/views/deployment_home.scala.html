@@ -15,26 +15,27 @@
  *@
 
 @import github4s.domain.Commit
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
+
+@this(
+  formtemplates_cache_status: formtemplates_cache_status,
+  main_template: main_template
+)
 
 @(
     authorization: Authorization,
     cacheStatus: CacheStatus
 )(
-    implicit request : Request[_], messages: Messages, appConfig: AppConfig
+    implicit request : Request[_], messages: Messages
 )
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukButton = @{new govukButton()}
 
 @ready = {
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
-        @govukButton(Button(
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Show available deployments")
         ))
@@ -42,7 +43,7 @@
  }
 
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Deployment ", tab = "deployment") {
+@main_template(title = "Deployment ", tab = "deployment") {
     @formtemplates_cache_status(authorization, cacheStatus, routes.DeploymentController.deploymentHome.path, true) {
         @ready
     }

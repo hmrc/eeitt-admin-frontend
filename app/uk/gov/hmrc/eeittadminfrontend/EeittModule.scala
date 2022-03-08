@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.playcomponents
+package uk.gov.hmrc.eeittadminfrontend
 
-import play.api._
-import play.api.i18n.{ I18nSupport, Langs, MessagesApi }
+import play.api.inject.{ Binding, Module }
+import play.api.{ Configuration, Environment }
+import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+import uk.gov.hmrc.eeittadminfrontend.proxy.{ ProxyModule, ProxyProvider }
 
-class PlayBuiltInsModule(
-  val builtInComponents: BuiltInComponents
-) { self =>
-
-  val langs: Langs = builtInComponents.langs
-
-  val messagesApi: MessagesApi = builtInComponents.messagesApi
-
-  val i18nSupport: I18nSupport = new I18nSupport {
-    override def messagesApi: MessagesApi = self.messagesApi
-  }
+class EeittModule extends Module {
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
+    bind[Authorization].toInstance(Authorization.fromConfig(configuration)),
+    bind[ProxyProvider].toInstance(ProxyModule.fromConfig(configuration))
+  )
 }

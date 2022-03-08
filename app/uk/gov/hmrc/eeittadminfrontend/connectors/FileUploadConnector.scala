@@ -18,16 +18,18 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import javax.inject.{ Inject, Singleton }
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
+@Singleton
+class FileUploadConnector @Inject() (wsHttp: DefaultHttpClient, sc: ServicesConfig) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -54,6 +56,7 @@ class FileUploadConnector(wsHttp: WSHttp, sc: ServicesConfig) {
     envelopeId: EnvelopeId
   )(implicit ec: ExecutionContext): Future[Either[String, Source[ByteString, _]]] = {
     val url = fileUploadUrl + s"/file-transfer/envelopes/${envelopeId.value}"
+
     wsHttp
       .buildRequest(url, Seq.empty[(String, String)])
       .withMethod("GET")

@@ -17,14 +17,14 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
+import javax.inject.Inject
 import org.slf4j.LoggerFactory
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, EmailRenderResponse, NotFound, ParametersNotFound, Successful, Unexpected }
-import uk.gov.hmrc.eeittadminfrontend.wshttp.WSHttp
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpReadsHttpResponse }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsHttpResponse }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class HMRCEmailRendererConnector(wSHttp: WSHttp, baseUrl: String)(implicit ec: ExecutionContext)
+class HMRCEmailRendererConnector @Inject() (wSHttp: HttpClient, baseUrl: String)(implicit ec: ExecutionContext)
     extends HttpReadsHttpResponse {
 
   private val logger = LoggerFactory.getLogger(getClass)

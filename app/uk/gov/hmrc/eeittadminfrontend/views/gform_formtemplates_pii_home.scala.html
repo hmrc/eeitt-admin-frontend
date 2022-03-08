@@ -14,27 +14,26 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateWithPIIInTitle
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
-@import uk.gov.hmrc.govukfrontend.views.html.helpers.formWithCSRF
+
+@this(
+  main_template: main_template
+)
 
 @(
   formTemplatesWithPIIInTitles: List[FormTemplateWithPIIInTitle],
   defaultFilters: Option[String]
-)(implicit request : Request[_], messages: Messages, appConfig: AppConfig)
+)(implicit request : Request[_], messages: Messages)
 
-@formWithCSRF = @{new formWithCSRF()}
-@govukButton = @{new govukButton()}
-@govukInput = @{new govukInput(new govukErrorMessage(), new govukHint(), new govukLabel())}
 
 @main_template(title = "Gform", tab = "gforms", backLink = Some(routes.GformsController.gformPage.path)) {
     <h2 class="govuk-heading-m">Search for forms with PII in page titles</h2>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
-        @govukInput(Input(
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
+        @GovukInput(Input(
                 id = "filters",
                 name = "filters",
                 value = defaultFilters,
@@ -46,7 +45,7 @@
                 )
             )
         ))
-        @govukButton(Button(
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Submit")
         ))

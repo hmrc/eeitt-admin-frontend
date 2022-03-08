@@ -16,13 +16,15 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.models.github.{Authorization, LastCommitCheck}
 @import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
-@import uk.gov.hmrc.govukfrontend.views.html.components.{GovukWarningText, WarningText, Text}
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  deployment_commit_info: deployment_commit_info
+)
 
 @(lastCommitCheck: LastCommitCheck,
   authorization: Authorization
 )
-
-@govukWarningText = @{new GovukWarningText()}
 
 @upToDate(check: LastCommitCheck.UpToDate) = {
     <p class="govuk-body">Cache of Github templates is <span class="govuk-!-font-weight-bold">up to date</span>.</p>
@@ -31,7 +33,7 @@
 }
 
 @outOfDate(check: LastCommitCheck.OutOfDate) = {
-    @govukWarningText(WarningText(
+    @GovukWarningText(WarningText(
         iconFallbackText = "Warning",
         content = Text("There is newer commit in Github repository.")
     ))

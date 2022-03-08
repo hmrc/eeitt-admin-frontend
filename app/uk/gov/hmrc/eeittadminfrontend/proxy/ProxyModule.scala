@@ -19,10 +19,10 @@ package uk.gov.hmrc.eeittadminfrontend.proxy
 import java.net.{ Authenticator, InetSocketAddress, PasswordAuthentication, Proxy }
 
 import org.slf4j.LoggerFactory
+import play.api.Configuration
 import pureconfig._
 import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
-import uk.gov.hmrc.eeittadminfrontend.config.ConfigModule
 
 case class ProxyConfig(
   username: String,
@@ -33,39 +33,44 @@ case class ProxyConfig(
   proxyRequiredForThisEnvironment: Boolean
 )
 
-class ProxyModule(val configModule: ConfigModule) {
+case class ProxyProvider(maybeProxy: Option[Proxy])
+
+object ProxyModule {
+
   private val logger = LoggerFactory.getLogger(getClass)
 
   implicit def hint: ProductHint[ProxyConfig] = ProductHint(ConfigFieldMapping(CamelCase, CamelCase))
 
-  val maybeProxy: Option[Proxy] =
-    if (configModule.typesafeConfig.hasPath("proxy"))
-      ConfigSource
-        .fromConfig(configModule.typesafeConfig.getConfig("proxy"))
-        .load[ProxyConfig]
-        .fold[Option[Proxy]](
-          failures => {
-            logger.error(s"Proxy configuration corrupted. Outbound connections will fail. " + failures.prettyPrint())
-            None
-          },
-          proxyConfig =>
-            if (proxyConfig.proxyRequiredForThisEnvironment) {
-              Authenticator
-                .setDefault(
-                  new ProxyAuthenticator(proxyConfig.username, proxyConfig.password.toCharArray)
-                ) // [1] look on javadoc
-              val address = new InetSocketAddress(proxyConfig.host, proxyConfig.port)
-              Some(new Proxy(Proxy.Type.HTTP, address))
-            } else {
+  def fromConfig(configuration: Configuration): ProxyProvider = {
+    val maybeProxy =
+      if (configuration.has("proxy"))
+        ConfigSource
+          .fromConfig(configuration.underlying.getConfig("proxy"))
+          .load[ProxyConfig]
+          .fold[Option[Proxy]](
+            failures => {
+              logger.error(s"Proxy configuration corrupted. Outbound connections will fail. " + failures.prettyPrint())
               None
-            }
-        )
-    else None
-
-  maybeProxy.fold {
-    logger.warn(s"No proxy configuration found. Outbound connections will fail.")
-  } { proxy =>
-    logger.info(s"Proxy configuration found. Using proxy: $proxy.")
+            },
+            proxyConfig =>
+              if (proxyConfig.proxyRequiredForThisEnvironment) {
+                Authenticator
+                  .setDefault(
+                    new ProxyAuthenticator(proxyConfig.username, proxyConfig.password.toCharArray)
+                  ) // [1] look on javadoc
+                val address = new InetSocketAddress(proxyConfig.host, proxyConfig.port)
+                Some(new Proxy(Proxy.Type.HTTP, address))
+              } else {
+                None
+              }
+          )
+      else None
+    maybeProxy.fold {
+      logger.warn(s"No proxy configuration found. Outbound connections will fail.")
+    } { proxy =>
+      logger.info(s"Proxy configuration found. Using proxy: $proxy.")
+    }
+    ProxyProvider(maybeProxy)
   }
 
 }

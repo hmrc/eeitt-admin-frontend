@@ -14,12 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
 @import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages, appConfig: AppConfig)
+@this(
+  main_template: main_template
+)
 
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Saved Data ", tab = "saved-data") {
+@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages)
+
+@main_template(title = "Saved Data ", tab = "saved-data") {
     <h2 class="govuk-heading-m">Form templates</h2>
     @for(formTemplateId <- formTemplateIds) {
         <div>

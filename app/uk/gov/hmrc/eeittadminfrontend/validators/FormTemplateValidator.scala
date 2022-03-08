@@ -20,13 +20,16 @@ import cats.implicits._
 import cats.data.Validated
 import io.circe.optics.JsonPath._
 import io.circe.Json
+import javax.inject.Inject
 import uk.gov.hmrc.eeittadminfrontend.connectors.HMRCEmailRendererConnector
 import uk.gov.hmrc.eeittadminfrontend.models.email._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class FormTemplateValidator(hmrcEmailRendererConnector: HMRCEmailRendererConnector)(implicit ec: ExecutionContext) {
+class FormTemplateValidator @Inject() (hmrcEmailRendererConnector: HMRCEmailRendererConnector)(implicit
+  ec: ExecutionContext
+) {
 
   def validate(json: Json)(implicit hc: HeaderCarrier): Future[Either[String, Unit]] = {
     val maybeEmailTemplateIds: Option[List[String]] =

@@ -22,29 +22,28 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import uk.gov.hmrc.eeittadminfrontend.common.{ WSHttpForWiremockSupport, WiremockSupport }
+import uk.gov.hmrc.eeittadminfrontend.common.WiremockSupport
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, NotFound, ParametersNotFound, Successful, Unexpected }
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.test.HttpClientSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class HMRCEmailRendererConnectorSpec
-    extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with WSHttpForWiremockSupport
-    with BeforeAndAfterAll {
+    extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with BeforeAndAfterAll
+    with HttpClientSupport {
 
   override implicit val patienceConfig = PatienceConfig(Span(5, Seconds), Span(500, Millis))
 
   override protected def beforeAll(): Unit =
     startServer()
 
-  override protected def afterAll(): Unit = {
-    closeClient()
+  override protected def afterAll(): Unit =
     stopServer()
-  }
 
   trait TestFixture {
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(wsHttp, url)
+    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(mkHttpClient(), url)
   }
 
   "renderTemplate" should "return a Successful response, when downstream service returns 200" in new TestFixture {

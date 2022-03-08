@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
+import javax.inject.Inject
 import reactivemongo.api.commands.WriteResult
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.repo.DeploymentRepo
 
-class DeploymentService(deploymentRepo: DeploymentRepo) {
+class DeploymentService @Inject() (deploymentRepo: DeploymentRepo) {
   def find(formTemplateId: FormTemplateId): Future[List[DeploymentRecord]] = deploymentRepo.get(formTemplateId)
   def save(deploymentRecord: DeploymentRecord): Future[WriteResult] = deploymentRepo.save(deploymentRecord)
 }

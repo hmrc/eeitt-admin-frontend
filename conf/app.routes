@@ -3,9 +3,7 @@
 ->            /govuk-frontend    govuk.Routes
 ->            /hmrc-frontend     hmrcfrontend.Routes
 
-GET        /login                                           uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.loginPage
-POST       /login                                           uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.checkCredentials
-GET        /logout                                          uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.signOut
+GET        /                                                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.login
 
 GET        /get-blob                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
 POST       /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
@@ -17,7 +15,6 @@ POST       /form-template-pii                               uk.gov.hmrc.eeittadm
 GET        /reload-templates                                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
 GET        /get-all-schema                                  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
 POST       /template                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
-GET        /gform-analytics                                 uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformAnalytics
 GET        /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 POST       /db-lookup-file-upload                           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 POST       /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplates

@@ -14,12 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.config.AppConfig
+@this(
+  main_template: main_template
+)
 
-@(uploadedForms: List[(FormTemplateId, String)], done: Boolean)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(uploadedForms: List[(FormTemplateId, String)], done: Boolean)(implicit request: Request[_], messages: Messages)
 
-
-@uk.gov.hmrc.eeittadminfrontend.views.html.main_template(title = "Gform", tab = "gforms") {
+@main_template(title = "Gform", tab = "gforms") {
 
     @if(!done) {
         <script type="application/javascript">

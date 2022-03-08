@@ -19,10 +19,10 @@
 @import uk.gov.hmrc.eeittadminfrontend.views.commitToTable
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
+@this()
+
 @(authorization: Authorization,
   commit: Commit
 )
 
-@govukTable = @{new govukTable()}
-
-@govukTable(commitToTable(authorization, commit))
+@GovukTable(commitToTable(authorization, commit))

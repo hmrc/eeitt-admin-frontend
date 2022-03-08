@@ -16,22 +16,18 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import javax.inject.Inject
-import org.slf4j.{ Logger, LoggerFactory }
-import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents }
-import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
+import play.api.mvc.MessagesControllerComponents
+import uk.gov.hmrc.internalauth.client.{ FrontendAuthComponents, Retrieval }
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
-class AuthController @Inject() (
+abstract class GformAdminFrontendController(
   frontendAuthComponents: FrontendAuthComponents,
   messagesControllerComponents: MessagesControllerComponents
-) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) {
+) extends FrontendController(messagesControllerComponents) {
 
-  private val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  def login: Action[AnyContent] =
-    authAction { request =>
-      val username = request.retrieval.value
-      logger.info(s"User '$username' logged in")
-      Redirect(routes.GformsController.gformPage)
-    }
+  def authAction = frontendAuthComponents
+    .authenticatedAction(
+      continueUrl = routes.AuthController.login,
+      retrieval = Retrieval.username
+    )
 }
