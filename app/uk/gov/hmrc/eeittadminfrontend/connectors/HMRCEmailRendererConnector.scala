@@ -23,9 +23,12 @@ import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, EmailRe
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsHttpResponse }
 
 import scala.concurrent.{ ExecutionContext, Future }
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class HMRCEmailRendererConnector @Inject() (wSHttp: HttpClient, baseUrl: String)(implicit ec: ExecutionContext)
+class HMRCEmailRendererConnector @Inject() (wSHttp: HttpClient, sc: ServicesConfig)(implicit ec: ExecutionContext)
     extends HttpReadsHttpResponse {
+
+  val baseUrl = sc.baseUrl("hmrc-email-renderer")
 
   private val logger = LoggerFactory.getLogger(getClass)
 
