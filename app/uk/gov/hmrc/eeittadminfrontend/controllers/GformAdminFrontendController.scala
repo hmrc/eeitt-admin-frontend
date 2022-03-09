@@ -19,6 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.internalauth.client.{ FrontendAuthComponents, Retrieval }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.internalauth.client.{ IAAction, Predicate, Resource, ResourceLocation, ResourceType }
 
 abstract class GformAdminFrontendController(
   frontendAuthComponents: FrontendAuthComponents,
@@ -26,8 +27,12 @@ abstract class GformAdminFrontendController(
 ) extends FrontendController(messagesControllerComponents) {
 
   def authAction = frontendAuthComponents
-    .authenticatedAction(
+    .authorizedAction(
       continueUrl = routes.AuthController.login,
+      predicate = Predicate.Permission(
+        Resource(ResourceType("eeitt-admin-frontend"), ResourceLocation("*")),
+        IAAction("*")
+      ),
       retrieval = Retrieval.username
     )
 }

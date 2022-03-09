@@ -16,6 +16,10 @@ Enter any value to Principal field and use this Redirect Url:
 http://localhost/eeitt-admin-frontend
 ```
 
+| Resource Type        | Resource Locations | Action |
+|----------------------|--------------------|--------|
+| eeitt-admin-frontend | *                  | *      |
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
