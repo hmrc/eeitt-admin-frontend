@@ -27,7 +27,7 @@ case class FormTemplateId(value: String) extends AnyVal {
 }
 
 object FormTemplateId {
-  implicit val handler: BSONHandler[FormTemplateId] = Macros.handler[FormTemplateId]
+  implicit val handler: BSONHandler[FormTemplateId] = Macros.valueHandler[FormTemplateId]
 
   implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
 
