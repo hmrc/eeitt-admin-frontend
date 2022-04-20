@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{ Json, OFormat }
+import play.api.libs.json.{ Format, JsString, Json, OFormat, Reads, Writes }
+
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 case class SavedForm(
   formTemplateId: FormTemplateId,
@@ -26,4 +29,23 @@ case class SavedForm(
 
 object SavedForm {
   implicit val format: OFormat[SavedForm] = Json.format
+}
+
+case class SavedFormDetail(
+  createdDate: LocalDate,
+  emailCount: Int,
+  ggCount: Int
+)
+
+object SavedFormDetail {
+
+  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  val localDateReads = Reads.localDateReads("yyyy-MM-dd")
+  val localDateWrites = Writes { date: LocalDate ⇒
+    JsString(date.format(dateTimeFormatter))
+  }
+
+  implicit val localDateTimeFormat = Format(localDateReads, localDateWrites)
+
+  implicit val format: OFormat[SavedFormDetail] = Json.format[SavedFormDetail]
 }

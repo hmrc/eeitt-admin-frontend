@@ -31,6 +31,7 @@ class SavedDataController @Inject() (
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
   saved_data: uk.gov.hmrc.eeittadminfrontend.views.html.saved_data,
+  saved_data_details: uk.gov.hmrc.eeittadminfrontend.views.html.saved_data_details,
   saved_data_formtemplates: uk.gov.hmrc.eeittadminfrontend.views.html.saved_data_formtemplates
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
@@ -51,6 +52,13 @@ class SavedDataController @Inject() (
     authAction.async { implicit request =>
       gformConnector.getFormCount(formTemplateId).map { case savedData =>
         Ok(saved_data(savedData))
+      }
+    }
+
+  def findSavedDataDetails(formTemplateId: FormTemplateId) =
+    authAction.async { implicit request =>
+      gformConnector.getFormDetailCount(formTemplateId).map { case savedDataDetails =>
+        Ok(saved_data_details(formTemplateId, savedDataDetails))
       }
     }
 

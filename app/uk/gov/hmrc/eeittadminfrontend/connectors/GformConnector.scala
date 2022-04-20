@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -125,4 +125,9 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[SavedForm] =
     wsHttp.GET[SavedForm](gformUrl + s"/formStatistics/${formTemplateId.value}")
+
+  def getFormDetailCount(
+    formTemplateId: FormTemplateId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Seq[SavedFormDetail]] =
+    wsHttp.GET[Seq[SavedFormDetail]](gformUrl + s"/formStatistics/${formTemplateId.value}/details")
 }
