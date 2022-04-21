@@ -33,7 +33,13 @@
         <tbody class="govuk-table__body stats-results">
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell">
-                @{savedForm.formTemplateId.value}
+                    @if(savedForm.emailCount >0 || savedForm.ggCount >0){
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.findSavedDataDetails(savedForm.formTemplateId)" class="govuk-link">
+                            @{savedForm.formTemplateId.value}
+                        </a>
+                    } else {
+                        @{savedForm.formTemplateId.value}
+                    }
                 </td>
                 <td class="govuk-table__cell">
                 @{savedForm.emailCount}

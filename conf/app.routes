@@ -48,5 +48,6 @@ POST        /submission-consolidator/consolidate  uk.gov.hmrc.eeittadminfrontend
 
 GET         /saved-data                           uk.gov.hmrc.eeittadminfrontend.controllers.SavedDataController.savedData
 GET         /saved-data/:formTemplateId           uk.gov.hmrc.eeittadminfrontend.controllers.SavedDataController.findSavedData(formTemplateId: FormTemplateId)
+GET         /saved-data/:formTemplateId/details   uk.gov.hmrc.eeittadminfrontend.controllers.SavedDataController.findSavedDataDetails(formTemplateId: FormTemplateId)
 
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

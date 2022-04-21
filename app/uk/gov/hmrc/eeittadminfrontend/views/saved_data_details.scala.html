@@ -1,0 +1,49 @@
+@*
+ * Copyright 2022 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import java.time.format.DateTimeFormatter
+
+@this(main_template: main_template)
+
+@(formTemplateId: FormTemplateId, savedFormDetails: Seq[SavedFormDetail])(implicit messages: Messages)
+
+@main_template(title = s"Saved Data for ${formTemplateId.value}", tab = "saved-data"){
+    <h2 class="govuk-heading-m">Saved Data for @{formTemplateId.value}</h2>
+    <table class="govuk-table stats-table">
+        <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header" scope="col" title="Template Id">Last saved date</th>
+                <th class="govuk-table__header" scope="col" title="Count of email forms">Count of email forms</th>
+                <th class="govuk-table__header" scope="col" title="Count of gov-gateway forms">Count of gov gateway forms</th>
+            </tr>
+        </thead>
+        @for(savedFormDetail <- savedFormDetails) {
+            <tbody class="govuk-table__body stats-results">
+                <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">
+                        @{savedFormDetail.createdDate.format(DateTimeFormatter.ofPattern("d MMM yyyy "))}
+                    </td>
+                    <td class="govuk-table__cell">
+                        @{savedFormDetail.emailCount}
+                    </td>
+                    <td class="govuk-table__cell">
+                        @{savedFormDetail.ggCount}
+                    </td>
+                </tr>
+            </tbody>
+        }
+    </table>
+}
