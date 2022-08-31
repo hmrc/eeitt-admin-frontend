@@ -39,7 +39,7 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   def getGformsTemplate(
     formTemplateId: FormTemplateId
   )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = gformUrl + s"/formtemplates/$formTemplateId/raw/sensitive"
+    val url = gformUrl + s"/formtemplates/$formTemplateId/sensitive"
     wsHttp
       .doGet(url)
       .map { response =>
