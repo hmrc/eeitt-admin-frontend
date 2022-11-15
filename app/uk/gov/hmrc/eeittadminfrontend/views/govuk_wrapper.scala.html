@@ -87,6 +87,11 @@
                 active = if(tab == "saved-data") true else false
             ),
             HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.stuckForms().path),
+                content = Text("Stuck forms"),
+                active = if(tab == "stuck-forms") true else false
+            ),
+            HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path),
                 content = Text("Submission Consolidator"),
                 active = if(tab == "submissionconsolidator") true else false
