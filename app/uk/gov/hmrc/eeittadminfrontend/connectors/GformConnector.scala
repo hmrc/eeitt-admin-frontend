@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -130,4 +130,22 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Seq[SavedFormDetail]] =
     wsHttp.GET[Seq[SavedFormDetail]](gformUrl + s"/formStatistics/${formTemplateId.value}/details")
+
+  def getSignedFormsDetails(implicit
+    headerCarrier: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[SignedFormDetails]] =
+    wsHttp.GET[Seq[SignedFormDetails]](gformUrl + s"/formStatistics/signed-forms")
+
+  def deleteForm(
+    formId: FormId
+  )(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .doPost[String](gformUrl + s"/forms/${formId.value}/delete", "", List.empty[(String, String)])
+
+  def unstuckForm(
+    formId: FormId
+  )(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
 }

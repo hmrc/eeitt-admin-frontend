@@ -1,0 +1,82 @@
+@*
+ * Copyright 2022 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import java.time.ZoneId
+@import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  main_template: main_template
+)
+
+@(signedFormDetails: Seq[SignedFormDetails])(implicit messages: Messages, request: Request[_])
+
+@main_template(title = s"Stuck Forms", tab = "stuck-forms"){
+
+   @request.flash.get("success").fold(Html("")) { notification =>
+     @GovukNotificationBanner(
+       NotificationBanner(
+         title = Text("Success"),
+         content = Text(notification),
+         bannerType = Some("success"),
+         role = Some("alert")
+       )
+     )
+   }
+
+    <table class="govuk-table stats-table">
+        <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header" scope="col" title="Form Template Id">Form Template</th>
+                <th class="govuk-table__header" scope="col" title="EnvelopId">EnvelopeId</th>
+                <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
+                <th class="govuk-table__header" scope="col" title="Change form state to InProgress">Release</th>
+                <th class="govuk-table__header" scope="col" title="Delete form (cannot be undone)">Delete</th>
+            </tr>
+        </thead>
+        @if(signedFormDetails.isEmpty) {
+          <tbody class="govuk-table__body stats-results">
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell" colspan="5">
+                No forms in Signed state found.
+              </td>
+            </tr>
+          </tbody>
+        } else {
+          @for(signedFormDetail <- signedFormDetails) {
+            <tbody class="govuk-table__body stats-results">
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  @{signedFormDetail.formTemplateId}
+                </td>
+                <td class="govuk-table__cell">
+                  @{signedFormDetail.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                  @{formatLocalDate(signedFormDetail.lastUpdated.atZone(ZoneId.of("Europe/London")).toLocalDateTime())}
+                </td>
+                <td class="govuk-table__cell">
+                  <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.releaseForm(signedFormDetail._id, signedFormDetail.envelopeId)" class="govuk-link">Release</a>
+                </td>
+                <td class="govuk-table__cell">
+                  <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.deleteForm(signedFormDetail._id, signedFormDetail.envelopeId)" class="govuk-link">Delete</a>
+                </td>
+              </tr>
+            </tbody>
+          }
+        }
+    </table>
+}
