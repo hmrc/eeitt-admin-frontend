@@ -17,12 +17,13 @@
 package uk.gov.hmrc.eeittadminfrontend
 
 import github4s.domain.Commit
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import uk.gov.hmrc.eeittadminfrontend.deployment.CommitSha
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
-import uk.gov.hmrc.govukfrontend.views.html.components.{ HeadCell, HtmlContent, Table, TableRow, Text }
+import uk.gov.hmrc.govukfrontend.views.html.components._
+
+import java.time.{ Instant, LocalDateTime, ZoneId }
+import java.time.format.DateTimeFormatter
 
 package object views {
 
@@ -30,6 +31,7 @@ package object views {
     .ofPattern("dd MMM yyyy HH:mm:ss")
 
   def formatLocalDate(localDateTime: LocalDateTime): String = dtf.format(localDateTime)
+  def formatInstant(instant: Instant): String = dtf.format(instant.atZone(ZoneId.of("UTC")).toLocalDateTime)
 
   def commitToTable(authorization: Authorization, commit: Commit) =
     Table(

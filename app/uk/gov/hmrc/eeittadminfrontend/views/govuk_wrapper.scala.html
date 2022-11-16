@@ -95,6 +95,11 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path),
                 content = Text("Submission Consolidator"),
                 active = if(tab == "submissionconsolidator") true else false
+            ),
+            HeaderNavigation(
+                    href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0).path),
+                    content = Text("Sdes Submissions"),
+                    active = if(tab == "sdes-submissions") true else false
             )
             )
         )

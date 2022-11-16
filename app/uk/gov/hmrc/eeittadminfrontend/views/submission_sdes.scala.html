@@ -1,0 +1,84 @@
+@*
+ * Copyright 2022 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.models.Pagination
+@import uk.gov.hmrc.eeittadminfrontend.views._
+
+@this(main_template: main_template)
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData)(implicit messages: Messages)
+
+@navigationLink(page: Int, label: String) = {
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page)" class="govuk-link">@label</a>
+}
+
+@main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
+
+    <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+
+    <table class="govuk-table stats-table">
+        <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
+                <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
+                <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
+                <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
+                <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+            </tr>
+        </thead>
+        <tbody class="govuk-table__body stats-results">
+        @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
+            <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.formTemplateId}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.submissionRef}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.envelopeId}
+                </td>
+                <td class="govuk-table__cell">
+                    @{formatInstant(sdesSubmission.submittedAt)}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.status}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.failureReason}
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="govuk-body">
+        @if(pagination.isFirstPage) {
+            First
+            Previous
+        } else {
+            @navigationLink(0, "First")
+            @navigationLink(pagination.previousPage, "Previous")
+        }
+        @if(pagination.isLastPage) {
+            Next
+            Last
+        } else {
+            @navigationLink(pagination.nextPage, "Next")
+            @navigationLink(pagination.last, "Last")
+        }
+    </div>
+}
