@@ -54,4 +54,6 @@ GET         /stuck-forms                             uk.gov.hmrc.eeittadminfront
 GET         /stuck-forms/release/:formId/:envelopeId uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.releaseForm(formId: FormId, envelopeId: EnvelopeId)
 GET         /stuck-forms/delete/:formId/:envelopeId  uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.deleteForm(formId: FormId, envelopeId: EnvelopeId)
 
+GET         /sdes-submissions/:page                  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int)
+
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

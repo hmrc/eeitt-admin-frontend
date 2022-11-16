@@ -16,19 +16,30 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import cats.syntax.eq._
-import cats.instances.int._
+import julienrf.json.derived
+import play.api.libs.json.OFormat
 
-case class Pagination(count: Long, page: Int, submissionCount: Int, pageSize: Int = Pagination.pageSize) {
-  val last: Int = Math.ceil(count.toDouble / pageSize).toInt - 1
-  val isFirstPage: Boolean = page === 0
-  val isLastPage: Boolean = last <= page
-  val previousPage: Int = if (isFirstPage) page else page - 1
-  val nextPage: Int = if (isLastPage) page else page + 1
-  val from: Int = if (submissionCount === 0) 0 else 1 + pageSize * page
-  val to: Long = if (submissionCount === 0) 0 else Math.min(pageSize.toLong * (page + 1), count)
+import java.time.Instant
+
+case class SdesSubmissionPageData(
+  sdesSubmissions: List[SdesSubmissionData],
+  count: Long,
+  countAll: Long
+)
+
+object SdesSubmissionPageData {
+  implicit val format: OFormat[SdesSubmissionPageData] = derived.oformat()
 }
 
-object Pagination {
-  val pageSize: Int = 100
+case class SdesSubmissionData(
+  envelopeId: String,
+  formTemplateId: String,
+  submissionRef: String,
+  submittedAt: Instant,
+  status: String,
+  failureReason: String
+)
+
+object SdesSubmissionData {
+  implicit val format: OFormat[SdesSubmissionData] = derived.oformat()
 }

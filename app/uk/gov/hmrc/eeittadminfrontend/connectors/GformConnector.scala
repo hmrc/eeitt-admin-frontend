@@ -17,10 +17,11 @@
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import akka.http.scaladsl.model.StatusCodes
+
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SdesSubmissionPageData, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -148,4 +149,10 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   )(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
       .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
+
+  def getSdesSubmissions(processed: Boolean, page: Int, pageSize: Int)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ) =
+    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$processed/$page/$pageSize")
 }
