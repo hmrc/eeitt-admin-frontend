@@ -56,4 +56,8 @@ GET         /stuck-forms/delete/:formId/:envelopeId  uk.gov.hmrc.eeittadminfront
 
 GET         /sdes-submissions/:page                  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int)
 
+GET         /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
+GET         /notification-banner/delete              uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner
+POST        /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBanner
+
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
