@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import julienrf.json.derived
-import play.api.libs.json.OFormat
+import play.api.libs.json._
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 
 import java.time.Instant
 
@@ -28,18 +28,64 @@ case class SdesSubmissionPageData(
 )
 
 object SdesSubmissionPageData {
-  implicit val format: OFormat[SdesSubmissionPageData] = derived.oformat()
+  implicit val format: OFormat[SdesSubmissionPageData] = Json.format[SdesSubmissionPageData]
 }
 
 case class SdesSubmissionData(
-  envelopeId: String,
-  formTemplateId: String,
-  submissionRef: String,
+  correlationId: CorrelationId,
+  envelopeId: EnvelopeId,
+  formTemplateId: FormTemplateId,
+  submissionRef: SubmissionRef,
   submittedAt: Instant,
-  status: String,
+  status: NotificationStatus,
   failureReason: String
 )
 
 object SdesSubmissionData {
-  implicit val format: OFormat[SdesSubmissionData] = derived.oformat()
+  implicit val format: OFormat[SdesSubmissionData] = Json.format[SdesSubmissionData]
+}
+
+case class SubmissionRef(value: String) extends AnyVal
+
+object SubmissionRef {
+  implicit val format: Format[SubmissionRef] = ValueClassFormatter.format(SubmissionRef.apply)(_.value)
+}
+
+case class CorrelationId(value: String) extends AnyVal
+
+object CorrelationId {
+  implicit val format: Format[CorrelationId] = ValueClassFormatter.format(CorrelationId.apply)(_.value)
+}
+
+sealed trait NotificationStatus extends Product with Serializable
+
+object NotificationStatus {
+
+  case object FileReady extends NotificationStatus
+
+  case object FileReceived extends NotificationStatus
+
+  case object FileProcessingFailure extends NotificationStatus
+
+  case object FileProcessed extends NotificationStatus
+
+  implicit val format: Format[NotificationStatus] = new Format[NotificationStatus] {
+    override def writes(o: NotificationStatus): JsValue = o match {
+      case FileReady             => JsString("FileReady")
+      case FileReceived          => JsString("FileReceived")
+      case FileProcessingFailure => JsString("FileProcessingFailure")
+      case FileProcessed         => JsString("FileProcessed")
+    }
+
+    override def reads(json: JsValue): JsResult[NotificationStatus] =
+      json match {
+        case JsString("FileReady")             => JsSuccess(FileReady)
+        case JsString("FileReceived")          => JsSuccess(FileReceived)
+        case JsString("FileProcessingFailure") => JsSuccess(FileProcessingFailure)
+        case JsString("FileProcessed")         => JsSuccess(FileProcessed)
+        case JsString(err) =>
+          JsError(s"only for valid FileReady, FileReceived, FileProcessingFailure or FileProcessed.$err is not allowed")
+        case _ => JsError("Failure")
+      }
+  }
 }

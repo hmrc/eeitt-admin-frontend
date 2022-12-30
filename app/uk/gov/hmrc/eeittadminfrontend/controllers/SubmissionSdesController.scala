@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.Pagination
+import uk.gov.hmrc.eeittadminfrontend.models.{ CorrelationId, Pagination, SubmissionRef }
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import javax.inject.Inject
@@ -34,12 +35,27 @@ class SubmissionSdesController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val pageSize = 10
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def sdesSubmissions(page: Int) =
     authAction.async { implicit request =>
       gformConnector.getSdesSubmissions(false, page, pageSize).map { sdesSubmissionPageData =>
         val pagination = Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.count.toInt, pageSize)
         Ok(submission_sdes(pagination, sdesSubmissionPageData))
+      }
+    }
+
+  def notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int) =
+    authAction.async { implicit request =>
+      val username = request.retrieval
+      logger.info(
+        s"${username.value} sends a notification to SDES for correlation id ${correlationId.value}, submission id  ${submissionRef.value}"
+      )
+      gformConnector.notifySDES(correlationId).map { httpResponse =>
+        Redirect(routes.SubmissionSdesController.sdesSubmissions(page))
+          .flashing(
+            "success" -> s"Envelope successfully notified. Correlation id: ${correlationId.value}, submission id: ${submissionRef.value}"
+          )
       }
     }
 }

@@ -16,15 +16,28 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.models.Pagination
 @import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(main_template: main_template)
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData)(implicit messages: Messages)
+
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData)(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
     <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page)" class="govuk-link">@label</a>
 }
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
+
+    @request.flash.get("success").fold(Html("")) { notification =>
+        @GovukNotificationBanner(
+            NotificationBanner(
+                title = Text("Success"),
+                content = HtmlContent(notification),
+                bannerType = Some("success"),
+                role = Some("alert")
+            )
+        )
+    }
 
     <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
 
@@ -37,28 +50,32 @@
                 <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+                <th class="govuk-table__header" scope="col" title="Failure Reason">Action</th>
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
         @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.formTemplateId}
+                    @{sdesSubmission.formTemplateId.value}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.submissionRef}
+                    @{sdesSubmission.submissionRef.value}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.envelopeId}
+                    @{sdesSubmission.envelopeId.value}
                 </td>
                 <td class="govuk-table__cell">
                     @{formatInstant(sdesSubmission.submittedAt)}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.status}
+                    @{sdesSubmission.status.toString}
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.failureReason}
+                </td>
+                <td class="govuk-table__cell">
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
                 </td>
             </tr>
         }

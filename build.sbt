@@ -56,6 +56,8 @@ lazy val microservice = Project(appName, file("."))
       "uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId",
       "uk.gov.hmrc.eeittadminfrontend.models.FormId",
       "uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId",
-      "uk.gov.hmrc.eeittadminfrontend.deployment._"
+      "uk.gov.hmrc.eeittadminfrontend.deployment._",
+      "uk.gov.hmrc.eeittadminfrontend.models.CorrelationId",
+      "uk.gov.hmrc.eeittadminfrontend.models.SubmissionRef"
     )
   )

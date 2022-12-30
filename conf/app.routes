@@ -55,6 +55,7 @@ GET         /stuck-forms/release/:formId/:envelopeId uk.gov.hmrc.eeittadminfront
 GET         /stuck-forms/delete/:formId/:envelopeId  uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.deleteForm(formId: FormId, envelopeId: EnvelopeId)
 
 GET         /sdes-submissions/:page                  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int)
+GET         /sdes-notify/:correlationId/:page        uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
 
 GET         /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
 GET         /notification-banner/delete              uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner
