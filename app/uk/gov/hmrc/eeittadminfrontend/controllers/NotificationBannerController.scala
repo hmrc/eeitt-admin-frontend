@@ -55,7 +55,7 @@ class NotificationBannerController @Inject() (
     authAction.async { request =>
       gformConnector.deleteNotificationBanner.map { maybeNotificationBanner =>
         Redirect(
-          uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner()
+          uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
         )
       }
     }
@@ -73,8 +73,7 @@ class NotificationBannerController @Inject() (
             } else {
               gformConnector.saveNotificationBanner(gformNotificationBanner).map { _ =>
                 Redirect(
-                  uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController
-                    .notificationBanner()
+                  uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
                 )
               }
             }

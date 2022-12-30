@@ -43,7 +43,7 @@
     if(formTemplateWithPIIInTitleDetails.lineContainsPII(index)) "background: #ffdce0" else ""
 }
 
-@main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome().path)) {
+@main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome.path)) {
 
     <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' with filters '@{filters}'</h2>
 

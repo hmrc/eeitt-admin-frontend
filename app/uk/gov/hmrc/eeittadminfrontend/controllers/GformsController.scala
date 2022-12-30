@@ -231,7 +231,7 @@ class GformsController @Inject() (
       .fold(
         error => {
           logger.error("Failed to bind request to form for gformFormTemplatesWithPIIInTitle", error)
-          Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome()))
+          Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome))
         },
         form =>
           (for {
@@ -286,7 +286,7 @@ class GformsController @Inject() (
     gformFormTemplateWithPIIInTitleForm
       .bindFromRequest()
       .fold(
-        _ => Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome())),
+        _ => Future.successful(Redirect(routes.GformsController.gformFormTemplatesWithPIIInTitleHome)),
         form =>
           getFormTemplatePIIDetails(form.formTemplateId, form.filters).map { formTemplateWithPIIInTitleDetails =>
             Ok(
@@ -363,7 +363,7 @@ class GformsController @Inject() (
   def uploadGformTemplates() = authAction.async(parse.multipartFormData) { implicit request =>
     val file = temporaryFileToPath(request.body.file("file").get.ref)
     batchUploadService.uploadZip(file.toFile).map { result =>
-      Redirect(routes.GformsController.uploadGformTemplatesStatus())
+      Redirect(routes.GformsController.uploadGformTemplatesStatus)
     }
   }
 

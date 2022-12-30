@@ -82,12 +82,12 @@
                 active = if(tab == "submissions") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.savedData().path),
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.savedData.path),
                 content = Text("Saved Data"),
                 active = if(tab == "saved-data") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.stuckForms().path),
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.stuckForms.path),
                 content = Text("Stuck forms"),
                 active = if(tab == "stuck-forms") true else false
             ),
@@ -102,7 +102,7 @@
                     active = if(tab == "sdes-submissions") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner().path),
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner.path),
                 content = Text("Notification banner"),
                 active = if(tab == "notification-banner") true else false
             ),
