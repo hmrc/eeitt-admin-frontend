@@ -49,7 +49,7 @@ class StuckFormsController @Inject() (
       val username = request.retrieval
       logger.info(s"$username changing formId: ${formId.value}, envelopeId: ${envelopeId.value} status to InProgress")
       gformConnector.unstuckForm(formId).map { httpResponse =>
-        Redirect(routes.StuckFormsController.stuckForms())
+        Redirect(routes.StuckFormsController.stuckForms)
           .flashing("success" -> s"Form successfuly unstuck. EnvelopeId: ${envelopeId.value}")
       }
     }
@@ -59,7 +59,7 @@ class StuckFormsController @Inject() (
       val username = request.retrieval
       logger.info(s"$username deleting formId: ${formId.value}, envelopeId: ${envelopeId.value}")
       gformConnector.deleteForm(formId).map { httpResponse =>
-        Redirect(routes.StuckFormsController.stuckForms())
+        Redirect(routes.StuckFormsController.stuckForms)
           .flashing("success" -> s"Form successful deleted. EnvelopeId: ${envelopeId.value}")
       }
     }

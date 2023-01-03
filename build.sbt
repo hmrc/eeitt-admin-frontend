@@ -41,7 +41,6 @@ lazy val microservice = Project(appName, file("."))
       Resolver.bintrayRepo("jetbrains", "markdown"),
       Resolver.jcenterRepo,
       "bintray-djspiewak-maven" at "https://dl.bintray.com/djspiewak/maven",
-      "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
       "bintray" at "https://dl.bintray.com/webjars/maven"
     )
   )
@@ -56,6 +55,8 @@ lazy val microservice = Project(appName, file("."))
       "uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId",
       "uk.gov.hmrc.eeittadminfrontend.models.FormId",
       "uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId",
-      "uk.gov.hmrc.eeittadminfrontend.deployment._"
+      "uk.gov.hmrc.eeittadminfrontend.deployment._",
+      "uk.gov.hmrc.eeittadminfrontend.models.CorrelationId",
+      "uk.gov.hmrc.eeittadminfrontend.models.SubmissionRef"
     )
   )
