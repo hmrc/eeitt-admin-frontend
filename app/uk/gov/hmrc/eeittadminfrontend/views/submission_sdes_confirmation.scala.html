@@ -1,0 +1,123 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.models.Pagination
+@import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(main_template: main_template)
+
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
+
+@navigationLink(page: Int, label: String) = {
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(page)" class="govuk-link">@label</a>
+}
+
+@formWithCSRF = @{new FormWithCSRF()}
+@govukButton = @{new GovukButton()}
+
+@main_template(title = s"SDES Submissions", tab = "sdes-submissions", backLink = None) {
+ @pageLevelError.render
+
+ <h2 class="govuk-heading-m">@{sdesSubmissions.count} records will be removed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+
+ <table class="govuk-table stats-table">
+  <thead class="govuk-table__head">
+   <tr class="govuk-table__row">
+    <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
+    <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
+    <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+    <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
+    <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
+    <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+   </tr>
+  </thead>
+  <tbody class="govuk-table__body stats-results">
+  @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
+   <tr class="govuk-table__row">
+    <td class="govuk-table__cell">
+    @{sdesSubmission.formTemplateId.value}
+    </td>
+    <td class="govuk-table__cell">
+    @{sdesSubmission.submissionRef.value}
+    </td>
+    <td class="govuk-table__cell">
+    @{sdesSubmission.envelopeId.value}
+    </td>
+    <td class="govuk-table__cell">
+    @{formatInstant(sdesSubmission.submittedAt)}
+    </td>
+    <td class="govuk-table__cell">
+    @{sdesSubmission.status.toString}
+    </td>
+    <td class="govuk-table__cell">
+    @{sdesSubmission.failureReason}
+    </td>
+   </tr>
+  }
+  </tbody>
+ </table>
+
+ <div class="govuk-body">
+  @if(pagination.isFirstPage) {
+   First
+   Previous
+  } else {
+   @navigationLink(0, "First")
+   @navigationLink(pagination.previousPage, "Previous")
+  }
+  @if(pagination.isLastPage) {
+   Next
+   Last
+  } else {
+   @navigationLink(pagination.nextPage, "Next")
+   @navigationLink(pagination.last, "Last")
+  }
+ </div>
+
+ @if(sdesSubmissions.count>0) {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(0), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
+   @{
+    new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
+     fieldset = Some(Fieldset(
+      legend = Some(Legend(
+       content = Text(messages("sdes.submission.delete.confirm")),
+       isPageHeading = true,
+       classes = "govuk-label--l"
+      ))
+     )),
+     errorMessage = fieldErrors.get("remove"),
+     name = "remove",
+     items = List(RadioItem(
+      value = Some("Yes"),
+      content = Text(messages("generic.Yes"))
+     ),
+      RadioItem(
+       value = Some("No"),
+       content = Text(messages("generic.No"))
+      )
+     ),
+     classes = "govuk-radios--inline"
+    ))
+   }
+   @govukButton(Button(content = Text(messages("button.continue")),
+    inputType = Some("submit"),
+    name = Some("save")
+   )
+   )
+  }
+ }
+}

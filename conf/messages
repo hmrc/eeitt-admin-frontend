@@ -1,3 +1,12 @@
 footer.links.Help=Help using GOV.UK
 
 linkText.back=Back
+
+generic.Yes=Yes
+generic.No=No
+generic.error.selectOption=Please select an option
+generic.error.selectOption.heading=There is a problem
+
+button.continue=Continue
+
+sdes.submission.delete.confirm = Are you sure you want to remove the above submission?

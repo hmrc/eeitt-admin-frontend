@@ -150,16 +150,19 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
 
-  def getSdesSubmissions(processed: Boolean, page: Int, pageSize: Int)(implicit
+  def getSdesSubmissions(processed: Boolean, daysBefore: Long, page: Int, pageSize: Int)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ) =
-    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$processed/$page/$pageSize")
+    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$processed/$daysBefore/$page/$pageSize")
 
   def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[Unit] =
     wsHttp
       .doPost[String](gformUrl + s"/sdes/notify/${correlationId.value}", "")
       .map(_ => ())
+
+  def deleteSdesSubmissions(daysBefore: Long)(implicit ec: ExecutionContext): Future[Unit] =
+    wsHttp.doDelete(gformUrl + s"/sdes/$daysBefore").map(_ => ())
 
   def findNotificationBanner()(implicit
     ec: ExecutionContext
