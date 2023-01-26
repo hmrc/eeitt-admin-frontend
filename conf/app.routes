@@ -54,10 +54,10 @@ GET         /stuck-forms                             uk.gov.hmrc.eeittadminfront
 GET         /stuck-forms/release/:formId/:envelopeId uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.releaseForm(formId: FormId, envelopeId: EnvelopeId)
 GET         /stuck-forms/delete/:formId/:envelopeId  uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.deleteForm(formId: FormId, envelopeId: EnvelopeId)
 
-GET         /sdes-submissions/:page                  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int)
-GET         /sdes-notify/:correlationId/:page        uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
-GET         /sdes-submissions/request-removal/:page  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestRemoval(page: Int)
-GET         /sdes-submissions/confirm-removal/:page  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.confirmRemoval(page: Int)
+GET         /sdes-submissions/:page                           uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int)
+GET         /sdes-notify/:correlationId/:page                 uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
+GET         /sdes-submissions/request-removal/:correlationId  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestRemoval(correlationId: CorrelationId)
+GET         /sdes-submissions/confirm-removal/:correlationId  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.confirmRemoval(correlationId: CorrelationId)
 
 GET         /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
 GET         /notification-banner/delete              uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner
