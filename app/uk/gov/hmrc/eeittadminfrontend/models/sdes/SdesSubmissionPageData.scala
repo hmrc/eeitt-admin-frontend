@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.models
+package uk.gov.hmrc.eeittadminfrontend.models.sdes
 
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, ValueClassFormatter }
 
 import java.time.Instant
 
@@ -38,7 +39,8 @@ case class SdesSubmissionData(
   submissionRef: SubmissionRef,
   submittedAt: Instant,
   status: NotificationStatus,
-  failureReason: String
+  failureReason: String,
+  lastUpdated: Option[Instant]
 )
 
 object SdesSubmissionData {

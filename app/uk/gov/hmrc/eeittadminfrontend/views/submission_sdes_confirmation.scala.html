@@ -14,17 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.models.Pagination
 @import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import java.time.Instant
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionData
+@import java.time.temporal.ChronoUnit
 
 @this(main_template: main_template)
 
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
-
-@navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(page)" class="govuk-link">@label</a>
-}
+@(sdesSubmission: SdesSubmissionData, olderThan: Long, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
 
 @formWithCSRF = @{new FormWithCSRF()}
 @govukButton = @{new GovukButton()}
@@ -32,7 +30,9 @@
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions", backLink = None) {
  @pageLevelError.render
 
- <h2 class="govuk-heading-m">@{sdesSubmissions.count} records will be removed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+ @if(sdesSubmission.submittedAt.isAfter(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
+  <h2 class="govuk-heading-m">Submission after @olderThan hours can be deleted</h2>
+ }
 
  <table class="govuk-table stats-table">
   <thead class="govuk-table__head">
@@ -46,7 +46,6 @@
    </tr>
   </thead>
   <tbody class="govuk-table__body stats-results">
-  @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
    <tr class="govuk-table__row">
     <td class="govuk-table__cell">
     @{sdesSubmission.formTemplateId.value}
@@ -67,29 +66,12 @@
     @{sdesSubmission.failureReason}
     </td>
    </tr>
-  }
   </tbody>
  </table>
 
- <div class="govuk-body">
-  @if(pagination.isFirstPage) {
-   First
-   Previous
-  } else {
-   @navigationLink(0, "First")
-   @navigationLink(pagination.previousPage, "Previous")
-  }
-  @if(pagination.isLastPage) {
-   Next
-   Last
-  } else {
-   @navigationLink(pagination.nextPage, "Next")
-   @navigationLink(pagination.last, "Last")
-  }
- </div>
 
- @if(sdesSubmissions.count>0) {
-  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(0), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
+ @if(sdesSubmission.submittedAt.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
    @{
     new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
      fieldset = Some(Fieldset(

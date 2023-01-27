@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.Pagination
 @import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
 
 @this(main_template: main_template)
 
@@ -39,7 +40,16 @@
         )
     }
 
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(0)" class="govuk-link govuk-heading-s">Remove</a>
+    @request.flash.get("failed").fold(Html("")) { notification =>
+        @GovukNotificationBanner(
+            NotificationBanner(
+                title = Text("Failed"),
+                content = HtmlContent(notification),
+                role = Some("alert")
+            )
+        )
+    }
+
     <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
 
     <table class="govuk-table stats-table">
@@ -51,7 +61,9 @@
                 <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
-                <th class="govuk-table__header" scope="col" title="Failure Reason">Action</th>
+                <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
+                <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
+                <th class="govuk-table__header" scope="col" title="Delete notification (cannot be undone)">Delete</th>
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
@@ -76,7 +88,13 @@
                     @{sdesSubmission.failureReason}
                 </td>
                 <td class="govuk-table__cell">
+                    @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
                     <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
+                </td>
+                <td class="govuk-table__cell">
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">Delete</a>
                 </td>
             </tr>
         }

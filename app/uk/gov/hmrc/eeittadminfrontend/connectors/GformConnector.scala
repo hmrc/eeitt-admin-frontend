@@ -21,7 +21,8 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.{ CorrelationId, DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SdesSubmissionPageData, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, SdesSubmissionData, SdesSubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -150,19 +151,26 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
 
-  def getSdesSubmissions(processed: Boolean, daysBefore: Long, page: Int, pageSize: Int)(implicit
+  def getSdesSubmissions(page: Int, pageSize: Int, maybeProcessed: Option[Boolean] = None)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ) = {
+    val queryString = maybeProcessed.fold("")(p => s"?processed=$p")
+    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$page/$pageSize$queryString")
+  }
+
+  def getSdesSubmission(correlationId: CorrelationId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ) =
-    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$processed/$daysBefore/$page/$pageSize")
+    wsHttp.GET[SdesSubmissionData](gformUrl + s"/sdes/${correlationId.value}")
 
-  def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[Unit] =
+  def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
       .doPost[String](gformUrl + s"/sdes/notify/${correlationId.value}", "")
-      .map(_ => ())
 
-  def deleteSdesSubmissions(daysBefore: Long)(implicit ec: ExecutionContext): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/sdes/$daysBefore").map(_ => ())
+  def deleteSdesSubmission(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp.doDelete(gformUrl + s"/sdes/${correlationId.value}")
 
   def findNotificationBanner()(implicit
     ec: ExecutionContext
