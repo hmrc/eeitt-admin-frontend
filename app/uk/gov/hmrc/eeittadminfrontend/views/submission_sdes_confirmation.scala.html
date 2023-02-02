@@ -30,7 +30,7 @@
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions", backLink = None) {
  @pageLevelError.render
 
- @if(sdesSubmission.submittedAt.isAfter(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
+ @if(sdesSubmission.createdAt.isAfter(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
   <h2 class="govuk-heading-m">Submission after @olderThan hours can be deleted</h2>
  }
 
@@ -40,40 +40,44 @@
     <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
     <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
     <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+    <th class="govuk-table__header" scope="col" title="Date when submission created">Created date</th>
     <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
     <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
     <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+    <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
    </tr>
   </thead>
   <tbody class="govuk-table__body stats-results">
    <tr class="govuk-table__row">
     <td class="govuk-table__cell">
-    @{sdesSubmission.formTemplateId.value}
+       @{sdesSubmission.formTemplateId.value}
     </td>
     <td class="govuk-table__cell">
-    @{sdesSubmission.submissionRef.value}
+       @{sdesSubmission.submissionRef.value}
     </td>
     <td class="govuk-table__cell">
-    @{sdesSubmission.envelopeId.value}
+       @{sdesSubmission.envelopeId.value}
     </td>
     <td class="govuk-table__cell">
-    @{formatInstant(sdesSubmission.submittedAt)}
+       @{formatInstant(sdesSubmission.createdAt)}
     </td>
     <td class="govuk-table__cell">
-    @{sdesSubmission.status.toString}
+       @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}
     </td>
     <td class="govuk-table__cell">
-    @{sdesSubmission.failureReason}
+       @{sdesSubmission.status.toString}
+    </td>
+    <td class="govuk-table__cell">
+       @{sdesSubmission.failureReason}
     </td>
    </tr>
   </tbody>
  </table>
 
 
- @if(sdesSubmission.submittedAt.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
+ @if(sdesSubmission.createdAt.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS))) {
   @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
-   @{
-    new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
+   @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
        content = Text(messages("sdes.submission.delete.confirm")),
@@ -95,11 +99,7 @@
      classes = "govuk-radios--inline"
     ))
    }
-   @govukButton(Button(content = Text(messages("button.continue")),
-    inputType = Some("submit"),
-    name = Some("save")
-   )
-   )
+   @govukButton(Button(content = Text(messages("button.continue")), inputType = Some("submit"), name = Some("save")))
   }
  }
 }
