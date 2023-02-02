@@ -22,6 +22,7 @@ import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormId, FormTemplateId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 
 object ValueClassBinders {
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
@@ -33,6 +34,10 @@ object ValueClassBinders {
     uri => Uri.fromString(uri).right.get,
     _.renderString,
     (message, exception) => "Failed to bind Uri: " + message + ", exception " + exception.getMessage()
+  )
+
+  implicit val notificationStatusBinder: QueryStringBindable[NotificationStatus] = valueClassQueryBinder(
+    NotificationStatus.fromName
   )
 
   def valueClassBinder[A: Reads](fromAtoString: A => String)(implicit stringBinder: PathBindable[String]) = {
@@ -51,4 +56,22 @@ object ValueClassBinders {
         stringBinder.unbind(key, fromAtoString(a))
     }
   }
+
+  private def valueClassQueryBinder[A: Reads](
+    fromAtoString: A => String
+  )(implicit stringBinder: QueryStringBindable[String]) =
+    new QueryStringBindable[A] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, A]] =
+        stringBinder.bind(key, params).map(_.flatMap(parseString[A]))
+
+      override def unbind(key: String, a: A): String =
+        stringBinder.unbind(key, fromAtoString(a))
+    }
+
+  private def parseString[A: Reads](str: String) =
+    JsString(str).validate[A] match {
+      case JsSuccess(a, _) => Right(a)
+      case JsError(error)  => Left("No valid value in url binding: " + str + ". Error: " + error)
+    }
+
 }

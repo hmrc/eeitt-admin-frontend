@@ -18,14 +18,23 @@
 @import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 
 @this(main_template: main_template)
 
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData)(implicit messages: Messages, request: Request[_])
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status)" class="govuk-link">@label</a>
 }
+
+
+@formWithCSRF = @{new FormWithCSRF()}
+@govukLabel = @{new GovukLabel()}
+@govukHint  = @{new GovukHint()}
+@govukErrorMessage = @{new GovukErrorMessage()}
+@govukSelect = @{new GovukSelect(govukErrorMessage, govukHint, govukLabel)}
+@govukButton = @{new GovukButton()}
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
@@ -48,6 +57,64 @@
                 role = Some("alert")
             )
         )
+    }
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
+        @GovukInput(Input(
+            id = "formTemplateId",
+            name = "formTemplateId",
+            value = formTemplateId.map(_.value),
+            label = Label(
+                classes = "govuk-label--s",
+                content = Text("Form Template Id")
+            )
+        ))
+        @govukSelect(
+            Select(
+                id = "notificationStatus",
+                name = "notificationStatus",
+                items = Seq(
+                    SelectItem(
+                        value = None,
+                        text = ""
+                    ),
+                    SelectItem(
+                        value = Some("NotNotified"),
+                        text = "NotNotified",
+                        selected = isSelected(status,"NotNotified")
+                    ),
+                    SelectItem(
+                        value = Some("FileReady"),
+                        text = "FileReady",
+                        selected = isSelected(status,"FileReady")
+                    ),
+                    SelectItem(
+                        value = Some("FileReceived"),
+                        text = "FileReceived",
+                        selected = isSelected(status,"FileReceived")
+                    ),
+                    SelectItem(
+                        value = Some("FileProcessingFailure"),
+                        text = "FileProcessingFailure",
+                        selected = isSelected(status,"FileProcessingFailure")
+                    ),
+                    SelectItem(
+                        value = Some("FileProcessed"),
+                        text = "FileProcessed",
+                        selected = isSelected(status,"FileProcessed")
+                    )),
+                label = Label(
+                    classes = "govuk-label--s",
+                    content = Text("Status")
+                )
+            )
+        )
+        @govukButton(Button(
+            preventDoubleClick = true,
+            content = Text("Filter"),
+            inputType = Some("submit"),
+            name = Some("filter")
+        ))
     }
 
     <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>

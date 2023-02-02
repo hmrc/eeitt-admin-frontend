@@ -21,7 +21,7 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, SdesSubmissionData, SdesSubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesSubmissionData, SdesSubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -151,12 +151,22 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
 
-  def getSdesSubmissions(page: Int, pageSize: Int, maybeProcessed: Option[Boolean] = None)(implicit
+  def getSdesSubmissions(
+    page: Int,
+    pageSize: Int,
+    maybeProcessed: Option[Boolean] = None,
+    formTemplateId: Option[FormTemplateId],
+    status: Option[NotificationStatus]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ) = {
-    val queryString = maybeProcessed.fold("")(p => s"?processed=$p")
-    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$page/$pageSize$queryString")
+    val queryStringByProcessed = maybeProcessed.fold("")(p => s"processed=$p")
+    val queryStringByTemplateId = formTemplateId.fold(queryStringByProcessed)(formTemplateId =>
+      s"formTemplateId=$formTemplateId&$queryStringByProcessed"
+    )
+    val queryString = status.fold(queryStringByTemplateId)(status => s"status=$status&$queryStringByTemplateId")
+    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$page/$pageSize?$queryString")
   }
 
   def getSdesSubmission(correlationId: CorrelationId)(implicit

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models.sdes
 
+import cats.Eq
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, ValueClassFormatter }
@@ -73,6 +74,8 @@ object NotificationStatus {
 
   case object FileProcessed extends NotificationStatus
 
+  implicit val catsEq: Eq[NotificationStatus] = Eq.fromUniversalEquals
+
   implicit val format: Format[NotificationStatus] = new Format[NotificationStatus] {
     override def writes(o: NotificationStatus): JsValue = o match {
       case NotNotified           => JsString("NotNotified")
@@ -93,5 +96,21 @@ object NotificationStatus {
           JsError(s"only for valid FileReady, FileReceived, FileProcessingFailure or FileProcessed.$err is not allowed")
         case _ => JsError("Failure")
       }
+  }
+
+  def fromName(notificationStatus: NotificationStatus): String = notificationStatus match {
+    case NotNotified           => "NotNotified"
+    case FileReady             => "FileReady"
+    case FileReceived          => "FileReceived"
+    case FileProcessingFailure => "FileProcessingFailure"
+    case FileProcessed         => "FileProcessed"
+  }
+
+  def fromString(notificationStatus: String): NotificationStatus = notificationStatus match {
+    case "NotNotified"           => NotNotified
+    case "FileReady"             => FileReady
+    case "FileReceived"          => FileReceived
+    case "FileProcessingFailure" => FileProcessingFailure
+    case "FileProcessed"         => FileProcessed
   }
 }
