@@ -20,12 +20,13 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 
+
 @this(main_template: main_template)
 
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus])(implicit messages: Messages, request: Request[_])
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeDate: Option[Boolean])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeDate)" class="govuk-link">@label</a>
 }
 
 
@@ -35,6 +36,8 @@
 @govukErrorMessage = @{new GovukErrorMessage()}
 @govukSelect = @{new GovukSelect(govukErrorMessage, govukHint, govukLabel)}
 @govukButton = @{new GovukButton()}
+@govukFieldset = @{new GovukFieldset()}
+@govukCheckboxes = @{new GovukCheckboxes(govukErrorMessage,govukFieldset, govukHint, govukLabel)}
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
@@ -109,6 +112,15 @@
                 )
             )
         )
+        @govukCheckboxes(Checkboxes(
+            name = "showBeforeDate",
+            items = Seq(
+                CheckboxItem(
+                content = Text("Not processed for more than 10 hours"),
+                value = "true"
+                )
+            )
+        ))
         @govukButton(Button(
             preventDoubleClick = true,
             content = Text("Filter"),
@@ -117,7 +129,10 @@
         ))
     }
 
-    <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+    <h2 class="govuk-heading-m">
+        <span style="color: #18703C">@{sdesSubmissions.countAll} forms submitted.</span>
+        <span style="color: #ff0000">@{sdesSubmissions.count} forms are not processed.</span>
+        Showing @{pagination.from} - @{pagination.to} submissions.</h2>
 
     <table class="govuk-table stats-table">
         <thead class="govuk-table__head">
@@ -161,13 +176,22 @@
                 <td class="govuk-table__cell">
                     @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
                 </td>
-                <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
-                </td>
-                <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">Delete</a>
-                </td>
-            </tr>
+                @if(sdesSubmission.status.toString == "FileProcessed") {
+                    <td class="govuk-table__cell">
+
+                    </td>
+                    <td class="govuk-table__cell">
+
+                    </td>
+                } else {
+                    <td class="govuk-table__cell">
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
+                    </td>
+                    <td class="govuk-table__cell">
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">Delete</a>
+                    </td>
+                }
+                </tr>
         }
         </tbody>
     </table>
