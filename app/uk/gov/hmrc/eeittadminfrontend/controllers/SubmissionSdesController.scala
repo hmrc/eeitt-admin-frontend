@@ -45,7 +45,7 @@ class SubmissionSdesController @Inject() (
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
-  private val pageSize = 10
+  private val pageSize = 100
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def sdesSubmissions(
@@ -53,13 +53,13 @@ class SubmissionSdesController @Inject() (
     processed: Option[Boolean],
     formTemplateId: Option[FormTemplateId] = None,
     status: Option[NotificationStatus] = None,
-    showBeforeDate: Option[Boolean]
+    showBeforeAt: Option[Boolean]
   ) =
     authAction.async { implicit request =>
-      gformConnector.getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeDate).map {
+      gformConnector.getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeAt).map {
         sdesSubmissionPageData =>
           val pagination = Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.count.toInt, pageSize)
-          Ok(submission_sdes(pagination, sdesSubmissionPageData, processed, formTemplateId, status, showBeforeDate))
+          Ok(submission_sdes(pagination, sdesSubmissionPageData, processed, formTemplateId, status, showBeforeAt))
       }
     }
 
@@ -149,7 +149,7 @@ class SubmissionSdesController @Inject() (
     Forms.tuple(
       "formTemplateId"     -> optional(text),
       "notificationStatus" -> optional(text),
-      "showBeforeDate"     -> optional(boolean)
+      "showBeforeAt"       -> optional(boolean)
     )
   )
 
@@ -162,15 +162,15 @@ class SubmissionSdesController @Inject() (
             routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None)
           ).pure[Future],
         {
-          case (maybeFormTemplateId, maybeStatus, maybeShowBeforeDate) =>
-            if (maybeShowBeforeDate.getOrElse(false) == true) {
+          case (maybeFormTemplateId, maybeStatus, maybeShowBeforeAt) =>
+            if (maybeShowBeforeAt.getOrElse(false) == true) {
               Redirect(
                 routes.SubmissionSdesController.sdesSubmissions(
                   0,
                   None,
                   maybeFormTemplateId.map(FormTemplateId(_)),
                   maybeStatus.map(NotificationStatus.fromString(_)),
-                  maybeShowBeforeDate
+                  maybeShowBeforeAt
                 )
               ).pure[Future]
             } else {
