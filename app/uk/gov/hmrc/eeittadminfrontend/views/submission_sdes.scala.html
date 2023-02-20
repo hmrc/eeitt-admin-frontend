@@ -27,7 +27,7 @@
 @(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-<a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt)" class="govuk-link">@label</a>
 }
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
@@ -46,9 +46,9 @@
     @request.flash.get("failed").fold(Html("")) { notification =>
         @GovukNotificationBanner(
             NotificationBanner(
-            title = Text("Failed"),
-            content = HtmlContent(notification),
-            role = Some("alert")
+                title = Text("Failed"),
+                content = HtmlContent(notification),
+                role = Some("alert")
             )
         )
     }
