@@ -163,27 +163,15 @@ class SubmissionSdesController @Inject() (
           ).pure[Future],
         {
           case (maybeFormTemplateId, maybeStatus, maybeShowBeforeAt) =>
-            if (maybeShowBeforeAt.getOrElse(false) == true) {
-              Redirect(
-                routes.SubmissionSdesController.sdesSubmissions(
-                  0,
-                  None,
-                  maybeFormTemplateId.map(FormTemplateId(_)),
-                  maybeStatus.map(NotificationStatus.fromString(_)),
-                  maybeShowBeforeAt
-                )
-              ).pure[Future]
-            } else {
-              Redirect(
-                routes.SubmissionSdesController.sdesSubmissions(
-                  0,
-                  None,
-                  maybeFormTemplateId.map(FormTemplateId(_)),
-                  maybeStatus.map(NotificationStatus.fromString(_)),
-                  None
-                )
-              ).pure[Future]
-            }
+            Redirect(
+              routes.SubmissionSdesController.sdesSubmissions(
+                0,
+                None,
+                maybeFormTemplateId.map(FormTemplateId(_)),
+                maybeStatus.map(NotificationStatus.fromString(_)),
+                maybeShowBeforeAt
+              )
+            ).pure[Future]
           case _ =>
             Redirect(
               routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None)
