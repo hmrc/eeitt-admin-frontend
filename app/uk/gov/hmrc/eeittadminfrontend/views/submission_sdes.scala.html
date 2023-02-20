@@ -31,32 +31,23 @@
 }
 
 
-@formWithCSRF = @{new FormWithCSRF()}
-@govukLabel = @{new GovukLabel()}
-@govukHint  = @{new GovukHint()}
-@govukErrorMessage = @{new GovukErrorMessage()}
-@govukSelect = @{new GovukSelect(govukErrorMessage, govukHint, govukLabel)}
-@govukButton = @{new GovukButton()}
-@govukFieldset = @{new GovukFieldset()}
-@govukCheckboxes = @{new GovukCheckboxes(govukErrorMessage,govukFieldset, govukHint, govukLabel)}
-@govukNotificationBanner = @{new GovukNotificationBanner()}
-@govukInput = @{new GovukInput(govukErrorMessage, govukHint, govukLabel)}
+
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
-        @govukNotificationBanner(
+        @GovukNotificationBanner(
             NotificationBanner(
-            title = Text("Success"),
-            content = HtmlContent(notification),
-            bannerType = Some("success"),
-            role = Some("alert")
+                title = Text("Success"),
+                content = HtmlContent(notification),
+                bannerType = Some("success"),
+                role = Some("alert")
             )
         )
     }
 
     @request.flash.get("failed").fold(Html("")) { notification =>
-        @govukNotificationBanner(
+        @GovukNotificationBanner(
             NotificationBanner(
             title = Text("Failed"),
             content = HtmlContent(notification),
@@ -65,17 +56,17 @@
         )
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
-        @govukInput(Input(
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
+        @GovukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
             value = formTemplateId.map(_.value),
             label = Label(
-            classes = "govuk-label--s",
-            content = Text("Form Template Id")
+                classes = "govuk-label--s",
+                content = Text("Form Template Id")
             )
         ))
-        @govukSelect(
+        @GovukSelect(
             Select(
                 id = "notificationStatus",
                 name = "notificationStatus",
@@ -98,12 +89,12 @@
                         value = Some("FileReceived"),
                         text = "FileReceived",
                         selected = isSelected(status,"FileReceived")
-                        ),
+                    ),
                     SelectItem(
                         value = Some("FileProcessingFailure"),
                         text = "FileProcessingFailure",
                         selected = isSelected(status,"FileProcessingFailure")
-                        ),
+                    ),
                     SelectItem(
                         value = Some("FileProcessed"),
                         text = "FileProcessed",
@@ -115,7 +106,7 @@
                 )
             )
         )
-        @govukCheckboxes(Checkboxes(
+        @GovukCheckboxes(Checkboxes(
             name = "showBeforeAt",
             items = Seq(
                 CheckboxItem(
@@ -125,7 +116,7 @@
                 )
             )
         ))
-        @govukButton(Button(
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Filter"),
             inputType = Some("submit"),
