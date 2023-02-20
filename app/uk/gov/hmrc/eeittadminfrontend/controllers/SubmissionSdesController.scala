@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.data.Forms.{ optional, text }
+import play.api.data.Forms.{ boolean, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
@@ -45,20 +45,21 @@ class SubmissionSdesController @Inject() (
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
-  private val pageSize = 10
+  private val pageSize = 100
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def sdesSubmissions(
     page: Int,
     processed: Option[Boolean],
     formTemplateId: Option[FormTemplateId] = None,
-    status: Option[NotificationStatus] = None
+    status: Option[NotificationStatus] = None,
+    showBeforeAt: Option[Boolean]
   ) =
     authAction.async { implicit request =>
-      gformConnector.getSdesSubmissions(page, pageSize, processed, formTemplateId, status).map {
+      gformConnector.getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeAt).map {
         sdesSubmissionPageData =>
           val pagination = Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.count.toInt, pageSize)
-          Ok(submission_sdes(pagination, sdesSubmissionPageData, processed, formTemplateId, status))
+          Ok(submission_sdes(pagination, sdesSubmissionPageData, processed, formTemplateId, status, showBeforeAt))
       }
     }
 
@@ -71,12 +72,12 @@ class SubmissionSdesController @Inject() (
       gformConnector.notifySDES(correlationId).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None))
+          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None))
             .flashing(
               "success" -> s"Envelope successfully notified. Correlation id: ${correlationId.value}, submission id: ${submissionRef.value}"
             )
         } else {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None))
+          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None))
             .flashing(
               "failed" -> s"Unexpected SDES response with correlation id: ${correlationId.value}, submission id: ${submissionRef.value} : ${response.body}"
             )
@@ -133,21 +134,22 @@ class SubmissionSdesController @Inject() (
             gformConnector
               .deleteSdesSubmission(correlationId)
               .map(httpResponse =>
-                Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None))
+                Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None))
                   .flashing(
                     "success" -> s"Sdes submission successfully deleted."
                   )
               )
           case "No" =>
-            Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None)).pure[Future]
+            Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None)).pure[Future]
         }
       )
   }
 
-  private val form: Form[(Option[String], Option[String])] = play.api.data.Form(
+  private val form: Form[(Option[String], Option[String], Option[Boolean])] = play.api.data.Form(
     Forms.tuple(
       "formTemplateId"     -> optional(text),
-      "notificationStatus" -> optional(text)
+      "notificationStatus" -> optional(text),
+      "showBeforeAt"       -> optional(boolean)
     )
   )
 
@@ -157,21 +159,22 @@ class SubmissionSdesController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.SubmissionSdesController.sdesSubmissions(page, None, None, None)
+            routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None)
           ).pure[Future],
         {
-          case (maybeFormTemplateId, maybeStatus) =>
+          case (maybeFormTemplateId, maybeStatus, maybeShowBeforeAt) =>
             Redirect(
               routes.SubmissionSdesController.sdesSubmissions(
                 0,
                 None,
                 maybeFormTemplateId.map(FormTemplateId(_)),
-                maybeStatus.map(NotificationStatus.fromString(_))
+                maybeStatus.map(NotificationStatus.fromString(_)),
+                maybeShowBeforeAt
               )
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.SubmissionSdesController.sdesSubmissions(page, None, None, None)
+              routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None)
             ).pure[Future]
         }
       )

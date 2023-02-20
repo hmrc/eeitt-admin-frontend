@@ -14,27 +14,21 @@
  * limitations under the License.
  *@
 
+@import cats.syntax.eq._
 @import uk.gov.hmrc.eeittadminfrontend.models.Pagination
 @import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus.FileProcessed
 
 @this(main_template: main_template)
 
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus])(implicit messages: Messages, request: Request[_])
+@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt)" class="govuk-link">@label</a>
 }
-
-
-@formWithCSRF = @{new FormWithCSRF()}
-@govukLabel = @{new GovukLabel()}
-@govukHint  = @{new GovukHint()}
-@govukErrorMessage = @{new GovukErrorMessage()}
-@govukSelect = @{new GovukSelect(govukErrorMessage, govukHint, govukLabel)}
-@govukButton = @{new GovukButton()}
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
@@ -59,7 +53,7 @@
         )
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
+    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
         @GovukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
@@ -69,7 +63,7 @@
                 content = Text("Form Template Id")
             )
         ))
-        @govukSelect(
+        @GovukSelect(
             Select(
                 id = "notificationStatus",
                 name = "notificationStatus",
@@ -109,7 +103,17 @@
                 )
             )
         )
-        @govukButton(Button(
+        @GovukCheckboxes(Checkboxes(
+            name = "showBeforeAt",
+            items = Seq(
+                CheckboxItem(
+                    content = Text("Not processed for more than 10 hours"),
+                    value = "true",
+                    checked = showBeforeAt.getOrElse(false)
+                )
+            )
+        ))
+        @GovukButton(Button(
             preventDoubleClick = true,
             content = Text("Filter"),
             inputType = Some("submit"),
@@ -117,7 +121,10 @@
         ))
     }
 
-    <h2 class="govuk-heading-m">@{sdesSubmissions.countAll} forms submitted. @{sdesSubmissions.count} forms are not processed. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+    <h2 class="govuk-heading-m">
+        <span style="color: #18703C"> @{sdesSubmissions.countAll} forms submitted.</span>
+        <span style="color: #ff0000">@{sdesSubmissions.count} forms are not processed.</span>
+        Showing @{if(sdesSubmissions.sdesSubmissions.size>0) pagination.from else 0} - @{pagination.from + sdesSubmissions.sdesSubmissions.size - 1} submissions.</h2>
 
     <table class="govuk-table stats-table">
         <thead class="govuk-table__head">
@@ -162,10 +169,16 @@
                     @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
                 </td>
                 <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
+                    @if(sdesSubmission.status =!= FileProcessed) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
+                        Notify</a>
+                    }
                 </td>
                 <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">Delete</a>
+                    @if(sdesSubmission.status =!= FileProcessed) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">
+                        Delete</a>
+                    }
                 </td>
             </tr>
         }

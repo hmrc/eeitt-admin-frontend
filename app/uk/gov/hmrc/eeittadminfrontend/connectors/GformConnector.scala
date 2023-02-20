@@ -156,7 +156,8 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     pageSize: Int,
     maybeProcessed: Option[Boolean] = None,
     formTemplateId: Option[FormTemplateId],
-    status: Option[NotificationStatus]
+    status: Option[NotificationStatus],
+    showBeforeAt: Option[Boolean]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -165,7 +166,9 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     val queryStringByTemplateId = formTemplateId.fold(queryStringByProcessed)(formTemplateId =>
       s"formTemplateId=$formTemplateId&$queryStringByProcessed"
     )
-    val queryString = status.fold(queryStringByTemplateId)(status => s"status=$status&$queryStringByTemplateId")
+    val queryStringByStatus = status.fold(queryStringByTemplateId)(status => s"status=$status&$queryStringByTemplateId")
+    val queryString =
+      showBeforeAt.fold(queryStringByStatus)(showBeforeAt => s"showBeforeAt=$showBeforeAt&$queryStringByStatus")
     wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$page/$pageSize?$queryString")
   }
 
