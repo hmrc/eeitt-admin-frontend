@@ -30,9 +30,6 @@
 <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt)" class="govuk-link">@label</a>
 }
 
-
-
-
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
