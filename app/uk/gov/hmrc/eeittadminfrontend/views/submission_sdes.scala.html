@@ -127,7 +127,6 @@
                 <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
-                <th class="govuk-table__header" scope="col" title="Date when submission created">Created date</th>
                 <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
@@ -147,9 +146,6 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.envelopeId.value}
-                </td>
-                <td class="govuk-table__cell">
-                    @{formatInstant(sdesSubmission.createdAt)}
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}

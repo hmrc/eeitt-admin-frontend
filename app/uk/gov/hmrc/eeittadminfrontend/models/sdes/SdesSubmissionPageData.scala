@@ -41,7 +41,6 @@ case class SdesSubmissionData(
   submittedAt: Option[Instant],
   status: NotificationStatus,
   failureReason: String,
-  createdAt: Instant,
   lastUpdated: Option[Instant]
 )
 
