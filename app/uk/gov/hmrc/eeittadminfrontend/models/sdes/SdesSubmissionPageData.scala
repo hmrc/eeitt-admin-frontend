@@ -41,7 +41,6 @@ case class SdesSubmissionData(
   submittedAt: Option[Instant],
   status: NotificationStatus,
   failureReason: String,
-  createdAt: Instant,
   lastUpdated: Option[Instant]
 )
 
@@ -64,7 +63,6 @@ object CorrelationId {
 sealed trait NotificationStatus extends Product with Serializable
 
 object NotificationStatus {
-  case object NotNotified extends NotificationStatus
 
   case object FileReady extends NotificationStatus
 
@@ -78,7 +76,6 @@ object NotificationStatus {
 
   implicit val format: Format[NotificationStatus] = new Format[NotificationStatus] {
     override def writes(o: NotificationStatus): JsValue = o match {
-      case NotNotified           => JsString("NotNotified")
       case FileReady             => JsString("FileReady")
       case FileReceived          => JsString("FileReceived")
       case FileProcessingFailure => JsString("FileProcessingFailure")
@@ -87,7 +84,6 @@ object NotificationStatus {
 
     override def reads(json: JsValue): JsResult[NotificationStatus] =
       json match {
-        case JsString("NotNotified")           => JsSuccess(NotNotified)
         case JsString("FileReady")             => JsSuccess(FileReady)
         case JsString("FileReceived")          => JsSuccess(FileReceived)
         case JsString("FileProcessingFailure") => JsSuccess(FileProcessingFailure)
@@ -99,7 +95,6 @@ object NotificationStatus {
   }
 
   def fromName(notificationStatus: NotificationStatus): String = notificationStatus match {
-    case NotNotified           => "NotNotified"
     case FileReady             => "FileReady"
     case FileReceived          => "FileReceived"
     case FileProcessingFailure => "FileProcessingFailure"
@@ -107,7 +102,6 @@ object NotificationStatus {
   }
 
   def fromString(notificationStatus: String): NotificationStatus = notificationStatus match {
-    case "NotNotified"           => NotNotified
     case "FileReady"             => FileReady
     case "FileReceived"          => FileReceived
     case "FileProcessingFailure" => FileProcessingFailure
