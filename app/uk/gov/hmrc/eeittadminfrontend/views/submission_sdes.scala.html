@@ -119,7 +119,7 @@
     <h2 class="govuk-heading-m">
         <span style="color: #18703C"> @{sdesSubmissions.countAll} forms submitted.</span>
         <span style="color: #ff0000">@{sdesSubmissions.count} forms are not processed.</span>
-        Showing @{if(sdesSubmissions.sdesSubmissions.size>0) pagination.from else 0} - @{pagination.from + sdesSubmissions.sdesSubmissions.size - 1} submissions.</h2>
+        Showing @{pagination.from} - @{pagination.to} submissions.</h2>
 
     <table class="govuk-table stats-table">
         <thead class="govuk-table__head">

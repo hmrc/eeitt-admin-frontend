@@ -58,7 +58,8 @@ class SubmissionSdesController @Inject() (
     authAction.async { implicit request =>
       gformConnector.getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeAt).map {
         sdesSubmissionPageData =>
-          val pagination = Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.count.toInt, pageSize)
+          val pagination =
+            Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.sdesSubmissions.size, pageSize)
           Ok(submission_sdes(pagination, sdesSubmissionPageData, processed, formTemplateId, status, showBeforeAt))
       }
     }
