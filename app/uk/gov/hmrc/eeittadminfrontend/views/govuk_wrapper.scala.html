@@ -97,14 +97,19 @@
                 active = if(tab == "submissionconsolidator") true else false
             ),
             HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner.path),
+                content = Text("Notification banner"),
+                active = if(tab == "notification-banner") true else false
+            ),
+            HeaderNavigation(
                     href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0, Some(false), None, None, None).path),
                     content = Text("Sdes Submissions"),
                     active = if(tab == "sdes-submissions") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner.path),
-                content = Text("Notification banner"),
-                active = if(tab == "notification-banner") true else false
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.sdesWorkItem(0, None, None).path),
+                content = Text("Sdes Work Item"),
+                active = if (tab == "sdes-work-item") true else false
             ),
             )
         )

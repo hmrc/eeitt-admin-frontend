@@ -22,7 +22,8 @@ import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormId, FormTemplateId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
 
 object ValueClassBinders {
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
@@ -39,6 +40,7 @@ object ValueClassBinders {
   implicit val notificationStatusBinder: QueryStringBindable[NotificationStatus] = valueClassQueryBinder(
     NotificationStatus.fromName
   )
+  implicit val processingStatusBinder: QueryStringBindable[ProcessingStatus] = valueClassQueryBinder(_.name)
 
   def valueClassBinder[A: Reads](fromAtoString: A => String)(implicit stringBinder: PathBindable[String]) = {
 

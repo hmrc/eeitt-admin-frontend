@@ -60,6 +60,12 @@ GET         /sdes-submissions/request-removal/:correlationId  uk.gov.hmrc.eeitta
 GET         /sdes-submissions/confirm-removal/:correlationId  uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.confirmRemoval(correlationId: CorrelationId)
 GET         /sdes-submissions/request-search/:page            uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestSearch(page: Int)
 
+GET         /sdes-work-item/:page                           uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.sdesWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
+GET         /sdes-work-item/request-search/:page            uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.requestSearch(page: Int)
+GET         /sdes-work-item/enqueue/:id                     uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.enqueue(page: Int, id: String, submissionRef: SubmissionRef)
+GET         /sdes-work-item/request-removal/:id             uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.requestRemoval(id: String)
+GET         /sdes-work-item/confirm-removal/:id             uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.confirmRemoval(id: String)
+
 GET         /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
 GET         /notification-banner/delete              uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner
 POST        /notification-banner                     uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBanner
