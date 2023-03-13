@@ -33,6 +33,7 @@ case class SdesWorkItemData(
   envelopeId: EnvelopeId,
   formTemplateId: FormTemplateId,
   submissionRef: SubmissionRef,
+  numberOfFiles: Int,
   size: Long,
   status: ProcessingStatus,
   failureCount: Int,
