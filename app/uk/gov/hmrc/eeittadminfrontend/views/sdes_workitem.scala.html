@@ -105,6 +105,7 @@
                 <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Count of the files in the envelope">File count</th>
                 <th class="govuk-table__header" scope="col" title="Size of envelope">Size(MB)</th>
                 <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Count">Failure Count</th>
@@ -125,6 +126,9 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{workItem.numberOfFiles}
                 </td>
                 <td class="govuk-table__cell">
                     @{BigDecimal(workItem.size.toDouble / (1024 * 1024)).setScale(3, DOWN)}
