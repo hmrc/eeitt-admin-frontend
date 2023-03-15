@@ -15,7 +15,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     organization := "uk.gov.hmrc",
     majorVersion := 1,
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.8",
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
@@ -24,7 +24,7 @@ lazy val microservice = Project(appName, file("."))
     scalacOptions ++= Seq(
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
-      "-Yno-adapted-args",
+      //"-Yno-adapted-args",
       "-Ywarn-numeric-widen",
       "-Ywarn-value-discard",
       "-Ywarn-dead-code",
