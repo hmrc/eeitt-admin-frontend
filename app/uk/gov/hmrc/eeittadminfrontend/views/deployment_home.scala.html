@@ -22,7 +22,9 @@
 
 @this(
   formtemplates_cache_status: formtemplates_cache_status,
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton
 )
 
 @(
@@ -34,9 +36,9 @@
 
 
 @ready = {
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
-        @GovukButton(Button(
-            preventDoubleClick = true,
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployments) {
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Show available deployments")
         ))
     }

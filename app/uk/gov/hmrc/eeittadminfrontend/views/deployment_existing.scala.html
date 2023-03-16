@@ -22,7 +22,9 @@
 @this(
   deployment_last_commit_check: deployment_last_commit_check,
   validation_problem: validation_problem,
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton
 )
 
 @(formTemplateId: FormTemplateId,
@@ -61,14 +63,14 @@
         </li>
     </ul>
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
         @if(inSync) {
             <h3 class="govuk-heading-m">Template is up to date</h3>
         } else {
             @diff
         }
-        @GovukButton(Button(
-            preventDoubleClick = true,
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Deploy")
         ))
     }

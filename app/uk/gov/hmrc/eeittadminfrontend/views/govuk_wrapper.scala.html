@@ -15,7 +15,6 @@
  *@
 
 @import play.twirl.api.HtmlFormat
-@import uk.gov.hmrc.govukfrontend.views.html.layouts._
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.{Footer, Meta}
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.banner.Banner
@@ -26,7 +25,11 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  govuk_layout: govuk_layout
+  govuk_layout: GovukLayout,
+  govukBackLink: GovukBackLink,
+  govukHeader: GovukHeader,
+  govukFooter: GovukFooter,
+  hmrcBanner: HmrcBanner
 )
 
 @(
@@ -55,7 +58,7 @@
     <script src='@routes.Assets.versioned("javascripts/diff2html-ui.min.js")'></script>
 }
 
-@headerBlock = @{GovukHeader(
+@headerBlock = @{govukHeader(
     uk.gov.hmrc.govukfrontend.views.viewmodels.header.Header(
         homepageUrl = Some("#"),
         serviceName = Some("EEITT Admin"),
@@ -117,10 +120,10 @@
 )}
 
 
-@bLink = @{GovukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
+@bLink = @{govukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
 
 @beforeContentBlock = {
-    @HmrcBanner(Banner())
+    @hmrcBanner(Banner())
     @bLink
 }
 
@@ -131,5 +134,5 @@
     beforeContentBlock = Some(beforeContentBlock),
     bodyEndBlock = None,
     scriptsBlock = scriptElem,
-    footerBlock = Some(GovukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items))))))
+    footerBlock = Some(govukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items))))))
 )(mainContent)

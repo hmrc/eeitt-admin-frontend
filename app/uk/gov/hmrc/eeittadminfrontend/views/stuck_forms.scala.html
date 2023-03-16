@@ -19,7 +19,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  govukNotificationBanner: GovukNotificationBanner
 )
 
 @(signedFormDetails: Seq[SignedFormDetails])(implicit messages: Messages, request: Request[_])
@@ -27,7 +28,7 @@
 @main_template(title = s"Stuck Forms", tab = "stuck-forms"){
 
    @request.flash.get("success").fold(Html("")) { notification =>
-     @GovukNotificationBanner(
+     @govukNotificationBanner(
        NotificationBanner(
          title = Text("Success"),
          content = Text(notification),

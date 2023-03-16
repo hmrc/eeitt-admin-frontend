@@ -20,7 +20,9 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  deployment_commit_info: deployment_commit_info
+  deployment_commit_info: deployment_commit_info,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton
 )
 
 @(
@@ -30,12 +32,11 @@
     displayCommitInfo: Boolean
 )(onReadyContent: Html)(implicit request : Request[_], messages: Messages)
 
-
 @refreshCache(message: Html) = {
     @message
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(redirectUrl)) {
-        @GovukButton(Button(
-            preventDoubleClick = true,
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(redirectUrl)) {
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Refresh Cache")
         ))
     }

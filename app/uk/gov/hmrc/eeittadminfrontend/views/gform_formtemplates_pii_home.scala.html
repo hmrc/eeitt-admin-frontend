@@ -20,7 +20,10 @@
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput
 )
 
 @(
@@ -28,12 +31,11 @@
   defaultFilters: Option[String]
 )(implicit request : Request[_], messages: Messages)
 
-
 @main_template(title = "Gform", tab = "gforms", backLink = Some(routes.GformsController.gformPage.path)) {
     <h2 class="govuk-heading-m">Search for forms with PII in page titles</h2>
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
-        @GovukInput(Input(
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
+        @govukInput(Input(
                 id = "filters",
                 name = "filters",
                 value = defaultFilters,
@@ -45,8 +47,8 @@
                 )
             )
         ))
-        @GovukButton(Button(
-            preventDoubleClick = true,
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Submit")
         ))
     }

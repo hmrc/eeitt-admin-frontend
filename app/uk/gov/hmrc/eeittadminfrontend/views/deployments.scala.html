@@ -20,7 +20,8 @@
 
 @this(
   deployment_last_commit_check: deployment_last_commit_check,
-  main_template: main_template
+  main_template: main_template,
+  govukTable: GovukTable
 )
 
 @(reconciliationLookup: ReconciliationLookup,
@@ -45,12 +46,12 @@
     <div class="govuk-hint">
         Templates available in @gformTemplatesRepo repository which are also deployed to gform microservice.
     </div>
-    @GovukTable(tableExisting)
+    @govukTable(tableExisting)
     <h2 class="govuk-heading-m">New - @reconciliationLookup.newTemplates.size templates</h2>
     <div class="govuk-hint">
         Templates available in @gformTemplatesRepo repository which are not deployed to gform microservice yet.
     </div>
-    @GovukTable(tableNew)
+    @govukTable(tableNew)
     <h2 class="govuk-heading-m">Orphans - @reconciliationLookup.deletedTemplates.size templates</h2>
     <div class="govuk-hint">
         Templates not available in @gformTemplatesRepo repository, but running in gform microservice.

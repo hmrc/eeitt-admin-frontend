@@ -19,7 +19,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  deployment_commit_info: deployment_commit_info
+  deployment_commit_info: deployment_commit_info,
+  govukWarningText: GovukWarningText
 )
 
 @(lastCommitCheck: LastCommitCheck,
@@ -33,7 +34,7 @@
 }
 
 @outOfDate(check: LastCommitCheck.OutOfDate) = {
-    @GovukWarningText(WarningText(
+    @govukWarningText(WarningText(
         iconFallbackText = "Warning",
         content = Text("There is newer commit in Github repository.")
     ))

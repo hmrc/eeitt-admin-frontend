@@ -15,7 +15,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     organization := "uk.gov.hmrc",
     majorVersion := 1,
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.12.15",
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
@@ -24,7 +24,7 @@ lazy val microservice = Project(appName, file("."))
     scalacOptions ++= Seq(
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
-      //"-Yno-adapted-args",
+      "-Yno-adapted-args",
       "-Ywarn-numeric-widen",
       "-Ywarn-value-discard",
       "-Ywarn-dead-code",
@@ -48,7 +48,9 @@ lazy val microservice = Project(appName, file("."))
     TwirlKeys.templateImports ++= Seq(
       "play.twirl.api.Html",
       "play.twirl.api.HtmlFormat",
-      "uk.gov.hmrc.eeittadminfrontend.models._"
+      "uk.gov.hmrc.eeittadminfrontend.models._",
+      "uk.gov.hmrc.govukfrontend.views.html.components.implicits._",
+      "uk.gov.hmrc.govukfrontend.views.html.components._"
     ),
     routesImport ++= Seq(
       "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",

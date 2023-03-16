@@ -19,7 +19,11 @@
 @import uk.gov.hmrc.eeittadminfrontend.controllers.routes
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukTable: GovukTable,
+  govukInput: GovukInput
 )
 
 @(
@@ -47,8 +51,8 @@
 
 @main_template(title = "Gform", tab = "gforms", backLink = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitleHome.path)) {
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
-        @GovukInput(Input(
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformFormTemplatesWithPIIInTitle) {
+        @govukInput(Input(
             id = "filters",
             name = "filters",
             value = Some(filters),
@@ -59,11 +63,11 @@
                 content = Text("Filters:")
             )
         ))
-        @GovukButton(Button(
-            preventDoubleClick = true,
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Submit")
         ))
-        @GovukTable(
+        @govukTable(
             Table(
                 rows = tableRows,
                 head = Some(

@@ -16,19 +16,21 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeIdForm
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import uk.gov.hmrc.govukfrontend.views.html.helpers._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput
 )
 
 @(form: Form[EnvelopeIdForm])(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "File upload", tab = "file-upload") {
 
-@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.findEnvelope) {
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.findEnvelope) {
     <h2 class="govuk-heading-m">Find an envelope</h2>
-    @GovukInput(Input(
+    @govukInput(Input(
         id = "value",
         name = "envelopeId.value",
         label = Label(
@@ -37,15 +39,15 @@
             content = Text("Envelope ID:")
         )
     ))
-    @GovukButton(Button(
-        preventDoubleClick = true,
+    @govukButton(Button(
+        preventDoubleClick = Some(true),
         content = Text("Search")
     ))
 }
 
-@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelopePost) {
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.downloadEnvelopePost) {
     <h2 class="govuk-heading-m">Download an envelope</h2>
-    @GovukInput(Input(
+    @govukInput(Input(
         id = "value",
         name = "envelopeId.value",
         label = Label(
@@ -54,15 +56,15 @@
         content = Text("Envelope ID:")
         )
     ))
-    @GovukButton(Button(
-        preventDoubleClick = true,
+    @govukButton(Button(
+        preventDoubleClick = Some(true),
         content = Text("Download")
     ))
 }
 
-@FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope) {
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.archiveEnvelope) {
     <h2 class="govuk-heading-m">Archive an envelope</h2>
-    @GovukInput(Input(
+    @govukInput(Input(
         id = "value",
         name = "envelopeId.value",
         label = Label(
@@ -71,8 +73,8 @@
         content = Text("Envelope ID:")
         )
     ))
-    @GovukButton(Button(
-        preventDoubleClick = true,
+    @govukButton(Button(
+        preventDoubleClick = Some(true),
         content = Text("Archive (warning, it cannot be undone and envelope must be in Routed state!)")
     ))
 }

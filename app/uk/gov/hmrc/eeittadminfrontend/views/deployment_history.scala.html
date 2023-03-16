@@ -17,7 +17,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  govukTable: GovukTable
 )
 
 @(
@@ -30,7 +31,7 @@
 
 @main_template(title = "Deployment ", tab = "deployment") {
     <h2 class="govuk-heading-m">Deployment History of @formTemplateId</h2>
-    @GovukTable(deploymentTable)
+    @govukTable(deploymentTable)
 
     @diff
 
