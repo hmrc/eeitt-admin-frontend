@@ -104,7 +104,7 @@ class GformsController @Inject() (
             val formTemplateIds = templates.collect {
               case JsString(template) if !template.startsWith("specimen-") => FormTemplateId(template)
             }
-            Future.traverse(formTemplateIds) { formTemplateId =>
+            Future.traverse(formTemplateIds.toSeq) { formTemplateId =>
               gformConnector
                 .getGformsTemplate(formTemplateId)
                 .map {

@@ -36,7 +36,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   materializer: Materializer
 ) {
 
-  val processedTemplates: mutable.MutableList[(FormTemplateId, String)] = mutable.MutableList()
+  val processedTemplates: mutable.ArrayDeque[(FormTemplateId, String)] = mutable.ArrayDeque()
   var done = true
 
   def uploadZip(file: File): Future[List[(FormTemplateId, String)]] = {

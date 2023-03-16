@@ -49,7 +49,7 @@ class SubmissionController @Inject() (
         case JsArray(formTemplateIds) =>
           val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
             case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
-          }
+          }.toSeq
           Ok(submissionsView(ftIds.sortBy(_.value)))
         case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
       }
