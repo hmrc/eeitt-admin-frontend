@@ -65,9 +65,10 @@
         @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
+            classes = "govuk-!-font-size-14",
             value = formTemplateId.map(_.value),
             label = Label(
-                classes = "govuk-label--s",
+                classes = "govuk-label--s govuk-!-font-size-14",
                 content = Text("Form Template Id")
             )
         ))
@@ -75,6 +76,7 @@
             Select(
                 id = "notificationStatus",
                 name = "notificationStatus",
+                classes = "govuk-!-font-size-14",
                 items = Seq(
                     SelectItem(
                         value = None,
@@ -101,7 +103,7 @@
                         selected = isSelected(status,"FileProcessed")
                     )),
                 label = Label(
-                    classes = "govuk-label--s",
+                    classes = "govuk-label--s govuk-!-font-size-14",
                     content = Text("Status")
                 )
             )
@@ -120,7 +122,8 @@
             preventDoubleClick = Some(true),
             content = Text("Filter"),
             inputType = Some("submit"),
-            name = Some("filter")
+            name = Some("filter"),
+            classes = "govuk-label--s govuk-!-font-size-14",
         ))
     }
 
@@ -129,12 +132,13 @@
         <span style="color: #ff0000">@{sdesSubmissions.count} forms are not processed.</span>
         Showing @{pagination.from} - @{pagination.to} submissions.</h2>
 
-    <table class="govuk-table stats-table">
+    <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
         <thead class="govuk-table__head">
             <tr class="govuk-table__row">
                 <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Count of the files in the Envelope">File Count</th>
                 <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
@@ -154,6 +158,9 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.numberOfFiles}
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}

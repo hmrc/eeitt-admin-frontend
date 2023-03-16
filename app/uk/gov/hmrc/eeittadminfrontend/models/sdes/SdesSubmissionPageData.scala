@@ -38,6 +38,7 @@ case class SdesSubmissionData(
   envelopeId: EnvelopeId,
   formTemplateId: FormTemplateId,
   submissionRef: SubmissionRef,
+  numberOfFiles: Int,
   submittedAt: Option[Instant],
   status: NotificationStatus,
   failureReason: String,
