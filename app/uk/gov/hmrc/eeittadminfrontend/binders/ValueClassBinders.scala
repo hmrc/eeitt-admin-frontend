@@ -32,7 +32,7 @@ object ValueClassBinders {
   implicit val formIdBinder: PathBindable[FormId] = valueClassBinder(_.value)
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(
-    uri => Uri.fromString(uri).right.get,
+    uri => Uri.fromString(uri).toOption.get,
     _.renderString,
     (message, exception) => "Failed to bind Uri: " + message + ", exception " + exception.getMessage()
   )
@@ -52,7 +52,7 @@ object ValueClassBinders {
 
     new PathBindable[A] {
       override def bind(key: String, value: String): Either[String, A] =
-        stringBinder.bind(key, value).right.flatMap(parseString)
+        stringBinder.bind(key, value).flatMap(parseString)
 
       override def unbind(key: String, a: A): String =
         stringBinder.unbind(key, fromAtoString(a))

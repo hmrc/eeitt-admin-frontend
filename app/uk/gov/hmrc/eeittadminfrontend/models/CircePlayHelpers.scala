@@ -23,6 +23,6 @@ object CircePlayHelpers {
 
   def circeToPlayUnsafe(json: io.circe.Json): JsValue = Json.parse(json.toString)
   def playToCirce(json: JsValue): Either[ParsingFailure, io.circe.Json] = io.circe.parser.parse(json.toString)
-  def playToCirceUnsafe(json: JsValue): io.circe.Json = playToCirce(json).right.get
+  def playToCirceUnsafe(json: JsValue): io.circe.Json = playToCirce(json).toOption.get
 
 }

@@ -56,7 +56,7 @@ class FormTemplateValidator @Inject() (hmrcEmailRendererConnector: HMRCEmailRend
               case Unexpected(reason) => s"$reason. ".asLeft[Unit]
             }
         })
-        .map(_.traverse(Validated.fromEither).toEither.right.map(_.head))
+        .map(_.traverse(Validated.fromEither).toEither.map(_.head))
     }
   }
 }
