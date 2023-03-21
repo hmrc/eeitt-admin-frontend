@@ -19,17 +19,21 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput,
+  govukNotificationBanner: GovukNotificationBanner
 )
 
 @(notificationBanner: NotificationBanner)(implicit messages: Messages, request: Request[_])
 
 @main_template(title = s"Notification banner", tab = "notification-banner"){
-  @FormWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.deleteNotificationBanner) {
+  @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.deleteNotificationBanner) {
     <h2 class="govuk-heading-m">Current notification banner</h2>
-    @GovukNotificationBanner(notificationBanner)
-    @GovukButton(Button(
-      preventDoubleClick = true,
+    @govukNotificationBanner(notificationBanner)
+    @govukButton(Button(
+      preventDoubleClick = Some(true),
       content = Text("Delete")
     ))
   }

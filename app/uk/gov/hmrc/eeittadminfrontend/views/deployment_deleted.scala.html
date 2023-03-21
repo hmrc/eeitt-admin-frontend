@@ -17,7 +17,9 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton
 )
 
 @(formTemplateId: FormTemplateId,
@@ -32,10 +34,10 @@
         </li>
     </ul>
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId), args = 'class -> "js-form") {
-        @GovukButton(Button(
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId), args = 'class -> "js-form") {
+        @govukButton(Button(
             classes = "govuk-button--warning",
-            preventDoubleClick = true,
+            preventDoubleClick = Some(true),
             content = Text(s"Delete '${formTemplateId.value}' template")
         ))
     }

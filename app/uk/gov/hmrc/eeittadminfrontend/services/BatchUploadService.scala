@@ -27,7 +27,7 @@ import java.io.File
 import java.util.zip.ZipFile
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future }
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import akka.stream.scaladsl._
 import cats.effect.{ IO, Resource }
 
@@ -36,7 +36,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   materializer: Materializer
 ) {
 
-  val processedTemplates: mutable.MutableList[(FormTemplateId, String)] = mutable.MutableList()
+  val processedTemplates: mutable.ArrayDeque[(FormTemplateId, String)] = mutable.ArrayDeque()
   var done = true
 
   def uploadZip(file: File): Future[List[(FormTemplateId, String)]] = {

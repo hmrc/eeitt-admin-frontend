@@ -14,10 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.govukfrontend.views.html.layouts._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this()
+@this(
+govukHeader: GovukHeader,
+govukFooter: GovukFooter,
+govukSkipLink: GovukSkipLink,
+fixedWidthPageLayout: FixedWidthPageLayout,
+govukTemplate: GovukTemplate
+)
 
 @(
   pageTitle: Option[String] = None,
@@ -32,7 +37,7 @@
 
 @headerDefault = {
   @headerBlock.getOrElse {
-    @GovukHeader(Header(
+    @govukHeader(Header(
       homepageUrl = Some("https://www.gov.uk/"),
       serviceName = Some(messages("service.name")),
       serviceUrl = Some(messages("service.homePageUrl")),
@@ -42,7 +47,7 @@
 
 @footerDefault = {
   @footerBlock.getOrElse {
-    @GovukFooter(new Footer(meta = Some(Meta(items = Some(footerItems)))))
+    @govukFooter(new Footer(meta = Some(Meta(items = Some(footerItems)))))
   }
 }
 
@@ -59,7 +64,7 @@
   </div>
 }
 
-@GovukTemplate(
+@govukTemplate(
   htmlLang = Some(messages.lang.code),
   pageTitle = pageTitle,
   headBlock = headBlock,
@@ -69,3 +74,4 @@
   mainClasses = Some("govuk-main-wrapper--auto-spacing"),
   bodyEndBlock = Some(bodyEndDefault)
 )(mainContentDefault)
+)

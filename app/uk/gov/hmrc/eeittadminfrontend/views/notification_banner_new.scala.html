@@ -19,14 +19,17 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput
 )
 
 @(maybeErrorMessage: Option[ErrorMessage])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = s"Notification banner", tab = "notification-banner"){
-  @FormWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.saveNotificationBanner) {
-    @GovukInput(Input(
+  @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.saveNotificationBanner) {
+    @govukInput(Input(
           id = "message",
           name = "message",
           label = Label(
@@ -36,8 +39,8 @@
           ),
           errorMessage = maybeErrorMessage
     ))
-    @GovukButton(Button(
-       preventDoubleClick = true,
+    @govukButton(Button(
+       preventDoubleClick = Some(true),
        content = Text("Save")
     ))
   }

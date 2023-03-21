@@ -21,18 +21,21 @@ import cats.effect.{ Blocker, ContextShift, IO }
 import github4s.{ GHError, GHResponse, Github }
 import github4s.Decoders._
 import github4s.domain.{ BlobContent, Commit, Content, Pagination, RefCommit }
+
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import org.http4s.{ Header, Request, Uri }
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
-import scala.concurrent.ExecutionContext.global
+import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyProvider
 
-class GithubConnector @Inject() (authorization: Authorization, proxyProvider: ProxyProvider) {
+class GithubConnector @Inject() (authorization: Authorization, proxyProvider: ProxyProvider)(implicit
+  ec: ExecutionContext
+) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -40,7 +43,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
   val repoName = authorization.repoName
   val main = Some("main")
 
-  implicit val cs: ContextShift[IO] = IO.contextShift(global)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   val httpClient: Client[IO] = {
     val blockingPool = Executors.newFixedThreadPool(5)
     val blocker = Blocker.liftExecutorService(blockingPool)

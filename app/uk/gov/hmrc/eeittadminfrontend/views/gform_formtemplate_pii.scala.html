@@ -19,7 +19,8 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  govukTable: GovukTable
 )
 
 @(formTemplateWithPIIInTitleDetails: FormTemplateWithPIIInTitleDetails, formTemplateId: FormTemplateId, filters: String)(implicit request : Request[_], messages: Messages)
@@ -47,7 +48,7 @@
 
     <h2 class="govuk-heading-m">PII references in form title for template '@{formTemplateWithPIIInTitleDetails.formTemplateId.value}' with filters '@{filters}'</h2>
 
-    @GovukTable(
+    @govukTable(
         Table(
             rows = tableRows,
             head = Some(

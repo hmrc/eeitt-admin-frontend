@@ -18,17 +18,21 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput,
+  govukSelect: GovukSelect
 )
 
 @(form: Form[ManualConsolidationForm])(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "Submission Consolidator", tab = "submissionconsolidator") {
 
-@FormWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.consolidate) {
+@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.consolidate) {
 <h2 class="govuk-heading-m">Consolidate Submissions</h2>
 
-@GovukSelect(
+@govukSelect(
   Select(
         id = "consolidatorJobId",
         name = "consolidatorJobId",
@@ -57,7 +61,7 @@
   )
 )
 
-@GovukInput(Input(
+@govukInput(Input(
     id = "value",
     name = "startDate",
     label = Label(
@@ -67,7 +71,7 @@
     )
 ))
 
-@GovukInput(Input(
+@govukInput(Input(
     id = "value",
     name = "endDate",
     label = Label(
@@ -77,8 +81,8 @@
     )
 ))
 
-@GovukButton(Button(
-    preventDoubleClick = true,
+@govukButton(Button(
+    preventDoubleClick = Some(true),
     content = Text("Consolidate")
 ))
 

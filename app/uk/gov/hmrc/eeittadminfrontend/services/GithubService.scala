@@ -32,7 +32,7 @@ class GithubService @Inject() (githubConnector: GithubConnector) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def listTemplates: EitherT[IO, String, NonEmptyList[Content]] = EitherT(githubConnector.listTemplates)
+  def listTemplates: EitherT[IO, String, NonEmptyList[Content]] = EitherT(githubConnector.listTemplates())
 
   def lastCommit: EitherT[IO, String, Commit] = EitherT(githubConnector.lastCommit)
 

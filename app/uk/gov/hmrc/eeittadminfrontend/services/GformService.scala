@@ -39,7 +39,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
       case JsArray(formTemplateIds) =>
         val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
           case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
-        }
+        }.toSeq
         Right(ftIds.sortBy(_.value).toList)
 
       case other => Left("Cannot retrieve form templates. Expected JsArray, got: " + other)

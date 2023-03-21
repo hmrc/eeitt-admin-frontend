@@ -44,7 +44,7 @@ class NotificationBannerController @Inject() (
 
   def notificationBanner() =
     authAction.async { implicit request =>
-      gformConnector.findNotificationBanner.map { maybeNotificationBanner =>
+      gformConnector.findNotificationBanner().map { maybeNotificationBanner =>
         maybeNotificationBanner.fold(Ok(notification_banner_new(Option.empty[ErrorMessage])))(gformNotificationBanner =>
           Ok(notification_banner_existing(gformNotificationBanner.toNotificationBanner))
         )
@@ -53,7 +53,7 @@ class NotificationBannerController @Inject() (
 
   def deleteNotificationBanner() =
     authAction.async { request =>
-      gformConnector.deleteNotificationBanner.map { maybeNotificationBanner =>
+      gformConnector.deleteNotificationBanner().map { maybeNotificationBanner =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
         )

@@ -22,7 +22,15 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus.FileProcessed
 
-@this(main_template: main_template)
+@this(
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukInput: GovukInput,
+  govukButton: GovukButton,
+  govukSelect: GovukSelect,
+  govukCheckboxes: GovukCheckboxes,
+  govukNotificationBanner: GovukNotificationBanner
+)
 
 @(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])(implicit messages: Messages, request: Request[_])
 
@@ -33,7 +41,7 @@
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
-        @GovukNotificationBanner(
+        @govukNotificationBanner(
             NotificationBanner(
                 title = Text("Success"),
                 content = HtmlContent(notification),
@@ -44,7 +52,7 @@
     }
 
     @request.flash.get("failed").fold(Html("")) { notification =>
-        @GovukNotificationBanner(
+        @govukNotificationBanner(
             NotificationBanner(
                 title = Text("Failed"),
                 content = HtmlContent(notification),
@@ -53,8 +61,8 @@
         )
     }
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
-        @GovukInput(Input(
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestSearch(pagination.page), args = 'class -> "js-form") {
+        @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
             classes = "govuk-!-font-size-14",
@@ -64,7 +72,7 @@
                 content = Text("Form Template Id")
             )
         ))
-        @GovukSelect(
+        @govukSelect(
             Select(
                 id = "notificationStatus",
                 name = "notificationStatus",
@@ -100,7 +108,7 @@
                 )
             )
         )
-        @GovukCheckboxes(Checkboxes(
+        @govukCheckboxes(Checkboxes(
             name = "showBeforeAt",
             items = Seq(
                 CheckboxItem(
@@ -110,8 +118,8 @@
                 )
             )
         ))
-        @GovukButton(Button(
-            preventDoubleClick = true,
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Filter"),
             inputType = Some("submit"),
             name = Some("filter"),

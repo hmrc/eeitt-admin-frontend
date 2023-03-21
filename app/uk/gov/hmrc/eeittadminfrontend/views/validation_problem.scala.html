@@ -16,13 +16,15 @@
 
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this()
+@this(
+  govukErrorSummary: GovukErrorSummary
+)
 
 @(
     validationWarning: Option[String]
 )(implicit request : Request[_], messages: Messages)
 
-@validationWarning.fold(HtmlFormat.empty)(warning => GovukErrorSummary(ErrorSummary(
+@validationWarning.fold(HtmlFormat.empty)(warning => govukErrorSummary(ErrorSummary(
     title = Text("Email template validation problem"),
     description = Text(warning)
 )))

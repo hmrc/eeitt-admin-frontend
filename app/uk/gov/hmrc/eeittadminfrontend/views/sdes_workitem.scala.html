@@ -22,7 +22,14 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus
 @import scala.math.BigDecimal.RoundingMode.DOWN
 
-@this(main_template: main_template)
+@this(
+  main_template: main_template,
+  govukNotificationBanner: GovukNotificationBanner,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput,
+  govukSelect: GovukSelect
+)
 
 @(pagination: Pagination, sdesWorkItemPageData: SdesWorkItemPageData, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])(implicit messages: Messages, request: Request[_])
 
@@ -33,7 +40,7 @@
 @main_template(title = s"SDES Work Item", tab = "sdes-work-item"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
-        @GovukNotificationBanner(
+        @govukNotificationBanner(
             NotificationBanner(
                 title = Text("Success"),
                 content = HtmlContent(notification),
@@ -44,7 +51,7 @@
     }
 
     @request.flash.get("failed").fold(Html("")) { notification =>
-        @GovukNotificationBanner(
+        @govukNotificationBanner(
             NotificationBanner(
                 title = Text("Failed"),
                 content = HtmlContent(notification),
@@ -53,8 +60,8 @@
         )
     }
 
-    @FormWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
-        @GovukInput(Input(
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
+        @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
             classes = "govuk-!-font-size-14",
@@ -65,7 +72,7 @@
             )
         ))
 
-        @GovukSelect(
+        @govukSelect(
             Select(
                 id = "processingStatus",
                 name = "processingStatus",
@@ -88,8 +95,8 @@
             )
         )
 
-        @GovukButton(Button(
-            preventDoubleClick = true,
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
             content = Text("Filter"),
             classes = "govuk-label--s govuk-!-font-size-14",
             inputType = Some("submit"),

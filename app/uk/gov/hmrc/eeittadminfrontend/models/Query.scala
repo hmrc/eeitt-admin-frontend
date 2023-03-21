@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.models
 import play.api.libs.json._
 
 object ValueClassFormatter {
-  def format[A: Format](fromStringToA: String => A)(fromAToString: A => String) =
+  def format[A](fromStringToA: String => A)(fromAToString: A => String) =
     Format[A](
       Reads[A] {
         case JsString(str) => JsSuccess(fromStringToA(str))

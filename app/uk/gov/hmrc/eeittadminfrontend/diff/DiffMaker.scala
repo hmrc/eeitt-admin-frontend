@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.diff
 import cats.syntax.eq._
 import com.github.difflib.{ DiffUtils, UnifiedDiffUtils }
 import com.github.difflib.patch.Patch
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import io.circe.Json
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubContent, MongoContent }
 import uk.gov.hmrc.eeittadminfrontend.models.github.PrettyPrintJson
@@ -42,7 +42,7 @@ object DiffMaker {
       .asScala
       .mkString("\\n")
       .replace("'", "\\'")
-      .replaceAllLiterally(
+      .replace(
         "</script>",
         "＜/script>"
       ) // </script> in json causes html parser to end script block, we need to prevent that
