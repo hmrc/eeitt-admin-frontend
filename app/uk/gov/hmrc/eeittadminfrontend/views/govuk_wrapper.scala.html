@@ -23,6 +23,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.views.components.FooterLinks
 @import uk.gov.hmrc.hmrcfrontend.views.html.components.HmrcBanner
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.views.html.FullMainContent
 
 @this(
   govuk_layout: GovukLayout,
@@ -126,6 +127,7 @@
     @hmrcBanner(Banner())
     @bLink
 }
+@fullMainContent = @{new FullMainContent}
 
 @govuk_layout(
     pageTitle = Some(title),
@@ -134,5 +136,6 @@
     beforeContentBlock = Some(beforeContentBlock),
     bodyEndBlock = None,
     scriptsBlock = scriptElem,
-    footerBlock = Some(govukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items))))))
+    footerBlock = Some(govukFooter(Footer(meta = Some(Meta(items = Some(FooterLinks.items)))))),
+    mainContentLayout =  Some(fullMainContent(_))
 )(mainContent)
