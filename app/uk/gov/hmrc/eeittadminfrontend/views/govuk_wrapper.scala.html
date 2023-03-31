@@ -26,6 +26,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.views.html.FullMainContent
 
 @this(
+  fullMainContent: FullMainContent,
   govuk_layout: GovukLayout,
   govukBackLink: GovukBackLink,
   govukHeader: GovukHeader,
@@ -127,7 +128,6 @@
     @hmrcBanner(Banner())
     @bLink
 }
-@fullMainContent = @{new FullMainContent}
 
 @govuk_layout(
     pageTitle = Some(title),
