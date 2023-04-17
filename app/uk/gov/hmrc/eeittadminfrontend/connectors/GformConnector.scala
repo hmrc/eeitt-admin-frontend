@@ -22,7 +22,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -210,20 +210,35 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
 
   def findNotificationBanner()(implicit
     ec: ExecutionContext
-  ): Future[Option[GformNotificationBanner]] =
+  ): Future[List[GformNotificationBannerView]] =
     wsHttp.doGet(gformUrl + s"/notification-banner").map { response =>
-      if (response.status == 200) Some(response.json.as[GformNotificationBanner])
-      else Option.empty[GformNotificationBanner]
+      if (response.status == 200) response.json.as[List[GformNotificationBannerView]]
+      else List.empty[GformNotificationBannerView]
     }
 
-  def deleteNotificationBanner()(implicit
+  def deleteNotificationBanner(id: String)(implicit
     ec: ExecutionContext
   ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/notification-banner").map(_ => ())
+    wsHttp.doDelete(gformUrl + s"/notification-banner/$id").map(_ => ())
 
   def saveNotificationBanner(notificationBanner: GformNotificationBanner)(implicit
     ec: ExecutionContext
   ): Future[Unit] =
     wsHttp.doPost[GformNotificationBanner](gformUrl + s"/notification-banner", notificationBanner).map(_ => ())
+
+  def saveNotificationBannerFormTemplates(notificationBannerFormTemplate: GformNotificationBannerFormTemplate)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .doPost[GformNotificationBannerFormTemplate](
+        gformUrl + s"/notification-banner-form-template",
+        notificationBannerFormTemplate
+      )
+      .map(_ => ())
+
+  def deleteNotificationBannerFormTemplate(id: FormTemplateId)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp.doDelete(gformUrl + s"/notification-banner-form-template/$id").map(_ => ())
 
 }
