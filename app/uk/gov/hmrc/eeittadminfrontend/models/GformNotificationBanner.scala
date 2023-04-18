@@ -18,10 +18,16 @@ package uk.gov.hmrc.eeittadminfrontend.models
 
 import julienrf.json.derived
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.eeittadminfrontend.utils.MarkDownUtil
 import uk.gov.hmrc.govukfrontend.views.html.components.{ NotificationBanner, Text }
+import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
+
+import java.util.UUID
 
 final case class GformNotificationBanner(
-  message: String
+  message: String,
+  isGlobal: Boolean,
+  _id: BannerId = BannerId(UUID.randomUUID().toString)
 ) {
   def toNotificationBanner: NotificationBanner = NotificationBanner(
     content = Text(message)
@@ -31,4 +37,35 @@ final case class GformNotificationBanner(
 
 object GformNotificationBanner {
   implicit val format: OFormat[GformNotificationBanner] = derived.oformat()
+}
+
+case class GformNotificationBannerFormTemplate(
+  _id: FormTemplateId,
+  bannerId: BannerId
+)
+
+object GformNotificationBannerFormTemplate {
+  implicit val format: OFormat[GformNotificationBannerFormTemplate] = {
+    implicit val formTemplateIdFormat = FormTemplateId.format
+    derived.oformat()
+  }
+}
+
+case class GformNotificationBannerView(
+  _id: BannerId,
+  isGlobal: Boolean,
+  message: String,
+  formTemplateIds: List[FormTemplateId]
+) {
+  def toNotificationBanner: NotificationBanner = NotificationBanner(
+    content = HtmlContent(MarkDownUtil.markDownParser(message))
+  )
+}
+
+object GformNotificationBannerView {
+
+  implicit val format: OFormat[GformNotificationBannerView] = {
+    implicit val formTemplateIdFormat = FormTemplateId.format
+    derived.oformat()
+  }
 }

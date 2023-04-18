@@ -26,7 +26,8 @@ object AppDependencies {
     "com.github.jwt-scala"     %% "jwt-circe"                    % "7.1.4",
     "org.bouncycastle"          % "bcpkix-jdk15on"               % "1.68",
     "io.github.java-diff-utils" % "java-diff-utils"              % "4.10",
-    "commons-io"                % "commons-io"                   % "2.11.0"
+    "commons-io"                % "commons-io"                   % "2.11.0",
+    "org.jetbrains"             % "markdown"                     % "0.1.46"
   )
 
   def test(scope: String = "test") =

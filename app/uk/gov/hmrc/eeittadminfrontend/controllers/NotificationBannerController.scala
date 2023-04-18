@@ -17,14 +17,17 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.syntax.all._
+
 import javax.inject.Inject
-import play.api.data.Form
-import play.api.data.Forms.{ mapping, text }
+import play.api.data.{ Form, Forms }
+import play.api.data.Forms.text
 import play.api.i18n.I18nSupport
+import play.api.libs.json.{ JsArray, JsString }
 import play.api.mvc.MessagesControllerComponents
+
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.GformNotificationBanner
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormTemplateId, GformNotificationBanner, GformNotificationBannerView }
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.Text
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
@@ -33,27 +36,24 @@ class NotificationBannerController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  notification_banner_new: uk.gov.hmrc.eeittadminfrontend.views.html.notification_banner_new,
-  notification_banner_existing: uk.gov.hmrc.eeittadminfrontend.views.html.notification_banner_existing
+  notification_banner: uk.gov.hmrc.eeittadminfrontend.views.html.notification_banner,
+  notification_banner_form_templates: uk.gov.hmrc.eeittadminfrontend.views.html.notification_banner_form_templates
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
-  val gformNotificationBannerForm: Form[GformNotificationBanner] = Form(
-    mapping("message" -> text)(GformNotificationBanner.apply)(GformNotificationBanner.unapply)
-  )
+  val formNotificationBanner: Form[String] = Form(Forms.single("message" -> text))
+  val formNotificationBannerForSpecificForm: Form[String] = Form(Forms.single("messageForTemplate" -> text))
 
   def notificationBanner() =
     authAction.async { implicit request =>
-      gformConnector.findNotificationBanner().map { maybeNotificationBanner =>
-        maybeNotificationBanner.fold(Ok(notification_banner_new(Option.empty[ErrorMessage])))(gformNotificationBanner =>
-          Ok(notification_banner_existing(gformNotificationBanner.toNotificationBanner))
-        )
+      gformConnector.findNotificationBanner().map { notificationBanners =>
+        Ok(notification_banner(notificationBanners, None))
       }
     }
 
-  def deleteNotificationBanner() =
+  def deleteNotificationBanner(bannerId: BannerId) =
     authAction.async { request =>
-      gformConnector.deleteNotificationBanner().map { maybeNotificationBanner =>
+      gformConnector.deleteNotificationBanner(bannerId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
         )
@@ -62,21 +62,79 @@ class NotificationBannerController @Inject() (
 
   def saveNotificationBanner() =
     authAction.async { implicit request =>
-      gformNotificationBannerForm
+      formNotificationBanner
         .bindFromRequest()
         .fold(
           formWithErrors => Future.successful(BadRequest("Error with notification banner form binding")),
-          gformNotificationBanner =>
-            if (gformNotificationBanner.message.isEmpty) {
-              Ok(notification_banner_new(Some(ErrorMessage(content = Text("Notification banner cannot be empty")))))
+          notificationBannerMessage =>
+            if (notificationBannerMessage.isEmpty) {
+              Ok(
+                notification_banner(
+                  List.empty[GformNotificationBannerView],
+                  Some(ErrorMessage(content = Text("Notification banner cannot be empty")))
+                )
+              )
                 .pure[Future]
             } else {
-              gformConnector.saveNotificationBanner(gformNotificationBanner).map { _ =>
-                Redirect(
-                  uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
+              gformConnector
+                .saveNotificationBanner(
+                  GformNotificationBanner(notificationBannerMessage, true)
                 )
-              }
+                .map { _ =>
+                  Redirect(
+                    uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
+                  )
+                }
             }
         )
+    }
+
+  def saveNotificationBannerForTemplate() =
+    authAction.async { implicit request =>
+      formNotificationBannerForSpecificForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => Future.successful(BadRequest("Error with notification banner form binding")),
+          notificationBannerMessage =>
+            if (notificationBannerMessage.isEmpty) {
+              Ok(
+                notification_banner(
+                  List.empty[GformNotificationBannerView],
+                  Some(ErrorMessage(content = Text("Notification banner for a specific form cannot be empty")))
+                )
+              )
+                .pure[Future]
+            } else {
+              gformConnector
+                .saveNotificationBanner(
+                  GformNotificationBanner(notificationBannerMessage, false)
+                )
+                .map { _ =>
+                  Redirect(
+                    uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
+                  )
+                }
+            }
+        )
+    }
+
+  def addFormTemplate(bannerId: BannerId) =
+    authAction.async { implicit request =>
+      for {
+        excludeFormTemplateIds <- gformConnector.findNotificationBanner().map(_.flatMap(_.formTemplateIds))
+        res <- gformConnector.getAllGformsTemplates.map {
+                 case JsArray(formTemplateIds) =>
+                   val ftIds: Seq[FormTemplateId] = formTemplateIds
+                     .collect {
+                       case JsString(id) if !id.startsWith("specimen-") => FormTemplateId(id)
+                     }
+                     .toSeq
+                     .filter(formTemplateId => !excludeFormTemplateIds.contains(formTemplateId))
+                     .sortBy(_.value)
+
+                   Ok(notification_banner_form_templates(bannerId, ftIds))
+                 case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
+               }
+      } yield res
     }
 }
