@@ -20,7 +20,7 @@ import cats.implicits._
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformNotificationBannerFormTemplate }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormTemplateId, GformNotificationBannerFormTemplate }
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import javax.inject.Inject
@@ -33,16 +33,16 @@ class NotificationBannerFormTemplateController @Inject() (
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
-  def delete(id: FormTemplateId) =
+  def delete(formTemplateId: FormTemplateId) =
     authAction.async { request =>
-      gformConnector.deleteNotificationBannerFormTemplate(id).map { maybeNotificationBanner =>
+      gformConnector.deleteNotificationBannerFormTemplate(formTemplateId).map { maybeNotificationBanner =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
         )
       }
     }
 
-  def save(bannerId: String) =
+  def save(bannerId: BannerId) =
     authAction.async { implicit request =>
       val formTemplateIds =
         request.body.asFormUrlEncoded.map(_.tail.flatMap(_._2).toList).fold(List.empty[FormTemplateId]) {

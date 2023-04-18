@@ -22,7 +22,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -216,10 +216,10 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       else List.empty[GformNotificationBannerView]
     }
 
-  def deleteNotificationBanner(id: String)(implicit
+  def deleteNotificationBanner(bannerId: BannerId)(implicit
     ec: ExecutionContext
   ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/notification-banner/$id").map(_ => ())
+    wsHttp.doDelete(gformUrl + s"/notification-banner/${bannerId.value}").map(_ => ())
 
   def saveNotificationBanner(notificationBanner: GformNotificationBanner)(implicit
     ec: ExecutionContext
@@ -236,9 +236,9 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       )
       .map(_ => ())
 
-  def deleteNotificationBannerFormTemplate(id: FormTemplateId)(implicit
+  def deleteNotificationBannerFormTemplate(formTemplateId: FormTemplateId)(implicit
     ec: ExecutionContext
   ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/notification-banner-form-template/$id").map(_ => ())
+    wsHttp.doDelete(gformUrl + s"/notification-banner-form-template/${formTemplateId.value}").map(_ => ())
 
 }

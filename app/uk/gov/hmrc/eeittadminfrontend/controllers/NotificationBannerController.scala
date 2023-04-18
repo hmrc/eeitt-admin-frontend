@@ -27,7 +27,7 @@ import play.api.mvc.MessagesControllerComponents
 
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, GformNotificationBanner, GformNotificationBannerView }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormTemplateId, GformNotificationBanner, GformNotificationBannerView }
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.Text
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
@@ -51,9 +51,9 @@ class NotificationBannerController @Inject() (
       }
     }
 
-  def deleteNotificationBanner(id: String) =
+  def deleteNotificationBanner(bannerId: BannerId) =
     authAction.async { request =>
-      gformConnector.deleteNotificationBanner(id).map { _ =>
+      gformConnector.deleteNotificationBanner(bannerId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
         )
@@ -118,7 +118,7 @@ class NotificationBannerController @Inject() (
         )
     }
 
-  def addFormTemplate(id: String) =
+  def addFormTemplate(bannerId: BannerId) =
     authAction.async { implicit request =>
       for {
         excludeFormTemplateIds <- gformConnector.findNotificationBanner().map(_.flatMap(_.formTemplateIds))
@@ -132,7 +132,7 @@ class NotificationBannerController @Inject() (
                      .filter(formTemplateId => !excludeFormTemplateIds.contains(formTemplateId))
                      .sortBy(_.value)
 
-                   Ok(notification_banner_form_templates(id, ftIds))
+                   Ok(notification_banner_form_templates(bannerId, ftIds))
                  case other => BadRequest("Cannot retrieve form templates. Expected JsArray, got: " + other)
                }
       } yield res

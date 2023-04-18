@@ -66,12 +66,12 @@ GET         /sdes-work-item/enqueue/:id                     uk.gov.hmrc.eeittadm
 GET         /sdes-work-item/request-removal/:id             uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.requestRemoval(id: String)
 GET         /sdes-work-item/confirm-removal/:id             uk.gov.hmrc.eeittadminfrontend.controllers.SdesWorkItemController.confirmRemoval(id: String)
 
-GET         /notification-banner                                    uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
-GET         /notification-banner/delete/:id                         uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner(id: String)
-POST        /notification-banner                                    uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBanner
-POST        /notification-banner-form-template                      uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBannerForTemplate
-GET         /notification-banner-form-template/:id                  uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.addFormTemplate(id: String)
-GET         /notification-banner-form-template/delete/:id           uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.delete(id: FormTemplateId)
-POST        /notification-banner-form-template/message/:bannerId    uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.save(bannerId: String)
+GET         /notification-banner                                        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
+GET         /notification-banner/delete/:bannerId                       uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner(bannerId: BannerId)
+POST        /notification-banner                                        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBanner
+POST        /notification-banner-form-template                          uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBannerForTemplate
+GET         /notification-banner-form-template/:bannerId                uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.addFormTemplate(bannerId: BannerId)
+GET         /notification-banner-form-template/delete/:formTemplateId   uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.delete(formTemplateId: FormTemplateId)
+POST        /notification-banner-form-template/message/:bannerId        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.save(bannerId: BannerId)
 
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

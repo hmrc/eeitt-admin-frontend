@@ -27,7 +27,7 @@ import java.util.UUID
 final case class GformNotificationBanner(
   message: String,
   isGlobal: Boolean,
-  _id: String = UUID.randomUUID().toString
+  _id: BannerId = BannerId(UUID.randomUUID().toString)
 ) {
   def toNotificationBanner: NotificationBanner = NotificationBanner(
     content = Text(message)
@@ -41,7 +41,7 @@ object GformNotificationBanner {
 
 case class GformNotificationBannerFormTemplate(
   _id: FormTemplateId,
-  bannerId: String
+  bannerId: BannerId
 )
 
 object GformNotificationBannerFormTemplate {
@@ -52,7 +52,7 @@ object GformNotificationBannerFormTemplate {
 }
 
 case class GformNotificationBannerView(
-  _id: String,
+  _id: BannerId,
   isGlobal: Boolean,
   message: String,
   formTemplateIds: List[FormTemplateId]
