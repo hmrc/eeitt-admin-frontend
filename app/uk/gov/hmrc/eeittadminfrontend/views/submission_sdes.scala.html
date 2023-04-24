@@ -169,7 +169,7 @@
                     @{sdesSubmission.status.toString}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.failureReason}
+                    <span style="word-break:break-all;">@{sdesSubmission.failureReason}</span>
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
