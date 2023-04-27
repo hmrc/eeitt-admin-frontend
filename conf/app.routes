@@ -73,5 +73,12 @@ POST        /notification-banner-form-template                          uk.gov.h
 GET         /notification-banner-form-template/:bannerId                uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.addFormTemplate(bannerId: BannerId)
 GET         /notification-banner-form-template/delete/:formTemplateId   uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.delete(formTemplateId: FormTemplateId)
 POST        /notification-banner-form-template/message/:bannerId        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerFormTemplateController.save(bannerId: BannerId)
+GET         /shutter                                        uk.gov.hmrc.eeittadminfrontend.controllers.ShutterController.shutter
+GET         /shutter/delete/:shutterMessageId                       uk.gov.hmrc.eeittadminfrontend.controllers.ShutterController.deleteShutter(shutterMessageId: ShutterMessageId)
+POST        /shutter                                        uk.gov.hmrc.eeittadminfrontend.controllers.ShutterController.saveShutter
+POST        /shutter-form-template                          uk.gov.hmrc.eeittadminfrontend.controllers.ShutterController.saveShutterForTemplate
+GET         /shutter-form-template/:shutterMessageId                uk.gov.hmrc.eeittadminfrontend.controllers.ShutterController.addFormTemplate(shutterMessageId: ShutterMessageId)
+GET         /shutter-form-template/delete/:formTemplateId   uk.gov.hmrc.eeittadminfrontend.controllers.ShutterFormTemplateController.delete(formTemplateId: FormTemplateId)
+POST        /shutter-form-template/message/:shutterMessageId        uk.gov.hmrc.eeittadminfrontend.controllers.ShutterFormTemplateController.save(shutterMessageId: ShutterMessageId)
 
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

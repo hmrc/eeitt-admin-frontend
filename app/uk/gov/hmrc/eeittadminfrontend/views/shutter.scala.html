@@ -1,0 +1,114 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput
+)
+
+@(shutters: List[ShutterView], maybeErrorMessage: Option[ErrorMessage])(implicit messages: Messages, request: Request[_])
+
+<head>
+    <style>
+        .card {
+          box-sizing: border-box;
+          width: 800px;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          margin: 10px;
+          background-color: white;
+        }
+        .card h3 {
+          margin-top: 0;
+        }
+    </style>
+</head>
+
+@main_template(title = s"shutter", tab = "shutter"){
+
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible"/>
+
+    @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.saveShutterForTemplate) {
+        <h2 class="govuk-heading-m">Shutter a specific form</h2>
+        @govukInput(Input(
+            id = "messageForTemplate",
+            name = "messageForTemplate",
+            label = Label(
+                isPageHeading = false,
+                classes = "govuk-label--s",
+                content = Text("Enter a shutter message for a specific form")
+            ),
+            errorMessage = maybeErrorMessage
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Add")
+        ))
+    }
+
+    @shutters.map{ shutter =>
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible"/>
+
+            <div class="card">
+                <h3>Shutter Message Literally:</h3>
+                <p>@shutter.message</p>
+            </div>
+
+            <div class="card">
+                <h3>Rendered Shutter Message:</h3>
+                <p>@Html(shutter.message)</p>
+            </div>
+
+
+
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible"/>
+        @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.deleteShutter(shutter._id)) {
+            @govukButton(Button(
+                preventDoubleClick = Some(true),
+                content = Text("Delete a shutter message")
+            ))
+        }
+        <table class="govuk-table stats-table">
+            <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                    <th class="govuk-table__header" scope="col" title="Form template Id">Form template Id</th>
+                    <th class="govuk-table__header" scope="col" title="Action">Action</th>
+                </tr>
+            </thead>
+            <tbody class="govuk-table__body stats-results">
+                @shutter.formTemplateIds.sortBy(_.value).map { formTemplateId =>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell">@formTemplateId </td>
+                        <td class="govuk-table__cell"><a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterFormTemplateController.delete(formTemplateId)" class="govuk-link">Delete</a> </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.addFormTemplate(shutter._id)) {
+            @govukButton(Button(
+                preventDoubleClick = Some(true),
+                content = Text("Add Form Template")
+            ))
+        }
+    }
+}

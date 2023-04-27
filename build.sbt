@@ -62,6 +62,7 @@ lazy val microservice = Project(appName, file("."))
       "uk.gov.hmrc.eeittadminfrontend.models.sdes.SubmissionRef",
       "uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus",
       "uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus",
-      "uk.gov.hmrc.eeittadminfrontend.models.BannerId"
+      "uk.gov.hmrc.eeittadminfrontend.models.BannerId",
+      "uk.gov.hmrc.eeittadminfrontend.models.ShutterMessageId"
     )
   )
