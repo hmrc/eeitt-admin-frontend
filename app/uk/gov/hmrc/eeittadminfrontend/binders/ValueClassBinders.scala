@@ -20,7 +20,7 @@ import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, ShutterMessageId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
@@ -31,6 +31,7 @@ object ValueClassBinders {
   implicit val filenameBinder: PathBindable[Filename] = valueClassBinder(_.value)
   implicit val formIdBinder: PathBindable[FormId] = valueClassBinder(_.value)
   implicit val bannerIdBinder: PathBindable[BannerId] = valueClassBinder(_.value)
+  implicit val shutterMessageIdBinder: PathBindable[ShutterMessageId] = valueClassBinder(_.value)
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(
     uri => Uri.fromString(uri).toOption.get,

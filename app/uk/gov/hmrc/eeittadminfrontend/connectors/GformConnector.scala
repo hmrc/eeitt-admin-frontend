@@ -22,7 +22,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -240,5 +240,38 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     ec: ExecutionContext
   ): Future[Unit] =
     wsHttp.doDelete(gformUrl + s"/notification-banner-form-template/${formTemplateId.value}").map(_ => ())
+
+  def findShutter()(implicit
+    ec: ExecutionContext
+  ): Future[List[ShutterView]] =
+    wsHttp.doGet(gformUrl + s"/shutter").map { response =>
+      if (response.status == 200) response.json.as[List[ShutterView]]
+      else List.empty[ShutterView]
+    }
+
+  def deleteShutter(shutterMessageId: ShutterMessageId)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp.doDelete(gformUrl + s"/shutter/${shutterMessageId.value}").map(_ => ())
+
+  def saveShutter(shutter: Shutter)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp.doPost[Shutter](gformUrl + s"/shutter", shutter).map(_ => ())
+
+  def saveShutterFormTemplates(shutterFormTemplate: ShutterFormTemplate)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .doPost[ShutterFormTemplate](
+        gformUrl + s"/shutter-form-template",
+        shutterFormTemplate
+      )
+      .map(_ => ())
+
+  def deleteShutterFormTemplate(formTemplateId: FormTemplateId)(implicit
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp.doDelete(gformUrl + s"/shutter-form-template/${formTemplateId.value}").map(_ => ())
 
 }
