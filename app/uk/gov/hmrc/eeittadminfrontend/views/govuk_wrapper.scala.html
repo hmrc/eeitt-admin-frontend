@@ -121,6 +121,11 @@
                 content = Text("Sdes Work Item"),
                 active = if (tab == "sdes-work-item") true else false
             ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path),
+                content = Text("Legacy Forms"),
+                active = if (tab == "legacy-forms") true else false
+                ),
             )
         )
     )
