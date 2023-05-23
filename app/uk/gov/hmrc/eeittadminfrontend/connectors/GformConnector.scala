@@ -22,7 +22,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -274,4 +274,9 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   ): Future[Unit] =
     wsHttp.doDelete(gformUrl + s"/shutter-form-template/${formTemplateId.value}").map(_ => ())
 
+  def getFormTemplatesRedirects(page: Int, pageSize: Int)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ) =
+    wsHttp.GET[FormRedirectPageData](gformUrl + s"/formtemplates-redirects/$page/$pageSize")
 }
