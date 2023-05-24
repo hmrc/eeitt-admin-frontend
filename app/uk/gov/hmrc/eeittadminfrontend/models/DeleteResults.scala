@@ -20,9 +20,10 @@ import julienrf.json.derived
 import play.api.libs.json.OFormat
 
 case class DeleteResults(
-  prod: DeleteResult,
-  prodSpecimen: DeleteResult,
-  raw: DeleteResult
+  formTemplate: DeleteResult,
+  formTemplateSpecimen: DeleteResult,
+  formTemplateRaw: DeleteResult,
+  formRedirect: DeleteResult
 )
 
 object DeleteResults {
