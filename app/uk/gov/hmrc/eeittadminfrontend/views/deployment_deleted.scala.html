@@ -22,7 +22,7 @@
   govukButton: GovukButton
 )
 
-@(formTemplateId: FormTemplateId,
+@(formTemplateId: FormTemplateId, downloadLink: Html, deleteAction: Call
 )(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "Deployment ", tab = "deployment") {
@@ -30,11 +30,11 @@
 
     <ul class="govuk-list govuk-list--bullet">
         <li>
-            @uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId)
+            @downloadLink
         </li>
     </ul>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId), args = 'class -> "js-form") {
+    @formWithCSRF(action = deleteAction, args = 'class -> "js-form") {
         @govukButton(Button(
             classes = "govuk-button--warning",
             preventDoubleClick = Some(true),

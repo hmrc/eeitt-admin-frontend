@@ -19,18 +19,22 @@ GET        /get-gform                                       uk.gov.hmrc.eeittadm
 POST       /db-lookup-file-upload                           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 POST       /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplates
 GET        /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplatesStatus
+GET        /handlebars-template                             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getHandlebarsTemplate
+POST       /handlebars-template                             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteHandlebarsTemplate
 
 GET        /download/:formTemplateId                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
+GET        /download-handlebars/:formTemplateId             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.downloadHandlebarsTemplate(formTemplateId: FormTemplateId)
 
 GET        /deployments                                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
 GET        /deployment/home                                 uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentHome
 GET        /deployment/existing/:formTemplateId             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentExisting(formTemplateId: FormTemplateId, filename: Filename)
 GET        /deployment/new/:formTemplateId                  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename, sha: BlobSha)
-GET        /deployment/deleted/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId)
+GET        /deployment/deleted/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId, json: Boolean)
 GET        /deployment/history/:formTemplateId/:sha1/:sha2  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha)
 GET        /deployment/history/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history1(formTemplateId: FormTemplateId)
 POST       /deployment/refresh-cache                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache(redirectUrl: String)
 POST       /deployment/delete/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
+POST       /deployment/delete-handlebars/:formTemplateId    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deleteHandlebarsTemplate(formTemplateId: FormTemplateId)
 POST       /deployment/:filename                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload

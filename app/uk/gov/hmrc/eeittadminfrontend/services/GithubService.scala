@@ -20,12 +20,13 @@ import cats.syntax.either._
 import cats.data.{ EitherT, NonEmptyList }
 import cats.effect.IO
 import github4s.domain.{ Commit, Content, RefCommit }
-import io.circe.{ DecodingFailure, Json }
+import io.circe.DecodingFailure
+
 import javax.inject.Inject
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GithubConnector
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, ContentValue, Filename }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
 class GithubService @Inject() (githubConnector: GithubConnector) {
@@ -42,24 +43,34 @@ class GithubService @Inject() (githubConnector: GithubConnector) {
 
   def getCommit(commitSha: CommitSha): EitherT[IO, String, RefCommit] = EitherT(githubConnector.getCommit(commitSha))
 
-  def retrieveFormTemplate(sha: BlobSha): EitherT[IO, String, (FormTemplateId, Json)] = getBlob(sha).flatMap { json =>
-    logger.debug(s"Downloading url blob $sha from Github Completed")
-    val hcursor = json.hcursor
-    val formTemplateId: Either[DecodingFailure, FormTemplateId] =
-      hcursor.downField("_id").as[String].map(FormTemplateId.apply)
+  def retrieveFormTemplate(filename: Filename, sha: BlobSha): EitherT[IO, String, (FormTemplateId, ContentValue)] =
+    getBlob(filename, sha).flatMap { content =>
+      logger.debug(s"Downloading url blob $sha from Github Completed")
 
-    val githubContent: Either[String, (FormTemplateId, Json)] = formTemplateId.bimap(
-      _.getMessage(),
-      formTemplateId => formTemplateId -> json
-    )
-    EitherT.fromEither(githubContent)
-  }
+      val formTemplateId: Either[DecodingFailure, FormTemplateId] =
+        if (filename.isJson) {
+          content.jsonContent.hcursor.downField("_id").as[String].map(FormTemplateId.apply)
+        } else {
+          FormTemplateId(filename.name).asRight
+        }
 
-  def getBlob(sha: BlobSha): EitherT[IO, String, Json] = EitherT(githubConnector.getBlob(sha)).flatMap { blobContent =>
-    blobContent.content.fold(EitherT.leftT[IO, Json](s"No blob content available for sha: $sha")) { content =>
-      val rawJson = new String(Base64.decodeBase64(content), "UTF-8")
-      val json: Either[String, Json] = io.circe.parser.parse(rawJson).leftMap(_.message)
-      EitherT.fromEither(json)
+      val githubContent: Either[String, (FormTemplateId, ContentValue)] = formTemplateId.bimap(
+        _.getMessage(),
+        formTemplateId => formTemplateId -> content
+      )
+      EitherT.fromEither(githubContent)
     }
-  }
+
+  def getBlob(filename: Filename, sha: BlobSha): EitherT[IO, String, ContentValue] =
+    EitherT(githubConnector.getBlob(sha)).flatMap { blobContent =>
+      blobContent.content.fold(EitherT.leftT[IO, ContentValue](s"No blob content available for sha: $sha")) { content =>
+        val rawJson = new String(Base64.decodeBase64(content), "UTF-8")
+        val json: Either[String, ContentValue] = if (filename.isJson) {
+          io.circe.parser.parse(rawJson).map(ContentValue.JsonContent).leftMap(_.message)
+        } else {
+          ContentValue.TextContent(rawJson).asRight
+        }
+        EitherT.fromEither(json)
+      }
+    }
 }

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
-import io.circe.Json
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-case class GithubContent(formTemplateId: FormTemplateId, json: Json, blobSha: BlobSha, commitSha: CommitSha)
+case class GithubContent(formTemplateId: FormTemplateId, content: ContentValue, blobSha: BlobSha, commitSha: CommitSha)

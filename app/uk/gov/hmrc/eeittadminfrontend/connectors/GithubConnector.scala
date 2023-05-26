@@ -42,6 +42,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
   val repoOwner = authorization.repoOwner
   val repoName = authorization.repoName
   val main = Some("main")
+  val githubExtensions = List(".json", ".hbs")
 
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   val httpClient: Client[IO] = {
@@ -106,7 +107,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
       response.result match {
         case Right(r) =>
           val jsonFiles: List[Content] = r.filter { content =>
-            content.name.endsWith(".json")
+            githubExtensions.exists(content.name.endsWith)
           }
           val maybeJsons: Option[NonEmptyList[Content]] = NonEmptyList.fromList(jsonFiles)
           maybeJsons.fold(logError[NonEmptyList[Content]]("No json file found."))(Right(_))
