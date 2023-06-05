@@ -18,13 +18,15 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.github.{Authorization, LastCommitCheck}
 @import uk.gov.hmrc.eeittadminfrontend.deployment.{DeploymentRecord, Filename, GithubContent}
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.deployment.ReconciliationLookup
 
 @this(
   deployment_last_commit_check: deployment_last_commit_check,
   validation_problem: validation_problem,
   main_template: main_template,
   formWithCSRF: FormWithCSRF,
-  govukButton: GovukButton
+  govukButton: GovukButton,
+  govukTable: GovukTable
 )
 
 @(formTemplateId: FormTemplateId,
@@ -36,14 +38,28 @@
   maybeDeploymentRecord: Option[DeploymentRecord],
   lastCommitCheck: LastCommitCheck,
   authorization: Authorization,
-  validationWarning: Option[String]
+  validationWarning: Option[String],
+  downloadLink: Html,
+  tableExisting: Table,
+  reconciliationLookup: ReconciliationLookup
 )(implicit request : Request[_], messages: Messages)
+
+@gformTemplatesRepo = {
+    <a class="govuk-link" target="_blank" href="https://github.com/hmrc/gform-templates">gform-templates</a>
+}
 
 @main_template(title = "Deployment ", tab = "deployment") {
 
     @deployment_last_commit_check(lastCommitCheck, authorization)
 
     <h2 class="govuk-heading-l">Deployment of @formTemplateId from file @filename.value</h2>
+    @if(reconciliationLookup.existingTemplates.nonEmpty){
+        <h3 class="govuk-heading-m">Deployed - @reconciliationLookup.existingTemplates.size handlebars templates</h3>
+        <div class="govuk-hint">
+            Handlebars templates available in @gformTemplatesRepo repository which are also deployed to gform microservice.
+        </div>
+        @govukTable(tableExisting)
+    }
 
     @last_modified(authorization, githubContent, commit)
 
@@ -53,7 +69,7 @@
 
     <ul class="govuk-list govuk-list--bullet">
         <li>
-            Show Gform content of @uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId)
+            Show Gform content of @downloadLink
         </li>
         <li>
             Show Github content of @deployment_link_github_commit_blob(authorization, githubContent.commitSha, filename)

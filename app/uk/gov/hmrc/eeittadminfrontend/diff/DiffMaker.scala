@@ -19,21 +19,22 @@ package uk.gov.hmrc.eeittadminfrontend.diff
 import cats.syntax.eq._
 import com.github.difflib.{ DiffUtils, UnifiedDiffUtils }
 import com.github.difflib.patch.Patch
+
 import scala.jdk.CollectionConverters._
-import io.circe.Json
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubContent, MongoContent }
-import uk.gov.hmrc.eeittadminfrontend.models.github.PrettyPrintJson
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ ContentValue, Filename, GithubContent, MongoContent }
 
 object DiffMaker {
 
-  private def toLines(json: Json): List[String] =
-    PrettyPrintJson.asString(json).split("\n").toList
+  def inSync(mongo: MongoContent, github: GithubContent): Boolean = mongo.content === github.content
 
-  def inSync(mongo: MongoContent, github: GithubContent): Boolean = mongo.json === github.json
-
-  def getDiff(originalFilename: String, revisedFilename: String, json1: Json, json2: Json): String = {
-    val json1Lines = toLines(json1).asJava
-    val json2Lines = toLines(json2).asJava
+  def getDiff(
+    originalFilename: String,
+    revisedFilename: String,
+    content1: ContentValue,
+    content2: ContentValue
+  ): String = {
+    val json1Lines = content1.toLines.asJava
+    val json2Lines = content2.toLines.asJava
 
     val patch: Patch[String] = DiffUtils.diff(json1Lines, json2Lines)
 
@@ -49,6 +50,6 @@ object DiffMaker {
   }
 
   def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent): String =
-    getDiff(filename.value, filename.value, mongo.json, github.json)
+    getDiff(filename.value, filename.value, mongo.content, github.content)
 
 }

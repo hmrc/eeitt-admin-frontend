@@ -16,13 +16,19 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
+import cats.Eq
 import play.api.libs.json.Format
 import reactivemongo.api.bson.{ BSONHandler, Macros }
 import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 
-case class Filename(value: String) extends AnyVal
+case class Filename(value: String) extends AnyVal {
+  def isJson: Boolean = value.endsWith(".json")
+  def name: String = value.substring(0, value.lastIndexOf("."))
+}
 
 object Filename {
   implicit val handler: BSONHandler[Filename] = Macros.valueHandler[Filename]
   implicit val format: Format[Filename] = ValueClassFormatter.format(Filename.apply)(_.value)
+
+  implicit val equal: Eq[ContentValue] = Eq.fromUniversalEquals
 }

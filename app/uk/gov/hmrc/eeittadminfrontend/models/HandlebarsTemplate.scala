@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.deployment
+package uk.gov.hmrc.eeittadminfrontend.models
 
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
+import play.api.libs.json.{ Json, OFormat }
 
-case class MongoContent(formTemplateId: FormTemplateId, content: ContentValue)
+case class HandlebarsTemplate(_id: FormTemplateId, payload: String)
+
+object HandlebarsTemplate {
+  implicit val formatTemplateId = FormTemplateId.format
+  implicit val format: OFormat[HandlebarsTemplate] = Json.format
+}

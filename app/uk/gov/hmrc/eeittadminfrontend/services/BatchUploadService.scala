@@ -47,8 +47,13 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
       processTemplate(templateId, formData)
     }
 
+    val flowHandlebars = Source(loadHandlebarsTeplatesFromZip(file)).mapAsyncUnordered(2) {
+      case (templateId, formData) =>
+        processHandlebarsTemplate(templateId, formData)
+    }
+
     //Run flow on background, some form may take up to 60s to load.
-    flow
+    (flow ++ flowHandlebars)
       .runWith(Sink.foreach { data =>
         processedTemplates += data
       })
@@ -58,7 +63,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
 
   }
 
-  def loadTeplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+  private def loadFromZip(file: File, fileExtension: String): List[(FormTemplateId, Array[Byte])] =
     Resource
       .fromAutoCloseable(IO(new ZipFile(file)))
       .use { zip =>
@@ -67,11 +72,11 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
             .entries()
             .asScala
             .filterNot(_.isDirectory)
-            .filter(x => x.getName.endsWith(".json"))
+            .filter(x => x.getName.endsWith(fileExtension))
             .map { zipEntry =>
               val templateFile = Array.fill[Byte](zipEntry.getSize.toInt)(0)
               IOUtils.readFully(zip.getInputStream(zipEntry), templateFile)
-              val formTemplateId = FormTemplateId(zipEntry.getName.replaceAll("\\.json", ""))
+              val formTemplateId = FormTemplateId(zipEntry.getName.replaceAll(fileExtension, ""))
               (formTemplateId, templateFile)
             }
             .toList
@@ -81,7 +86,13 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
       }
       .unsafeRunSync()
 
-  def processTemplate(templateId: FormTemplateId, template: Array[Byte]) = {
+  private def loadTeplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+    loadFromZip(file, ".json")
+
+  private def loadHandlebarsTeplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+    loadFromZip(file, ".hbs")
+
+  private def processTemplate(templateId: FormTemplateId, template: Array[Byte]) = {
     val jsonTemplate = Json.parse(template)
     gformConnector
       .saveTemplate(templateId, jsonTemplate)
@@ -95,5 +106,18 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
         (templateId, s"Unable to upload: ${e.getMessage}")
       }
   }
+
+  private def processHandlebarsTemplate(templateId: FormTemplateId, template: Array[Byte]) =
+    gformConnector
+      .saveHandlebarsTemplate(templateId, new String(template, "UTF-8"))
+      .map { result =>
+        result.fold(err => err, _ => "Ok")
+      }
+      .map { uploadResult =>
+        (templateId, uploadResult)
+      }
+      .recover { case e: Exception =>
+        (templateId, s"Unable to upload: ${e.getMessage}")
+      }
 
 }

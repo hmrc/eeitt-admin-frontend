@@ -22,7 +22,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
@@ -279,4 +279,83 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     ec: ExecutionContext
   ) =
     wsHttp.GET[FormRedirectPageData](gformUrl + s"/formtemplates-redirects/$page/$pageSize")
+
+  def getHandlebarsTemplate(
+    formTemplateId: FormTemplateId
+  )(implicit ec: ExecutionContext): Future[Either[String, String]] = {
+    val url = gformUrl + s"/handlebarstemplates/${formTemplateId.value}"
+    wsHttp
+      .doGet(url, headers = Seq("Content-Type" -> "text/plain;charset=UTF-8"))
+      .map { response =>
+        logger.info(s"Get ${formTemplateId.value} handlebars from gform ${response.status}")
+        if (response.status == 200) Right(response.body)
+        else {
+          logger.error(s"Wrong status code ${response.body} when calling $url, response body ${response.body}")
+          Left(response.body)
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve template ${formTemplateId.value}, by calling $url, exception: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+  }
+
+  def getRawHandlebarsTemplate(
+    formTemplateId: FormTemplateId
+  )(implicit ec: ExecutionContext): Future[Either[String, String]] = {
+    val url = gformUrl + s"/handlebarstemplates/${formTemplateId.value}/raw"
+    wsHttp
+      .doGet(url, headers = Seq("Content-Type" -> "text/plain;charset=UTF-8"))
+      .map { response =>
+        logger.info(s"Get ${formTemplateId.value} handlebars from gform ${response.status}")
+        if (response.status == 200) Right(response.body)
+        else {
+          logger.error(s"Wrong status code ${response.body} when calling $url, response body ${response.body}")
+          Left(response.body)
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve template ${formTemplateId.value}, by calling $url, exception: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+  }
+
+  def deleteHandlebarsTemplate(
+    formTemplateId: FormTemplateId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResult] =
+    wsHttp.DELETE[DeleteResult](gformUrl + s"/handlebarstemplates/${formTemplateId.value}")
+
+  def saveHandlebarsTemplate(formTemplateId: FormTemplateId, payload: String)(implicit
+    ec: ExecutionContext
+  ): Future[Either[String, Unit]] =
+    wsHttp
+      .doPostString(
+        gformUrl + s"/handlebarstemplates/${formTemplateId.value}",
+        payload,
+        headers = Seq("Content-Type" -> "text/plain;charset=UTF-8")
+      )
+      .map { response =>
+        if (response.status == 204)
+          Right(())
+        else
+          Left(s"error: ${response.body}")
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to save handlebars template ${formTemplateId.value}: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+
+  def getAllHandlebarsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    wsHttp.GET[JsArray](gformUrl + "/handlebarstemplates")
+
+  def getHandlebarsTemplateIds(
+    formTemplateId: FormTemplateId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    wsHttp.GET[JsArray](gformUrl + s"/formtemplates-with-handlebars/$formTemplateId")
 }
