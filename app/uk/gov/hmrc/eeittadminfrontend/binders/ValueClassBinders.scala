@@ -22,7 +22,7 @@ import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, ShutterMessageId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesDestination }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
 
 object ValueClassBinders {
@@ -41,6 +41,9 @@ object ValueClassBinders {
 
   implicit val notificationStatusBinder: QueryStringBindable[NotificationStatus] = valueClassQueryBinder(
     NotificationStatus.fromName
+  )
+  implicit val sdesDestinationBinder: QueryStringBindable[SdesDestination] = valueClassQueryBinder(
+    SdesDestination.fromName
   )
   implicit val processingStatusBinder: QueryStringBindable[ProcessingStatus] = valueClassQueryBinder(_.name)
 

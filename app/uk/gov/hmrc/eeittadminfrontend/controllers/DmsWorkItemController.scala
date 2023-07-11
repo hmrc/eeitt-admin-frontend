@@ -24,7 +24,7 @@ import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SdesConfig, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SubmissionRef }
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
@@ -35,28 +35,27 @@ import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
-class SdesWorkItemController @Inject() (
+class DmsWorkItemController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  sdes_workitem: uk.gov.hmrc.eeittadminfrontend.views.html.sdes_workitem,
-  sdes_workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.sdes_workitem_confirmation,
-  sdesConfig: SdesConfig
+  dms_workitem: uk.gov.hmrc.eeittadminfrontend.views.html.dms_workitem,
+  dms_workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.dms_workitem_confirmation
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val pageSize = 100
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def sdesWorkItem(
+  def searchWorkItem(
     page: Int,
     formTemplateId: Option[FormTemplateId],
     status: Option[ProcessingStatus]
   ) =
     authAction.async { implicit request =>
-      gformConnector.searchWorkItem(page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
+      gformConnector.searchDmsWorkItem(page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
         val pagination = Pagination(sdesWorkItemPageData.count, page, sdesWorkItemPageData.count.toInt, pageSize)
-        Ok(sdes_workitem(pagination, sdesWorkItemPageData, formTemplateId, status))
+        Ok(dms_workitem(pagination, sdesWorkItemPageData, formTemplateId, status))
       }
     }
 
@@ -64,15 +63,15 @@ class SdesWorkItemController @Inject() (
     authAction.async { implicit request =>
       val username = request.retrieval
       logger.info(s"${username.value} sends a reprocess request for $id, submission id: ${submissionRef.value}")
-      gformConnector.enqueueWorkItem(id).map { response =>
+      gformConnector.enqueueDmsWorkItem(id).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
-          Redirect(routes.SdesWorkItemController.sdesWorkItem(0, None, None))
+          Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None))
             .flashing(
               "success" -> s"Submission successfully reprocessed. Submission id: ${submissionRef.value}"
             )
         } else {
-          Redirect(routes.SdesWorkItemController.sdesWorkItem(page, None, None))
+          Redirect(routes.DmsWorkItemController.searchWorkItem(page, None, None))
             .flashing(
               "failed" -> s"Unexpected response with id: $id, submission id: ${submissionRef.value} : ${response.body}"
             )
@@ -105,8 +104,8 @@ class SdesWorkItemController @Inject() (
             )
           )
         }
-      gformConnector.getSdesWorkItem(id).map { sdesWorkItemData =>
-        Ok(sdes_workitem_confirmation(sdesWorkItemData, pageError, fieldErrors))
+      gformConnector.getDmsWorkItem(id).map { workItemData =>
+        Ok(dms_workitem_confirmation(workItemData, pageError, fieldErrors))
       }
     }
 
@@ -122,20 +121,20 @@ class SdesWorkItemController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.SdesWorkItemController.requestRemoval(id)
+            routes.DmsWorkItemController.requestRemoval(id)
           ).flashing("removeParamMissing" -> "true").pure[Future],
         {
           case "Yes" =>
             gformConnector
-              .deleteSdesWorkItem(id)
+              .deleteDmsWorkItem(id)
               .map(_ =>
-                Redirect(routes.SdesWorkItemController.sdesWorkItem(0, None, None))
+                Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None))
                   .flashing(
-                    "success" -> s"Sdes work-item successfully deleted."
+                    "success" -> s"Dms work-item successfully deleted."
                   )
               )
           case "No" =>
-            Redirect(routes.SdesWorkItemController.sdesWorkItem(0, None, None)).pure[Future]
+            Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None)).pure[Future]
         }
       )
   }
@@ -153,12 +152,12 @@ class SdesWorkItemController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.SdesWorkItemController.sdesWorkItem(page, None, None)
+            routes.DmsWorkItemController.searchWorkItem(page, None, None)
           ).pure[Future],
         {
           case (maybeFormTemplateId, maybeStatus) =>
             Redirect(
-              routes.SdesWorkItemController.sdesWorkItem(
+              routes.DmsWorkItemController.searchWorkItem(
                 0,
                 maybeFormTemplateId.map(FormTemplateId(_)),
                 maybeStatus.flatMap(ProcessingStatus.fromName)
@@ -166,7 +165,7 @@ class SdesWorkItemController @Inject() (
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.SdesWorkItemController.sdesWorkItem(page, None, None)
+              routes.DmsWorkItemController.searchWorkItem(page, None, None)
             ).pure[Future]
         }
       )
