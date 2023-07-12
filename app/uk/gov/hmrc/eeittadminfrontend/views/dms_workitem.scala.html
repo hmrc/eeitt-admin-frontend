@@ -34,10 +34,10 @@
 @(pagination: Pagination, sdesWorkItemPageData: SdesWorkItemPageData, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.sdesWorkItem(page, formTemplateId, status)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.searchWorkItem(page, formTemplateId, status)" class="govuk-link">@label</a>
 }
 
-@main_template(title = s"SDES Work Item", tab = "sdes-work-item"){
+@main_template(title = s"DMS Work Item", tab = "dms-work-item"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
         @govukNotificationBanner(
@@ -60,7 +60,7 @@
         )
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
         @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
@@ -154,12 +154,12 @@
                 </td>
                 <td class="govuk-table__cell">
                     @if(ProcessingStatus.reProcessable.contains(workItem.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.enqueue(pagination.page, workItem.id, workItem.submissionRef)" class="govuk-link">Enqueue</a>
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.enqueue(pagination.page, workItem.id, workItem.submissionRef)" class="govuk-link">Enqueue</a>
                     }
                 </td>
                 <td class="govuk-table__cell">
                     @if(ProcessingStatus.removable.contains(workItem.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.requestRemoval(workItem.id)" class="govuk-link">Delete</a>
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.requestRemoval(workItem.id)" class="govuk-link">Delete</a>
                     }
                 </td>
             </tr>

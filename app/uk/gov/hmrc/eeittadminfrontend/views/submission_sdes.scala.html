@@ -21,6 +21,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus.FileProcessed
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
 
 @this(
   main_template: main_template,
@@ -32,10 +33,16 @@
   govukNotificationBanner: GovukNotificationBanner
 )
 
-@(pagination: Pagination, sdesSubmissions: SdesSubmissionPageData, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])(implicit messages: Messages, request: Request[_])
+@(pagination: Pagination,
+  sdesSubmissions: SdesSubmissionPageData,
+  processed: Option[Boolean],
+  formTemplateId: Option[FormTemplateId],
+  status: Option[NotificationStatus],
+  showBeforeAt: Option[Boolean],
+  destination: Option[SdesDestination])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, processed, formTemplateId, status, showBeforeAt, destination)" class="govuk-link">@label</a>
 }
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions"){
@@ -78,36 +85,44 @@
                 name = "notificationStatus",
                 classes = "govuk-!-font-size-14",
                 items = Seq(
-                    SelectItem(
-                        value = None,
-                        text = ""
-                    ),
-                    SelectItem(
-                        value = Some("FileReady"),
-                        text = "FileReady",
-                        selected = isSelected(status,"FileReady")
-                    ),
-                    SelectItem(
-                        value = Some("FileReceived"),
-                        text = "FileReceived",
-                        selected = isSelected(status,"FileReceived")
-                    ),
-                    SelectItem(
-                        value = Some("FileProcessingFailure"),
-                        text = "FileProcessingFailure",
-                        selected = isSelected(status,"FileProcessingFailure")
-                    ),
-                    SelectItem(
-                        value = Some("FileProcessed"),
-                        text = "FileProcessed",
-                        selected = isSelected(status,"FileProcessed")
-                    )),
+                        SelectItem(
+                            value = None,
+                            text = ""
+                        )
+                    ) ++ NotificationStatus.values.map(ns =>
+                        SelectItem(
+                            value = Some(ns.toString),
+                            text = ns.toString,
+                            selected = status.fold(false)(status => ns === status)
+                        )
+                    ).toSeq,
                 label = Label(
                     classes = "govuk-label--s govuk-!-font-size-14",
                     content = Text("Status")
                 )
             )
         )
+        @govukSelect(
+            Select(
+                id = "destination",
+                name = "destination",
+                classes = "govuk-!-font-size-14",
+                items = Seq(
+                                SelectItem(
+                                    value = None,
+                                    text = ""
+                                )
+                            ) ++ SdesDestination.values.map(d =>
+                                SelectItem(
+                                    value = Some(d.toString),
+                                    text = d.toString,
+                                    selected = destination.fold(false)(destination => d === destination)
+                                )
+                            ).toSeq,
+                label = Label(classes = "govuk-label--s govuk-!-font-size-14",content = Text("Destination"))
+            )
+        )
+
         @govukCheckboxes(Checkboxes(
             name = "showBeforeAt",
             items = Seq(
@@ -143,6 +158,7 @@
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
                 <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
+                <th class="govuk-table__header" scope="col" title="Destination">Destination</th>
                 <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
                 <th class="govuk-table__header" scope="col" title="Delete notification (cannot be undone)">Delete</th>
             </tr>
@@ -173,6 +189,9 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.destination}
                 </td>
                 <td class="govuk-table__cell">
                     @if(sdesSubmission.status =!= FileProcessed) {

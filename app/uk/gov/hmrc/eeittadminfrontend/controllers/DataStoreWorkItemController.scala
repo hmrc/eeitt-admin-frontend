@@ -18,13 +18,13 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.data.Forms.{ boolean, optional, text }
+import play.api.data.Forms.{ optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesDestination, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SubmissionRef }
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
@@ -35,70 +35,51 @@ import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
-class SubmissionSdesController @Inject() (
+class DataStoreWorkItemController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  submission_sdes: uk.gov.hmrc.eeittadminfrontend.views.html.submission_sdes,
-  submission_sdes_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.submission_sdes_confirmation,
-  sdesConfig: SdesConfig
+  datastore_workitem: uk.gov.hmrc.eeittadminfrontend.views.html.datastore_workitem,
+  datastore_workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.datastore_workitem_confirmation
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val pageSize = 100
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def sdesSubmissions(
+  def searchWorkItem(
     page: Int,
-    processed: Option[Boolean],
     formTemplateId: Option[FormTemplateId],
-    status: Option[NotificationStatus],
-    showBeforeAt: Option[Boolean],
-    destination: Option[SdesDestination]
+    status: Option[ProcessingStatus]
   ) =
     authAction.async { implicit request =>
-      gformConnector
-        .getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeAt, destination)
-        .map { sdesSubmissionPageData =>
-          val pagination =
-            Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.sdesSubmissions.size, pageSize)
-          Ok(
-            submission_sdes(
-              pagination,
-              sdesSubmissionPageData,
-              processed,
-              formTemplateId,
-              status,
-              showBeforeAt,
-              destination
-            )
-          )
-        }
+      gformConnector.searchDataStoreWorkItem(page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
+        val pagination = Pagination(sdesWorkItemPageData.count, page, sdesWorkItemPageData.count.toInt, pageSize)
+        Ok(datastore_workitem(pagination, sdesWorkItemPageData, formTemplateId, status))
+      }
     }
 
-  def notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int) =
+  def enqueue(page: Int, id: String, submissionRef: SubmissionRef) =
     authAction.async { implicit request =>
       val username = request.retrieval
-      logger.info(
-        s"${username.value} sends a notification to SDES for correlation id ${correlationId.value}, submission id  ${submissionRef.value}"
-      )
-      gformConnector.notifySDES(correlationId).map { response =>
+      logger.info(s"${username.value} sends a reprocess request for $id, submission id: ${submissionRef.value}")
+      gformConnector.enqueueDataStoreWorkItem(id).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None))
+          Redirect(routes.DataStoreWorkItemController.searchWorkItem(0, None, None))
             .flashing(
-              "success" -> s"Envelope successfully notified. Correlation id: ${correlationId.value}, submission id: ${submissionRef.value}"
+              "success" -> s"Submission successfully reprocessed. Submission id: ${submissionRef.value}"
             )
         } else {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None))
+          Redirect(routes.DataStoreWorkItemController.searchWorkItem(page, None, None))
             .flashing(
-              "failed" -> s"Unexpected SDES response with correlation id: ${correlationId.value}, submission id: ${submissionRef.value} : ${response.body}"
+              "failed" -> s"Unexpected response with id: $id, submission id: ${submissionRef.value} : ${response.body}"
             )
         }
       }
     }
 
-  def requestRemoval(correlationId: CorrelationId) =
+  def requestRemoval(id: String) =
     authAction.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
@@ -123,8 +104,8 @@ class SubmissionSdesController @Inject() (
             )
           )
         }
-      gformConnector.getSdesSubmission(correlationId).map { sdesSubmissionData =>
-        Ok(submission_sdes_confirmation(sdesSubmissionData, sdesConfig.olderThan, pageError, fieldErrors))
+      gformConnector.getDataStoreWorkItem(id).map { workItemData =>
+        Ok(datastore_workitem_confirmation(workItemData, pageError, fieldErrors))
       }
     }
 
@@ -134,36 +115,34 @@ class SubmissionSdesController @Inject() (
     )
   )
 
-  def confirmRemoval(correlationId: CorrelationId) = authAction.async { implicit request =>
+  def confirmRemoval(id: String) = authAction.async { implicit request =>
     formRemoval
       .bindFromRequest()
       .fold(
         _ =>
           Redirect(
-            routes.SubmissionSdesController.requestRemoval(correlationId)
+            routes.DataStoreWorkItemController.requestRemoval(id)
           ).flashing("removeParamMissing" -> "true").pure[Future],
         {
           case "Yes" =>
             gformConnector
-              .deleteSdesSubmission(correlationId)
-              .map(httpResponse =>
-                Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None, None))
+              .deleteDataStoreWorkItem(id)
+              .map(_ =>
+                Redirect(routes.DataStoreWorkItemController.searchWorkItem(0, None, None))
                   .flashing(
-                    "success" -> s"Sdes submission successfully deleted."
+                    "success" -> s"Data store work-item successfully deleted."
                   )
               )
           case "No" =>
-            Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None, None)).pure[Future]
+            Redirect(routes.DataStoreWorkItemController.searchWorkItem(0, None, None)).pure[Future]
         }
       )
   }
 
-  private val form: Form[(Option[String], Option[String], Option[Boolean], Option[String])] = play.api.data.Form(
+  private val form: Form[(Option[String], Option[String])] = play.api.data.Form(
     Forms.tuple(
-      "formTemplateId"     -> optional(text),
-      "notificationStatus" -> optional(text),
-      "showBeforeAt"       -> optional(boolean),
-      "destination"        -> optional(text)
+      "formTemplateId"   -> optional(text),
+      "processingStatus" -> optional(text)
     )
   )
 
@@ -173,23 +152,20 @@ class SubmissionSdesController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None)
+            routes.DataStoreWorkItemController.searchWorkItem(page, None, None)
           ).pure[Future],
         {
-          case (maybeFormTemplateId, maybeStatus, maybeShowBeforeAt, maybeDestination) =>
+          case (maybeFormTemplateId, maybeStatus) =>
             Redirect(
-              routes.SubmissionSdesController.sdesSubmissions(
+              routes.DataStoreWorkItemController.searchWorkItem(
                 0,
-                None,
                 maybeFormTemplateId.map(FormTemplateId(_)),
-                maybeStatus.map(NotificationStatus.fromString),
-                maybeShowBeforeAt,
-                maybeDestination.map(SdesDestination.fromString)
+                maybeStatus.flatMap(ProcessingStatus.fromName)
               )
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None)
+              routes.DataStoreWorkItemController.searchWorkItem(page, None, None)
             ).pure[Future]
         }
       )

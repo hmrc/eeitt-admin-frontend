@@ -16,66 +16,65 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import java.time.Instant
-@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionData
-@import java.time.temporal.ChronoUnit
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesWorkItemData
+@import scala.math.BigDecimal.RoundingMode.DOWN
 
 @this(main_template: main_template)
 
-@(sdesSubmission: SdesSubmissionData, olderThan: Long, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
+
+@(workItemData: SdesWorkItemData, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
 
 @formWithCSRF = @{new FormWithCSRF()}
 @govukButton = @{new GovukButton()}
 
-@main_template(title = s"SDES Submissions", tab = "sdes-submissions", backLink = None) {
+@main_template(title = s"DataStore Work Item", tab = "data-store-work-item", backLink = None) {
  @pageLevelError.render
 
- @if(sdesSubmission.submittedAt.fold(true)(t => t.isAfter(Instant.now().minus(olderThan, ChronoUnit.HOURS)))) {
-  <h2 class="govuk-heading-m">Submission after @olderThan hours can be deleted</h2>
- }
-
- <table class="govuk-table stats-table">
+ <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
   <thead class="govuk-table__head">
    <tr class="govuk-table__row">
     <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
     <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
     <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
-    <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
-    <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
-    <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+    <th class="govuk-table__header" scope="col" title="Size of envelope">Size(MB)</th>
+    <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
+    <th class="govuk-table__header" scope="col" title="Failure Count">Failure Count</th>
+    <th class="govuk-table__header" scope="col" title="Local date time of received time">Received At</th>
     <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
    </tr>
   </thead>
   <tbody class="govuk-table__body stats-results">
    <tr class="govuk-table__row">
     <td class="govuk-table__cell">
-       @{sdesSubmission.formTemplateId.value}
+    @{workItemData.formTemplateId.value}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.submissionRef.value}
+    @{workItemData.submissionRef.value}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.envelopeId.value}
+    @{workItemData.envelopeId.value}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}
+    @{BigDecimal(workItemData.size.toDouble / (1024 * 1024)).setScale(3, DOWN)}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.status.toString}
+    @{workItemData.status.name}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.failureReason}
+    @{workItemData.failureCount}
     </td>
     <td class="govuk-table__cell">
-       @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
+    @{formatInstant(workItemData.receivedAt)}
+    </td>
+    <td class="govuk-table__cell">
+    @{formatInstant(workItemData.updatedAt)}
     </td>
    </tr>
   </tbody>
  </table>
 
 
- @if(sdesSubmission.submittedAt.fold(false)(t => t.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS)))) {
-  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.confirmRemoval(workItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-work-item") {
    @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
@@ -100,5 +99,4 @@
    }
    @govukButton(Button(content = Text(messages("button.continue")), inputType = Some("submit"), name = Some("save")))
   }
- }
 }

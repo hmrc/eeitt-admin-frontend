@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend
 
-import cats.syntax.eq._
 import github4s.domain.Commit
 import uk.gov.hmrc.eeittadminfrontend.deployment.CommitSha
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.govukfrontend.views.html.components._
 
@@ -34,9 +32,6 @@ package object views {
 
   def formatLocalDate(localDateTime: LocalDateTime): String = dtf.format(localDateTime)
   def formatInstant(instant: Instant): String = dtf.format(instant.atZone(ZoneId.of("UTC")).toLocalDateTime)
-
-  def isSelected(status: Option[NotificationStatus], field: String) =
-    status.map(s => NotificationStatus.fromName(s) === field).getOrElse(false)
 
   def commitToTable(authorization: Authorization, commit: Commit) =
     Table(

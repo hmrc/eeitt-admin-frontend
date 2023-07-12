@@ -22,12 +22,12 @@
 @this(main_template: main_template)
 
 
-@(sdesWorkItemData: SdesWorkItemData, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
+@(workItemData: SdesWorkItemData, pageLevelError: HasErrors = NoErrors, fieldErrors: Map[String, ErrorMessage] = Map.empty)(implicit messages: Messages, request: Request[_])
 
 @formWithCSRF = @{new FormWithCSRF()}
 @govukButton = @{new GovukButton()}
 
-@main_template(title = s"SDES Submissions", tab = "sdes-work-item", backLink = None) {
+@main_template(title = s"DMS Work Item", tab = "dms-work-item", backLink = None) {
  @pageLevelError.render
 
  <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
@@ -46,39 +46,39 @@
   <tbody class="govuk-table__body stats-results">
    <tr class="govuk-table__row">
     <td class="govuk-table__cell">
-    @{sdesWorkItemData.formTemplateId.value}
+    @{workItemData.formTemplateId.value}
     </td>
     <td class="govuk-table__cell">
-    @{sdesWorkItemData.submissionRef.value}
+    @{workItemData.submissionRef.value}
     </td>
     <td class="govuk-table__cell">
-    @{sdesWorkItemData.envelopeId.value}
+    @{workItemData.envelopeId.value}
     </td>
     <td class="govuk-table__cell">
-    @{BigDecimal(sdesWorkItemData.size.toDouble / (1024 * 1024)).setScale(3, DOWN)}
+    @{BigDecimal(workItemData.size.toDouble / (1024 * 1024)).setScale(3, DOWN)}
     </td>
     <td class="govuk-table__cell">
-    @{sdesWorkItemData.status.name}
+    @{workItemData.status.name}
     </td>
     <td class="govuk-table__cell">
-    @{sdesWorkItemData.failureCount}
+    @{workItemData.failureCount}
     </td>
     <td class="govuk-table__cell">
-    @{formatInstant(sdesWorkItemData.receivedAt)}
+    @{formatInstant(workItemData.receivedAt)}
     </td>
     <td class="govuk-table__cell">
-    @{formatInstant(sdesWorkItemData.updatedAt)}
+    @{formatInstant(workItemData.updatedAt)}
     </td>
    </tr>
   </tbody>
  </table>
 
 
-  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesWorkItemController.confirmRemoval(sdesWorkItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-work-item") {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.confirmRemoval(workItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-work-item") {
    @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
-       content = Text(messages("sdes.submission.delete.confirm")),
+       content = Text(messages("delete.confirm")),
        isPageHeading = true,
        classes = "govuk-label--l"
       ))
