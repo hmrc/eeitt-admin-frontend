@@ -31,7 +31,7 @@ package object views {
     .ofPattern("dd MMM yyyy HH:mm:ss")
 
   def formatLocalDate(localDateTime: LocalDateTime): String = dtf.format(localDateTime)
-  def formatInstant(instant: Instant): String = dtf.format(instant.atZone(ZoneId.of("UTC")).toLocalDateTime)
+  def formatInstant(instant: Instant): String = dtf.format(instant.atZone(ZoneId.of("Europe/London")).toLocalDateTime)
 
   def commitToTable(authorization: Authorization, commit: Commit) =
     Table(
