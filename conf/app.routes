@@ -37,6 +37,10 @@ POST       /deployment/delete/:formTemplateId               uk.gov.hmrc.eeittadm
 POST       /deployment/delete-handlebars/:formTemplateId    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deleteHandlebarsTemplate(formTemplateId: FormTemplateId)
 POST       /deployment/:filename                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
 
+GET         /envelope                        uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelope
+GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showEnvelope(envelopeId: EnvelopeId)
+POST        /envelope/find                   uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.findEnvelope
+
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope
 GET         /file-upload/find/:envelopeId    uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.showEnvelope(envelopeId: EnvelopeId)
