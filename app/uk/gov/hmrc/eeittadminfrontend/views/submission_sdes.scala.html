@@ -173,7 +173,7 @@
                     @{sdesSubmission.submissionRef.value}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.envelopeId.value}
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(sdesSubmission.envelopeId)" class="govuk-link">@{sdesSubmission.envelopeId.value}</a>
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.numberOfFiles}

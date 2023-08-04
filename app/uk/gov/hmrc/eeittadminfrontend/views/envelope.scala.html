@@ -1,0 +1,47 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeIdForm
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukButton: GovukButton,
+  govukInput: GovukInput
+)
+
+@(form: Form[EnvelopeIdForm])(implicit request : Request[_], messages: Messages)
+
+@main_template(title = "Envelope", tab = "envelope") {
+
+@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.findEnvelope) {
+    <h2 class="govuk-heading-m">Find an envelope</h2>
+    @govukInput(Input(
+        id = "value",
+        name = "envelopeId.value",
+        label = Label(
+            isPageHeading = true,
+            classes = "govuk-label--s",
+            content = Text("Envelope ID:")
+        )
+    ))
+    @govukButton(Button(
+        preventDoubleClick = Some(true),
+        content = Text("Search")
+    ))
+}
+}

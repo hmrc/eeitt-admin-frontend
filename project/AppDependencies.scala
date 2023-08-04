@@ -33,7 +33,6 @@ object AppDependencies {
   def test(scope: String = "test") =
     Seq(
       "uk.gov.hmrc"            %% "bootstrap-test-play-28"      % "7.13.0"            % scope,
-      "uk.gov.hmrc"            %% "service-integration-test"    % "1.3.0-play-28"     % scope,
       "org.pegdown"             % "pegdown"                     % "1.6.0"             % scope,
       "org.jsoup"               % "jsoup"                       % "1.11.3"            % scope,
       "com.typesafe.play"      %% "play-test"                   % PlayVersion.current % scope,

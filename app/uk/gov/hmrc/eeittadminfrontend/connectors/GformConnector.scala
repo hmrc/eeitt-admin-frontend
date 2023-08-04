@@ -21,6 +21,7 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
@@ -386,4 +387,18 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     wsHttp.GET[JsArray](gformUrl + s"/formtemplates-with-handlebars/$formTemplateId")
+
+  def getEnvelopeById(
+    envelopeId: EnvelopeId
+  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = gformUrl + s"/envelopes/${envelopeId.value}"
+    wsHttp
+      .doGet(url)
+      .map { response =>
+        if (response.status == 200) Right(response.json) else Left(s"Envelope ${envelopeId.value} not found")
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve envelopeId $envelopeId: " + ex.getMessage)
+      }
+  }
 }
