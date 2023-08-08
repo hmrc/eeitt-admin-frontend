@@ -1,0 +1,197 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import cats.syntax.eq._
+@import uk.gov.hmrc.eeittadminfrontend.models.Pagination
+@import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesReportsPageData
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus.FileProcessed
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
+
+@this(
+  main_template: main_template,
+  formWithCSRF: FormWithCSRF,
+  govukInput: GovukInput,
+  govukButton: GovukButton,
+  govukSelect: GovukSelect,
+  govukCheckboxes: GovukCheckboxes,
+  govukNotificationBanner: GovukNotificationBanner
+)
+
+@(pagination: Pagination,
+  sdesSubmissions: SdesReportsPageData,
+  processed: Option[Boolean],
+  status: Option[NotificationStatus],
+  showBeforeAt: Option[Boolean])(implicit messages: Messages, request: Request[_])
+
+@navigationLink(page: Int, label: String) = {
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.sdesSubmissions(page, processed, status, showBeforeAt)" class="govuk-link">@label</a>
+}
+
+@main_template(title = s"SDES Reports", tab = "sdes-reports"){
+
+    @request.flash.get("success").fold(Html("")) { notification =>
+        @govukNotificationBanner(
+            NotificationBanner(
+                title = Text("Success"),
+                content = HtmlContent(notification),
+                bannerType = Some("success"),
+                role = Some("alert")
+            )
+        )
+    }
+
+    @request.flash.get("failed").fold(Html("")) { notification =>
+        @govukNotificationBanner(
+            NotificationBanner(
+                title = Text("Failed"),
+                content = HtmlContent(notification),
+                role = Some("alert")
+            )
+        )
+    }
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestSearch(pagination.page), args = 'class -> "js-form") {
+        @govukSelect(
+            Select(
+                id = "notificationStatus",
+                name = "notificationStatus",
+                classes = "govuk-!-font-size-14",
+                items = Seq(
+                        SelectItem(
+                            value = None,
+                            text = ""
+                        )
+                    ) ++ NotificationStatus.values.map(ns =>
+                        SelectItem(
+                            value = Some(ns.toString),
+                            text = ns.toString,
+                            selected = status.fold(false)(status => ns === status)
+                        )
+                    ).toSeq,
+                label = Label(
+                    classes = "govuk-label--s govuk-!-font-size-14",
+                    content = Text("Status")
+                )
+            )
+        )
+
+        @govukCheckboxes(Checkboxes(
+            name = "showBeforeAt",
+            items = Seq(
+                CheckboxItem(
+                    content = Text("Not processed for more than 10 hours"),
+                    value = "true",
+                    checked = showBeforeAt.getOrElse(false)
+                )
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Filter"),
+            inputType = Some("submit"),
+            name = Some("filter"),
+            classes = "govuk-label--s govuk-!-font-size-14",
+        ))
+    }
+
+    <h2 class="govuk-heading-m">
+        <span style="color: #18703C"> @{sdesSubmissions.countAll} forms submitted.</span>
+        <span style="color: #ff0000">@{sdesSubmissions.count} forms are not processed.</span>
+        Showing @{pagination.from} - @{pagination.to} submissions.</h2>
+
+    <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
+        <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header" scope="col" title="Consolidator Job Id">Consolidator Job Id</th>
+                <th class="govuk-table__header" scope="col" title="Start date">Start date</th>
+                <th class="govuk-table__header" scope="col" title="End date">End date</th>
+                <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
+                <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
+                <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
+                <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+                <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
+                <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
+                <th class="govuk-table__header" scope="col" title="Delete notification (cannot be undone)">Delete</th>
+            </tr>
+        </thead>
+        <tbody class="govuk-table__body stats-results">
+        @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
+            <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.consolidatorJobId}
+                </td>
+                <td class="govuk-table__cell">
+                    @{formatInstant(sdesSubmission.startTimestamp)}
+                </td>
+                <td class="govuk-table__cell">
+                    @{formatInstant(sdesSubmission.endTimestamp)}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.submissionRef.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.status.toString}
+                </td>
+                <td class="govuk-table__cell">
+                    <span style="word-break:break-all;">@{sdesSubmission.failureReason}</span>
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @if(sdesSubmission.status =!= FileProcessed) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
+                        Notify</a>
+                    }
+                </td>
+                <td class="govuk-table__cell">
+                    @if(sdesSubmission.status =!= FileProcessed) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">
+                        Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="govuk-body">
+        @if(pagination.isFirstPage) {
+            First
+            Previous
+        } else {
+            @navigationLink(0, "First")
+            @navigationLink(pagination.previousPage, "Previous")
+        }
+        @if(pagination.isLastPage) {
+            Next
+            Last
+        } else {
+            @navigationLink(pagination.nextPage, "Next")
+            @navigationLink(pagination.last, "Last")
+        }
+    </div>
+}

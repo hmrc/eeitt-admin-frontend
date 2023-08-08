@@ -122,6 +122,11 @@
                     active = if(tab == "sdes-submissions") true else false
             ),
             HeaderNavigation(
+                    href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.sdesSubmissions(0, Some(false), None, None).path),
+                    content = Text("SDES Reports"),
+                    active = if(tab == "sdes-reports") true else false
+            ),
+            HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.searchWorkItem(0, None, None).path),
                 content = Text("DMS Work Item"),
                 active = if (tab == "dms-work-item") true else false

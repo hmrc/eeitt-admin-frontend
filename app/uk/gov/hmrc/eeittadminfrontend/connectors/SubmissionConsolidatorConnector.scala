@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesReportData, SdesReportsPageData }
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpResponse }
+import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -49,4 +50,36 @@ class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClient, sc: Service
           s"Unknown problem when trying consolidate forms [consolidatorJobId=$consolidatorJobId, startDate=$startDate, endDate=$endDate]" + ex.getMessage
         )
       }
+
+  def getSdesSubmissions(
+    page: Int,
+    pageSize: Int,
+    maybeProcessed: Option[Boolean] = None,
+    status: Option[NotificationStatus],
+    showBeforeAt: Option[Boolean]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[SdesReportsPageData] = {
+    val queryStringByProcessed = maybeProcessed.fold("")(p => s"processed=$p")
+    val queryStringByStatus =
+      status.fold(queryStringByProcessed)(status => s"status=$status&$queryStringByProcessed")
+    val queryString =
+      showBeforeAt.fold(queryStringByStatus)(showBeforeAt => s"showBeforeAt=$showBeforeAt&$queryStringByStatus")
+    wsHttp.GET[SdesReportsPageData](s"$submissionConsolidatorUrl/sdes/search/$page/$pageSize?$queryString")
+  }
+
+  def getSdesSubmission(correlationId: CorrelationId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[SdesReportData] =
+    wsHttp.GET[SdesReportData](s"$submissionConsolidatorUrl/sdes/${correlationId.value}")
+
+  def deleteSdesSubmission(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp.doDelete(s"$submissionConsolidatorUrl/sdes/${correlationId.value}")
+
+  def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .doPost[String](s"$submissionConsolidatorUrl/sdes/notify/${correlationId.value}", "")
+
 }

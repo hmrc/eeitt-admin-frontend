@@ -63,10 +63,16 @@ GET         /stuck-forms/release/:formId/:envelopeId uk.gov.hmrc.eeittadminfront
 GET         /stuck-forms/delete/:formId/:envelopeId  uk.gov.hmrc.eeittadminfrontend.controllers.StuckFormsController.deleteForm(formId: FormId, envelopeId: EnvelopeId)
 
 GET         /sdes-submissions/:page                                     uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.sdesSubmissions(page: Int, processed: Option[Boolean], formTemplateId: Option[FormTemplateId], status: Option[NotificationStatus], showBeforeAt: Option[Boolean], destination: Option[SdesDestination])
-GET         /sdes-notify/:correlationId/:page                           uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
+GET         /sdes-submissions/notify/:correlationId/:page               uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
 GET         /sdes-submissions/request-removal/:correlationId            uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestRemoval(correlationId: CorrelationId)
 GET         /sdes-submissions/confirm-removal/:correlationId            uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.confirmRemoval(correlationId: CorrelationId)
 GET         /sdes-submissions/request-search/:page                      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestSearch(page: Int)
+
+GET         /sdes-reports/:page                                         uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.sdesSubmissions(page: Int, processed: Option[Boolean], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])
+GET         /sdes-reports/notify/:correlationId/:page                   uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)
+GET         /sdes-reports/request-removal/:correlationId                uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.requestRemoval(correlationId: CorrelationId)
+GET         /sdes-reports/confirm-removal/:correlationId                uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.confirmRemoval(correlationId: CorrelationId)
+GET         /sdes-reports/request-search/:page                          uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.requestSearch(page: Int)
 
 GET         /dms-work-item/:page                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.searchWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
 GET         /dms-work-item/request-search/:page                         uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.requestSearch(page: Int)
