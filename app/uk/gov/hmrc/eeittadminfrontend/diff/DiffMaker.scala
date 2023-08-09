@@ -23,6 +23,9 @@ import com.github.difflib.patch.Patch
 import scala.jdk.CollectionConverters._
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ ContentValue, Filename, GithubContent, MongoContent }
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ Await, ExecutionContext, Future, TimeoutException }
+
 object DiffMaker {
 
   def inSync(mongo: MongoContent, github: GithubContent): Boolean = mongo.content === github.content
@@ -31,25 +34,37 @@ object DiffMaker {
     originalFilename: String,
     revisedFilename: String,
     content1: ContentValue,
-    content2: ContentValue
-  ): String = {
+    content2: ContentValue,
+    timeout: Duration
+  )(implicit ec: ExecutionContext): String = {
     val json1Lines = content1.toLines.asJava
     val json2Lines = content2.toLines.asJava
 
-    val patch: Patch[String] = DiffUtils.diff(json1Lines, json2Lines)
+    val patchF: Future[Patch[String]] = Future {
+      DiffUtils.diff(json1Lines, json2Lines)
+    }
 
-    UnifiedDiffUtils
-      .generateUnifiedDiff(originalFilename, revisedFilename, json1Lines, patch, 5)
-      .asScala
-      .mkString("\\n")
-      .replace("'", "\\'")
-      .replace(
-        "</script>",
-        "＜/script>"
-      ) // </script> in json causes html parser to end script block, we need to prevent that
+    try {
+      val patch: Patch[String] = Await.result(patchF, timeout)
+
+      UnifiedDiffUtils
+        .generateUnifiedDiff(originalFilename, revisedFilename, json1Lines, patch, 5)
+        .asScala
+        .mkString("\\n")
+        .replace("'", "\\'")
+        .replace(
+          "</script>",
+          "＜/script>"
+        ) // </script> in json causes html parser to end script block, we need to prevent that
+    } catch {
+      case _: TimeoutException =>
+        s"--- $originalFilename\\n+++ $originalFilename\\n@@  Too many changes to display  @@"
+    } // Wait for the result with a timeout
   }
 
-  def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent): String =
-    getDiff(filename.value, filename.value, mongo.content, github.content)
+  def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent, timeout: Duration)(implicit
+    ec: ExecutionContext
+  ): String =
+    getDiff(filename.value, filename.value, mongo.content, github.content, timeout)
 
 }
