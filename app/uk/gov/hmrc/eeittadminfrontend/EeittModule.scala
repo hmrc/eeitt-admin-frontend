@@ -18,6 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend
 
 import play.api.inject.{ Binding, Module }
 import play.api.{ Configuration, Environment }
+import uk.gov.hmrc.eeittadminfrontend.diff.DiffConfig
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesConfig
 import uk.gov.hmrc.eeittadminfrontend.proxy.{ ProxyModule, ProxyProvider }
@@ -26,6 +27,7 @@ class EeittModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
     bind[Authorization].toInstance(Authorization.fromConfig(configuration)),
     bind[ProxyProvider].toInstance(ProxyModule.fromConfig(configuration)),
-    bind[SdesConfig].toInstance(SdesConfig.fromConfig(configuration))
+    bind[SdesConfig].toInstance(SdesConfig.fromConfig(configuration)),
+    bind[DiffConfig].toInstance(DiffConfig.fromConfig(configuration))
   )
 }

@@ -32,7 +32,7 @@ import play.twirl.api.{ Html, HtmlFormat }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
-import uk.gov.hmrc.eeittadminfrontend.diff.DiffMaker
+import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
@@ -56,7 +56,8 @@ class DeploymentController @Inject() (
   deployment_deleted: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted,
   deployment_history: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history,
   deployment_success: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success,
-  handlebars_template: uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template
+  handlebars_template: uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template,
+  diffConfig: DiffConfig
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -107,7 +108,8 @@ class DeploymentController @Inject() (
         sha1.value,
         sha2.value,
         blob1,
-        blob2
+        blob2,
+        diffConfig.timeout
       )
       uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
     }
@@ -218,7 +220,7 @@ class DeploymentController @Inject() (
                   (mongoTemplateHandelbars, githubContentHandelbars)
                 ) =>
               val validationWarning: Option[String] = validationResult.swap.toOption
-              val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent)
+              val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent, diffConfig.timeout)
               val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
               val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
               val downloadLink = if (filename.isJson) {
