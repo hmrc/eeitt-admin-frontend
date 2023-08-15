@@ -23,8 +23,7 @@ import java.time.Instant
 
 case class SdesReportsPageData(
   sdesSubmissions: List[SdesReportData],
-  count: Long,
-  countAll: Long
+  count: Long
 )
 
 object SdesReportsPageData {
@@ -32,9 +31,9 @@ object SdesReportsPageData {
 }
 
 case class SdesReportData(
-  consolidatorJobId: String,
-  startTimestamp: Instant,
-  endTimestamp: Instant,
+  consolidatorJobId: Option[String],
+  startTimestamp: Option[Instant],
+  endTimestamp: Option[Instant],
   correlationId: CorrelationId,
   envelopeId: EnvelopeId,
   submissionRef: SubmissionRef,
