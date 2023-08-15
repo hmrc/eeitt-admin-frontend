@@ -25,8 +25,7 @@ import java.time.Instant
 
 case class SdesSubmissionPageData(
   sdesSubmissions: List[SdesSubmissionData],
-  count: Long,
-  countAll: Long
+  count: Long
 )
 
 object SdesSubmissionPageData {
@@ -39,6 +38,8 @@ case class SdesSubmissionData(
   formTemplateId: FormTemplateId,
   submissionRef: SubmissionRef,
   numberOfFiles: Int,
+  uploadCount: Int,
+  size: Long,
   submittedAt: Option[Instant],
   status: NotificationStatus,
   failureReason: String,
