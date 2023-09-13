@@ -104,4 +104,14 @@ POST        /shutter-form-template/message/:shutterMessageId            uk.gov.h
 
 GET         /legacy-forms/:page                                         uk.gov.hmrc.eeittadminfrontend.controllers.LegacyFormsController.legacyForms(page: Int)
 
+GET         /history                                                    uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.history
+GET         /history/by-date-time                                       uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.historyByDateTime(fromDay: Option[String], fromMonth: Option[String], fromYear: Option[String], fromHour: Option[String], fromMinute: Option[String], toDay: Option[String], toMonth: Option[String], toYear: Option[String], toHour: Option[String], toMinute: Option[String])
+POST        /history/by-date-time                                       uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.historyByDateTimePost
+GET         /history/by-form-template-id                                uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.historyByFormTemplateId
+GET         /history/:formTemplateRawId                                 uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.historyOverviewFor(formTemplateRawId: FormTemplateRawId)
+GET         /history/dwim/:formTemplateRawId/:historyId                 uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.historyDwim(formTemplateRawId: FormTemplateRawId, historyId: HistoryId)
+GET         /history/diff1/:formTemplateRawId/:historyId1               uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.diffFor1(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId)
+GET         /history/diff2/:formTemplateRawId/:historyId1/:historyId2   uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.diffFor2(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId, historyId2: HistoryId)
+GET         /history/open/:historyId                                    uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.open(historyId: HistoryId)
+
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)

@@ -21,12 +21,14 @@ import akka.http.scaladsl.model.StatusCodes
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
+import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
+import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
+import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -401,4 +403,35 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
         Left(s"Unknown problem when trying to retrieve envelopeId $envelopeId: " + ex.getMessage)
       }
   }
+
+  def historyAllTemplateIds(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[FormTemplateRawId]] =
+    wsHttp.GET[List[String]](gformUrl + "/history-all-ids").map(_.map(FormTemplateRawId(_)))
+
+  def historyOverviewForTemplateId(
+    formTemplateRawId: FormTemplateRawId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[HistoryOverview]] =
+    wsHttp.GET[List[HistoryOverview]](gformUrl + "/history/overview/" + formTemplateRawId.value)
+
+  def historyTemplate(historyId: HistoryId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[FormTemplateRaw] =
+    wsHttp.GET[JsValue](gformUrl + "/history/template/" + historyId.value).map { json =>
+      FormTemplateRaw(CircePlayHelpers.playToCirceUnsafe(json))
+    }
+
+  def nextHistoryOverview(
+    formTemplateRawId: FormTemplateRawId,
+    historyId: HistoryId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HistoryId]] =
+    wsHttp
+      .GET[Option[HistoryId]](
+        gformUrl + s"/history/next/" + formTemplateRawId.value + "/" + historyId.value
+      )
+
+  def historyWithFilter(
+    historyFilter: HistoryFilter
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[HistoryOverviewFull]] =
+    wsHttp
+      .POST[HistoryFilter, List[HistoryOverviewFull]](
+        gformUrl + s"/history/filter",
+        historyFilter
+      )
 }
