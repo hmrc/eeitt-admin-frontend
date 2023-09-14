@@ -20,12 +20,15 @@ import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
 import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, ShutterMessageId }
+import uk.gov.hmrc.eeittadminfrontend.history.HistoryId
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, FormTemplateRawId, ShutterMessageId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesDestination }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
 
 object ValueClassBinders {
+  implicit val historyIdBinder: PathBindable[HistoryId] = valueClassBinder(_.value)
+  implicit val formTemplateRawIdBinder: PathBindable[FormTemplateRawId] = valueClassBinder(_.value)
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
   implicit val envelopeIdBinder: PathBindable[EnvelopeId] = valueClassBinder(_.value)
   implicit val filenameBinder: PathBindable[Filename] = valueClassBinder(_.value)

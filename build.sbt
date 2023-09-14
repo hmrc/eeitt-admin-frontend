@@ -54,6 +54,8 @@ lazy val microservice = Project(appName, file("."))
     ),
     routesImport ++= Seq(
       "uk.gov.hmrc.eeittadminfrontend.binders.ValueClassBinders._",
+      "uk.gov.hmrc.eeittadminfrontend.history.HistoryId",
+      "uk.gov.hmrc.eeittadminfrontend.models.FormTemplateRawId",
       "uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId",
       "uk.gov.hmrc.eeittadminfrontend.models.FormId",
       "uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId",

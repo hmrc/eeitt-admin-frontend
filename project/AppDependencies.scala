@@ -17,6 +17,7 @@ object AppDependencies {
     "com.github.pureconfig"    %% "pureconfig"                   % "0.15.0",
     "org.typelevel"            %% "cats-core"                    % "2.6.1",
     "org.julienrf"             %% "play-json-derived-codecs"     % "10.0.2",
+    "com.dripower"             %% "play-circe"                   % "2814.1",
     "com.47deg"                %% "github4s"                     % "0.28.4",
     "org.http4s"               %% "http4s-blaze-client"          % http4sVersion,
     "org.http4s"               %% "http4s-circe"                 % http4sVersion,
@@ -25,7 +26,7 @@ object AppDependencies {
     "io.circe"                 %% "circe-optics"                 % circeVersion,
     "com.github.jwt-scala"     %% "jwt-circe"                    % "7.1.4",
     "org.bouncycastle"          % "bcpkix-jdk15on"               % "1.68",
-    "io.github.java-diff-utils" % "java-diff-utils"              % "4.10",
+    "io.github.java-diff-utils" % "java-diff-utils"              % "4.12",
     "commons-io"                % "commons-io"                   % "2.11.0",
     "org.jetbrains"             % "markdown"                     % "0.1.46"
   )

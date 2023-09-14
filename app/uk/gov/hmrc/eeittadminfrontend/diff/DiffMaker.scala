@@ -47,20 +47,42 @@ object DiffMaker {
     try {
       val patch: Patch[String] = Await.result(patchF, timeout)
 
-      UnifiedDiffUtils
-        .generateUnifiedDiff(originalFilename, revisedFilename, json1Lines, patch, 5)
-        .asScala
-        .mkString("\\n")
-        .replace("'", "\\'")
-        .replace(
-          "</script>",
-          "＜/script>"
-        ) // </script> in json causes html parser to end script block, we need to prevent that
+      sanitizeDiff(
+        UnifiedDiffUtils
+          .generateUnifiedDiff(originalFilename, revisedFilename, json1Lines, patch, 5)
+      )
+
     } catch {
       case _: TimeoutException =>
         s"--- $originalFilename\\n+++ $originalFilename\\n@@  Too many changes to display  @@"
     } // Wait for the result with a timeout
   }
+
+  def getDiff(
+    revisedFilename: String,
+    content: ContentValue
+  ): String = {
+    val jsonLines = content.toLines.asJava
+
+    val noLines = List.empty[String].asJava
+
+    val patch: Patch[String] = DiffUtils.diff(noLines, jsonLines)
+
+    sanitizeDiff(
+      UnifiedDiffUtils
+        .generateUnifiedDiff(revisedFilename, revisedFilename, noLines, patch, 5)
+    )
+
+  }
+
+  private def sanitizeDiff(unifiedDiff: java.util.List[String]): String =
+    unifiedDiff.asScala
+      .mkString("\\n")
+      .replace("'", "\\'")
+      .replace(
+        "</script>",
+        "＜/script>"
+      ) // </script> in json causes html parser to end script block, we need to prevent that
 
   def getDiff(filename: Filename, mongo: MongoContent, github: GithubContent, timeout: Duration)(implicit
     ec: ExecutionContext

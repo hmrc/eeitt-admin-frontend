@@ -140,8 +140,12 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path),
                 content = Text("Legacy Forms"),
                 active = if (tab == "legacy-forms") true else false
-                ),
-            )
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.history.path),
+                content = Text("WIP Forms"),
+                active = if (tab == "history") true else false
+            ))
         )
     )
 )}

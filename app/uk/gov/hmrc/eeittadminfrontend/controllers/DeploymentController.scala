@@ -126,6 +126,7 @@ class DeploymentController @Inject() (
   def history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha) = authAction.async { implicit request =>
     deploymentService.find(formTemplateId).flatMap { deploymentRecords =>
       val deploymentDiffs = mkDeploymentDiff(deploymentRecords)
+      deploymentDiffs.map(_.toTableRow(authorization, sha1, sha2))
       hist(formTemplateId, deploymentDiffs, sha1, sha2)
     }
   }

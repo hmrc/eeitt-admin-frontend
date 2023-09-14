@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import cats.Order
+import io.circe.{ Json => CirceJson }
 import play.api.libs.json._
 import reactivemongo.api.bson.{ BSONHandler, Macros }
 
@@ -36,7 +37,13 @@ object FormTemplateId {
 
 case class FormTemplateRawId(value: String)
 object FormTemplateRawId {
-  implicit val format: Format[FormTemplateRawId] = Json.format[FormTemplateRawId]
+  val writes: Writes[FormTemplateRawId] = Writes[FormTemplateRawId](id => JsString(id.value))
+  val reads: Reads[FormTemplateRawId] = Reads[FormTemplateRawId] {
+    case JsString(value) => JsSuccess(FormTemplateRawId(value))
+    case otherwise       => JsError(s"Invalid formTemplateId, expected JsString, got: $otherwise")
+  }
+
+  implicit val format: Format[FormTemplateRawId] = Format[FormTemplateRawId](reads, writes)
 }
 
 case class GformId(formTemplateId: FormTemplateId)
@@ -46,6 +53,8 @@ case class GformTemplate(template: JsValue)
 object GformTemplate {
   implicit val format: Format[GformTemplate] = Json.format[GformTemplate]
 }
+
+final case class FormTemplateRaw(value: CirceJson)
 
 case class DbLookupId(_id: String)
 
