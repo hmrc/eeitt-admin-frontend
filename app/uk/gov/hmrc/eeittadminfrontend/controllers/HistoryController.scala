@@ -221,7 +221,10 @@ class HistoryController @Inject() (
 
       val table = overviewTable(tableRows)
 
-      Ok(history_of(formTemplateRawId, table, diffHtml))
+      val controlPanel = uk.gov.hmrc.eeittadminfrontend.views.html
+        .history_control_panel(formTemplateRawId, historyId1, None, None)
+
+      Ok(history_of(formTemplateRawId, table, controlPanel, diffHtml))
 
     }
   }
@@ -229,9 +232,11 @@ class HistoryController @Inject() (
   def diffFor2(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId, historyId2: HistoryId) = authAction.async {
     implicit request =>
       for {
-        historyOverviews <- gformConnector.historyOverviewForTemplateId(formTemplateRawId)
-        historyTemplate1 <- gformConnector.historyTemplate(historyId1)
-        historyTemplate2 <- gformConnector.historyTemplate(historyId2)
+        historyOverviews  <- gformConnector.historyOverviewForTemplateId(formTemplateRawId)
+        historyTemplate1  <- gformConnector.historyTemplate(historyId1)
+        historyTemplate2  <- gformConnector.historyTemplate(historyId2)
+        previousHistoryId <- gformConnector.previousHistoryId(formTemplateRawId, historyId2)
+        nextHistoryId     <- gformConnector.nextHistoryId(formTemplateRawId, historyId2)
       } yield {
         val diff: String = DiffMaker.getDiff(
           formTemplateRawId.value,
@@ -255,7 +260,18 @@ class HistoryController @Inject() (
 
         val table = overviewTable(tableRows)
 
-        Ok(history_of(formTemplateRawId, table, diffHtml))
+        // Let not allow previous id to be newer then current id
+        val restrictedPreviousId = if (previousHistoryId.contains(historyId1)) None else previousHistoryId
+
+        val controlPanel = uk.gov.hmrc.eeittadminfrontend.views.html
+          .history_control_panel(
+            formTemplateRawId,
+            historyId1,
+            restrictedPreviousId,
+            nextHistoryId
+          )
+
+        Ok(history_of(formTemplateRawId, table, controlPanel, diffHtml))
       }
   }
 
@@ -342,7 +358,7 @@ class HistoryController @Inject() (
    * Receives historyId and determine what historyId comes next (if any) and display the diff.
    */
   def historyDwim(formTemplateRawId: FormTemplateRawId, historyId: HistoryId) = authAction.async { implicit request =>
-    gformConnector.nextHistoryOverview(formTemplateRawId, historyId).map { maybeHistoryId =>
+    gformConnector.nextHistoryId(formTemplateRawId, historyId).map { maybeHistoryId =>
       maybeHistoryId match {
         case Some(nextHistoryId) =>
           Redirect(
@@ -377,7 +393,7 @@ class HistoryController @Inject() (
 
           val table = overviewTable(emptyRow)
 
-          Ok(history_of(formTemplateRawId, table, HtmlFormat.empty))
+          Ok(history_of(formTemplateRawId, table, HtmlFormat.empty, HtmlFormat.empty))
       }
     }
   }

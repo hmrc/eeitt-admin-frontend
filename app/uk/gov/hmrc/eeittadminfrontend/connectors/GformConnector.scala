@@ -417,7 +417,16 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       FormTemplateRaw(CircePlayHelpers.playToCirceUnsafe(json))
     }
 
-  def nextHistoryOverview(
+  def previousHistoryId(
+    formTemplateRawId: FormTemplateRawId,
+    historyId: HistoryId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HistoryId]] =
+    wsHttp
+      .GET[Option[HistoryId]](
+        gformUrl + s"/history/previous/" + formTemplateRawId.value + "/" + historyId.value
+      )
+
+  def nextHistoryId(
     formTemplateRawId: FormTemplateRawId,
     historyId: HistoryId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HistoryId]] =

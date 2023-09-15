@@ -24,6 +24,7 @@
 @(
   formTemplateRawId: FormTemplateRawId,
   deploymentTable: Table,
+  controlPanel: Html,
   diff: Html
 )(
   implicit messages: Messages
@@ -34,6 +35,8 @@
   <h2 class="govuk-heading-m">History of: @{formTemplateRawId.value}</h2>
 
   @govukTable(deploymentTable)
+
+  @controlPanel
 
   @diff
 

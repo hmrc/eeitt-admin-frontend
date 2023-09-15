@@ -1,0 +1,35 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.history.HistoryId
+@import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateRawId
+
+@(
+  formTemplateRawId: FormTemplateRawId,
+  currentHistoryId: HistoryId,
+  maybePreviousHistoryId: Option[HistoryId],
+  maybeNextHistoryId: Option[HistoryId]
+)
+
+<div id="control-panel" class="govuk-body">
+  @maybePreviousHistoryId.map { previousHistoryId =>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.diffFor2(formTemplateRawId, currentHistoryId, previousHistoryId)#control-panel" class="govuk-link">Previous</a>
+  }.getOrElse(<span>Previous</span>)
+  |
+  @maybeNextHistoryId.map { nextHistoryId =>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.diffFor2(formTemplateRawId, currentHistoryId, nextHistoryId)#control-panel" class="govuk-link">Next</a>
+  }.getOrElse(<span>Next</span>)
+</div>
