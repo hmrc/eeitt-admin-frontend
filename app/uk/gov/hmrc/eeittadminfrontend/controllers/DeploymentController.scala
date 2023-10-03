@@ -39,6 +39,8 @@ import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, De
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.govukfrontend.views.html.components._
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
+import uk.gov.hmrc.play.bootstrap.binders.{ OnlyRelative, RedirectUrl }
 
 class DeploymentController @Inject() (
   authorization: Authorization,
@@ -330,9 +332,9 @@ class DeploymentController @Inject() (
         f(githubContent)
       }
 
-  def refreshCache(redirectUrl: String) = authAction.async { request =>
+  def refreshCache(redirectUrl: RedirectUrl) = authAction.async { request =>
     cachingService.refreshCache
-    Redirect(redirectUrl).pure[Future]
+    Redirect(redirectUrl.get(OnlyRelative).url).pure[Future]
   }
 
   def deploymentHome = authAction.async { implicit request =>

@@ -18,4 +18,10 @@ package uk.gov.hmrc.eeittadminfrontend.deployment
 
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-case class GithubContent(formTemplateId: FormTemplateId, content: ContentValue, blobSha: BlobSha, commitSha: CommitSha)
+case class GithubContent(
+  formTemplateId: FormTemplateId,
+  content: ContentValue,
+  blobSha: BlobSha,
+  commitSha: CommitSha,
+  path: String
+)

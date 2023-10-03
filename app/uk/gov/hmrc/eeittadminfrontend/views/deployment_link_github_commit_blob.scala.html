@@ -19,11 +19,12 @@
 
 @(authorization: Authorization,
   commitSha: CommitSha,
-  filename: Filename
+  filename: Filename,
+  path: String
 )
 
 <a target="_blank"
    title="Show Github content"
-   href="https://github.com/@authorization.repoOwner/@authorization.repoName/blob/@commitSha.value/@filename.value">
+   href="https://github.com/@authorization.repoOwner/@authorization.repoName/blob/@commitSha.value/@path">
     @filename.value
 </a>
