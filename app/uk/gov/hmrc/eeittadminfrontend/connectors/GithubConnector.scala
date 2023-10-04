@@ -100,8 +100,23 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
 
     logger.debug(s"Fetching list of templates from Github")
 
-    val searchResults: IO[GHResponse[NonEmptyList[Content]]] =
-      gh.repos.getContents(repoOwner, repoName, ".", main)
+    def combineGHResponses(
+      response1: GHResponse[NonEmptyList[Content]],
+      response2: GHResponse[NonEmptyList[Content]]
+    ): GHResponse[NonEmptyList[Content]] =
+      (response1.result, response2.result) match {
+        case (Right(result1), Right(result2)) =>
+          GHResponse(Right(result1.concat(result2.toList)), response1.statusCode, response1.headers)
+        case (Right(_), Left(_)) => // 2. folder is empty
+          response1
+        case (Left(error1), _) =>
+          GHResponse(Left(error1), response1.statusCode, response1.headers)
+      }
+
+    val searchResults: IO[GHResponse[NonEmptyList[Content]]] = for {
+      resultForRoot       <- gh.repos.getContents(repoOwner, repoName, ".", main)
+      resultForHandleBars <- gh.repos.getContents(repoOwner, repoName, "handlebars", main)
+    } yield combineGHResponses(resultForRoot, resultForHandleBars)
 
     searchResults.map { response =>
       response.result match {

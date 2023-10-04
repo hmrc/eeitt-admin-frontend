@@ -82,7 +82,8 @@ class CachingService @Inject() (githubService: GithubService) {
           formTemplateId,
           contentValue,
           blobSha,
-          CommitSha(commit.sha)
+          CommitSha(commit.sha),
+          githubTemplate.path
         )
         logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
         cache.put(filename, githubContent)

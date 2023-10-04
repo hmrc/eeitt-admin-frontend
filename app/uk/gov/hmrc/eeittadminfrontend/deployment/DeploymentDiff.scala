@@ -110,7 +110,12 @@ sealed trait DeploymentDiff extends Product with Serializable {
     TableRow(
       content = HtmlContent(
         uk.gov.hmrc.eeittadminfrontend.views.html
-          .deployment_link_github_commit_blob(authorization, deploymentRecord.commitSha, deploymentRecord.filename)
+          .deployment_link_github_commit_blob(
+            authorization,
+            deploymentRecord.commitSha,
+            deploymentRecord.filename,
+            deploymentRecord.filename.value
+          )
       )
     ),
     TableRow(

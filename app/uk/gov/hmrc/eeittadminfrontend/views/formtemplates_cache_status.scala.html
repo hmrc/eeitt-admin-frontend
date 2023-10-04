@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 @import uk.gov.hmrc.eeittadminfrontend.services.CacheStatus
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 @this(
   deployment_commit_info: deployment_commit_info,
@@ -34,7 +35,7 @@
 
 @refreshCache(message: Html) = {
     @message
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(redirectUrl)) {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.refreshCache(RedirectUrl(redirectUrl))) {
         @govukButton(Button(
             preventDoubleClick = Some(true),
             content = Text("Refresh Cache")

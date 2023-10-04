@@ -72,7 +72,7 @@
             Show Gform content of @downloadLink
         </li>
         <li>
-            Show Github content of @deployment_link_github_commit_blob(authorization, githubContent.commitSha, filename)
+            Show Github content of @deployment_link_github_commit_blob(authorization, githubContent.commitSha, filename, githubContent.path)
         </li>
         <li>
             <a class="govuk-link" target="_blank" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.history1(formTemplateId)">Deployment History</a>
