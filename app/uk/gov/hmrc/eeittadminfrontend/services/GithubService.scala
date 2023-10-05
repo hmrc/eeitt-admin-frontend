@@ -26,7 +26,7 @@ import javax.inject.Inject
 import org.apache.commons.codec.binary.Base64
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GithubConnector
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, ContentValue, Filename }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, ContentValue, Filename, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
 class GithubService @Inject() (githubConnector: GithubConnector) {
@@ -37,8 +37,8 @@ class GithubService @Inject() (githubConnector: GithubConnector) {
 
   def lastCommit: EitherT[IO, String, Commit] = EitherT(githubConnector.lastCommit)
 
-  def getCommitByFilename(filename: Filename): EitherT[IO, String, Commit] = EitherT(
-    githubConnector.getCommitByFilename(filename)
+  def getCommitByPath(githubPath: GithubPath): EitherT[IO, String, Commit] = EitherT(
+    githubConnector.getCommitByPath(githubPath)
   )
 
   def getCommit(commitSha: CommitSha): EitherT[IO, String, RefCommit] = EitherT(githubConnector.getCommit(commitSha))

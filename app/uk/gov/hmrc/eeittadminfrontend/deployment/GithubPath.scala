@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.eeittadminfrontend.deployment.{Filename, CommitSha}
-@import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
-@import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
+package uk.gov.hmrc.eeittadminfrontend.deployment
 
-@(authorization: Authorization,
-  commitSha: CommitSha,
-  filename: Filename,
-  path: GithubPath
-)
-
-<a target="_blank"
-   title="Show Github content"
-   href="https://github.com/@authorization.repoOwner/@authorization.repoName/blob/@commitSha.value/@path.value">
-    @filename.value
-</a>
+case class GithubPath(value: String)

@@ -29,7 +29,7 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
 import scala.concurrent.ExecutionContext
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
 import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyProvider
 
@@ -73,13 +73,13 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
       }
     }
 
-  def getCommitByFilename(filename: Filename): IO[Either[String, Commit]] = {
+  def getCommitByPath(githubPath: GithubPath): IO[Either[String, Commit]] = {
     // We can't use gh.repos.listCommits() since it is not handling '&' character in filename correctly.
     val uri = Uri(
       scheme = Some(Uri.Scheme.https),
       authority = Some(Uri.Authority(host = Uri.RegName("api.github.com"))),
       path = s"repos/$repoOwner/$repoName/commits"
-    ).withQueryParam("path", filename.value)
+    ).withQueryParam("path", githubPath.value)
 
     httpClient
       .expect[List[Commit]](
@@ -90,7 +90,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
       .attempt
       .map {
         case Right(commit :: _) => Right(commit)
-        case Right(Nil)         => logError(s"No commit found for $filename")
+        case Right(Nil)         => logError(s"No commit found for $githubPath")
         case Left(e) =>
           logError(s"Failed to query commits $uri because ${e.getMessage} ", e)
       }
