@@ -23,5 +23,5 @@ case class GithubContent(
   content: ContentValue,
   blobSha: BlobSha,
   commitSha: CommitSha,
-  path: String
+  path: GithubPath
 )

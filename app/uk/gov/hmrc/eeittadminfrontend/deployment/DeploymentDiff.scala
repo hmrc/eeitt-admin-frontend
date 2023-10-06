@@ -114,7 +114,7 @@ sealed trait DeploymentDiff extends Product with Serializable {
             authorization,
             deploymentRecord.commitSha,
             deploymentRecord.filename,
-            deploymentRecord.filename.value
+            GithubPath(deploymentRecord.filename.value)
           )
       )
     ),

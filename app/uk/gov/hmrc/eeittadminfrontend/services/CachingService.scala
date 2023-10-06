@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.{ AtomicInteger }
 import java.util.concurrent.CountDownLatch
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename, GithubContent }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, Filename, GithubContent, GithubPath }
 import scala.collection.concurrent.TrieMap
 
 sealed trait CacheStatus
@@ -73,17 +73,18 @@ class CachingService @Inject() (githubService: GithubService) {
     countDownLatch.countDown()
     githubTemplates.parTraverse { githubTemplate =>
       val filename = Filename(githubTemplate.name)
+      val githubPath = GithubPath(githubTemplate.path)
       val blobSha = BlobSha(githubTemplate.sha)
       (
         githubService.retrieveFormTemplate(filename, blobSha),
-        githubService.getCommitByFilename(filename)
+        githubService.getCommitByPath(githubPath)
       ).parMapN { case ((formTemplateId, contentValue), commit) =>
         val githubContent = GithubContent(
           formTemplateId,
           contentValue,
           blobSha,
           CommitSha(commit.sha),
-          githubTemplate.path
+          GithubPath(githubTemplate.path)
         )
         logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
         cache.put(filename, githubContent)
