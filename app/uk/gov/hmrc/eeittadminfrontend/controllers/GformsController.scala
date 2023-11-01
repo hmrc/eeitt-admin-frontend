@@ -37,6 +37,13 @@ import uk.gov.hmrc.eeittadminfrontend.services.{ BatchUploadService, GformServic
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
+import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
+import uk.gov.hmrc.govukfrontend.views.html.components
+import uk.gov.hmrc.govukfrontend.views.viewmodels.content
+import uk.gov.hmrc.govukfrontend.views.viewmodels.errorsummary.{ ErrorLink, ErrorSummary }
+import uk.gov.hmrc.govukfrontend.views.Aliases.Text
+import play.api.data.Forms.text
+import play.api.data.Forms
 
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
 import java.time.Instant
@@ -77,7 +84,8 @@ class GformsController @Inject() (
   gform_formtemplates_pii_home: uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplates_pii_home,
   gform_page: uk.gov.hmrc.eeittadminfrontend.views.html.gform_page,
   batch_upload: uk.gov.hmrc.eeittadminfrontend.views.html.batch_upload,
-  handlebars_template: uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template
+  handlebars_template: uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template,
+  confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.confirmation
 )(implicit ec: ExecutionContext, m: Materializer)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -265,6 +273,59 @@ class GformsController @Inject() (
       gformConnector.getAllSchema.map(x => Ok(x))
     }
 
+  def requestRemoval(formTemplateId: FormTemplateId) =
+    authAction.async { implicit request =>
+      val (pageError, fieldErrors) =
+        request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
+          (
+            Errors(
+              new components.GovukErrorSummary()(
+                ErrorSummary(
+                  errorList = List(
+                    ErrorLink(
+                      href = Some("#remove"),
+                      content = content.Text(request.messages.messages("generic.error.selectOption"))
+                    )
+                  ),
+                  title = content.Text(request.messages.messages("generic.error.selectOption.heading"))
+                )
+              )
+            ),
+            Map(
+              "remove" -> ErrorMessage(
+                content = Text(request.messages.messages("generic.error.selectOption"))
+              )
+            )
+          )
+        }
+      Ok(confirmation(formTemplateId, pageError, fieldErrors)).pure[Future]
+    }
+
+  private val formRemoval: Form[String] = Form(
+    Forms.single(
+      "remove" -> Forms.nonEmptyText
+    )
+  )
+  def confirmRemoval(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
+    formRemoval
+      .bindFromRequest()
+      .fold(
+        _ =>
+          Redirect(
+            routes.GformsController.requestRemoval(formTemplateId)
+          ).flashing("removeParamMissing" -> "true").pure[Future],
+        {
+          case "Yes" =>
+            logger.info(s"${request.retrieval.value} deleted $formTemplateId ")
+            gformConnector.deleteTemplate(formTemplateId).map { deleteResults =>
+              Ok(Json.toJson(deleteResults))
+            }
+          case "No" =>
+            Redirect(routes.GformsController.gformPage).pure[Future]
+        }
+      )
+  }
+
   def deleteGformTemplate =
     authAction.async { implicit request =>
       val username = request.retrieval.value
@@ -273,9 +334,12 @@ class GformsController @Inject() (
         .fold(
           formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
           gformId => {
-            logger.info(s"$username deleted ${gformId.formTemplateId} ")
-            gformConnector.deleteTemplate(gformId.formTemplateId).map { deleteResults =>
-              Ok(Json.toJson(deleteResults))
+            val formTemplateId = gformId.formTemplateId
+            logger.info(s"$username queried for $formTemplateId to delete it")
+            gformConnector.getGformsTemplate(formTemplateId).map {
+              case Left(ex) =>
+                Ok(s"Problem when fetching form template: $formTemplateId. Reason: $ex")
+              case Right(r) => Redirect(routes.GformsController.requestRemoval(gformId.formTemplateId))
             }
           }
         )
