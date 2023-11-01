@@ -15,6 +15,8 @@ POST       /form-template-pii                               uk.gov.hmrc.eeittadm
 GET        /reload-templates                                uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.reloadTemplates
 GET        /get-all-schema                                  uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllSchema
 POST       /template                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteGformTemplate
+GET        /template/request-removal/:formTemplateId        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.requestRemoval(formTemplateId: FormTemplateId)
+GET        /template/confirm-removal/:formTemplateId        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.confirmRemoval(formTemplateId: FormTemplateId)
 GET        /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformPage
 POST       /db-lookup-file-upload                           uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.dbLookupFileUpload
 POST       /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplates

@@ -6,7 +6,8 @@ generic.Yes=Yes
 generic.No=No
 generic.error.selectOption=Please select an option
 generic.error.selectOption.heading=There is a problem
+generic.delete.confirm = Are you sure you want to remove?
 
 button.continue=Continue
 
-delete.confirm = Are you sure you want to remove?
+formTemplate.delete.confirm = Are you sure you want to remove ''{0}''?
