@@ -138,15 +138,26 @@ class GformService @Inject() (gformConnector: GformConnector) {
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Either[String, List[FormTemplateId]]] =
-    gformConnector.getHandlebarsTemplateIds(formTemplateId).map {
-      case JsArray(templates) =>
-        val templateIds = templates.collect { case JsString(template) =>
-          FormTemplateId(template)
-        }
-        Right(templateIds.toList)
-      case _ =>
-        Right(List.empty[FormTemplateId])
-    }
+    (gformConnector
+      .getHandlebarsTemplateIds(formTemplateId)
+      .map {
+        case JsArray(templates) =>
+          val templateIds = templates.collect { case JsString(template) =>
+            FormTemplateId(template)
+          }
+          Right(templateIds.toList)
+        case _ =>
+          Right(List.empty[FormTemplateId])
+      })
+      .recoverWith { error =>
+        // When FormTempate definition is changed in gform service it may fail to parse when calling getHandlebarsTemplateIds.
+        // To be able to deploy we need this call to succeed.
+        logger.error(
+          s"Error when loading handlebar template ids for $formTemplateId. Pretending there are no handlebar templates.",
+          error
+        )
+        Future.successful(Right(List.empty[FormTemplateId]))
+      }
 
   def retrieveContentsForHandlebars(
     formTemplateId: FormTemplateId,
