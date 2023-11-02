@@ -21,16 +21,19 @@ import cats.data.NonEmptyList
 import cats.syntax.all._
 import cats.data.EitherT
 import cats.effect.IO
+import io.circe.{ JsonObject, Json => CJson }
+import io.circe.syntax._
 
 import java.time.Instant
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc.{ AnyContent, MessagesControllerComponents, Request, Result }
+import play.api.mvc.{ AnyContent, Call, MessagesControllerComponents, Request, Result }
 import play.twirl.api.{ Html, HtmlFormat }
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.Try
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
@@ -53,6 +56,8 @@ class DeploymentController @Inject() (
   messagesControllerComponents: MessagesControllerComponents,
   deployment_new: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_new,
   deployment_existing: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_existing,
+  deployment_confirm_no_version_change: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_confirm_no_version_change,
+  deployment_confirm_allow_old_version_journey: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_confirm_allow_old_version_journey,
   deploymentsView: uk.gov.hmrc.eeittadminfrontend.views.html.deployments,
   deployment_home: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_home,
   deployment_deleted: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_deleted,
@@ -154,46 +159,105 @@ class DeploymentController @Inject() (
       .fold(error => BadRequest(error), identity)
   }
 
+  def cutNewVersion(formTemplateId: FormTemplateId, filename: Filename) =
+    authAction.async { implicit request =>
+      withLastCommit { lastCommitCheck =>
+        withGithubContentFromCache(filename) { githubContent =>
+          val githubJson: CJson = githubContent.content.jsonContent
+          for {
+            mongoContent <- EitherT(gformService.getFormTemplate(formTemplateId))
+            mongoJson = mongoContent.content.jsonContent
+            mongoVersion <- EitherT.fromEither[Future](getTemplateVersion(mongoJson))
+            versionedTemplateId = formTemplateId.value + "-v" + mongoVersion
+            mongoIdUpdated <- EitherT.fromEither[Future](
+                                mongoJson.hcursor
+                                  .downField("_id")
+                                  .withFocus(_.mapString(_ => versionedTemplateId))
+                                  .up
+                                  .focus
+                                  .toRight(s"Cannot find '_id' field in mongo json $mongoJson")
+                              )
+            updatedMongoJson = CJson.obj("accessibilityUrl" := formTemplateId.value).deepMerge(mongoIdUpdated)
+            updatedGithubJson <- EitherT.fromEither[Future] {
+                                   githubJson.asObject
+                                     .map { jsonObject =>
+                                       val updatedFields = jsonObject.toList.flatMap {
+                                         case id @ ("_id", value) =>
+                                           List(
+                                             id,
+                                             "legacyFormIds" -> CJson.arr(versionedTemplateId.asJson)
+                                           )
+                                         case ("legacyFormIds", _) => Nil // Remove existing legacyFormIds
+                                         case keep                 => List(keep)
+                                       }
+                                       CJson.fromJsonObject(JsonObject.fromIterable(updatedFields))
+                                     }
+                                     .toRight(s"Github json error. Expected json object, but got: $githubJson")
+                                 }
+            updatedGithubContent =
+              githubContent.copy(content = ContentValue.JsonContent(updatedGithubJson))
+            _      <- gformService.saveTemplate(FormTemplateId(versionedTemplateId), updatedMongoJson)
+            result <- deployGithubContent(Username.fromRetrieval(request.retrieval), filename, updatedGithubContent)
+          } yield result
+        }
+      }
+    }
+
+  private def deployGithubContent(username: Username, filename: Filename, githubContent: GithubContent)(implicit
+    request: Request[_]
+  ): EitherT[Future, String, Result] = {
+    logDeploymentStatus(username, filename, "started")
+
+    val deploymentRecord = DeploymentRecord(
+      username = username,
+      createdAt = Instant.now(),
+      filename = filename,
+      formTemplateId = githubContent.formTemplateId,
+      blobSha = githubContent.blobSha,
+      commitSha = githubContent.commitSha
+    )
+
+    val saveResult = githubContent.content match {
+      case ContentValue.JsonContent(json) =>
+        gformService.saveTemplate(githubContent.formTemplateId, json)
+      case ContentValue.TextContent(payload) =>
+        gformService.saveHandlebarsTemplate(githubContent.formTemplateId, payload)
+    }
+
+    val saveDeployment =
+      saveResult.flatMap(_ => EitherT.rightT[Future, String](deploymentService.save(deploymentRecord)))
+
+    saveDeployment.bimap(
+      error => {
+        logDeploymentStatus(username, filename, s"failed with: $error")
+        error
+      },
+      _ => {
+        val formTemplateId = githubContent.formTemplateId
+        logDeploymentStatus(username, filename, formTemplateId.value + " successfully deployed")
+        Ok(deployment_success(formTemplateId, filename))
+      }
+    )
+  }
+  private def logDeploymentStatus(username: Username, filename: Filename, message: String): Unit =
+    logger.info(s"$username deployment of filename ${filename.value} " + message)
+
+  def deployFilenameGet(filename: Filename) = deployFilename(filename)
+
   def deployFilename(filename: Filename) = authAction.async { implicit request =>
     val username = request.retrieval
-    def logDeploymentStatus(message: String): Unit =
-      logger.info(s"$username deployment of filename ${filename.value} " + message)
 
     withGithubContentFromCache(filename) { githubContent =>
-      logDeploymentStatus("started")
-
-      val deploymentRecord = DeploymentRecord(
-        username = Username.fromRetrieval(username),
-        createdAt = Instant.now(),
-        filename = filename,
-        formTemplateId = githubContent.formTemplateId,
-        blobSha = githubContent.blobSha,
-        commitSha = githubContent.commitSha
-      )
-
-      val saveResult = githubContent.content match {
-        case ContentValue.JsonContent(json) =>
-          gformService.saveTemplate(githubContent.formTemplateId, json)
-        case ContentValue.TextContent(payload) =>
-          gformService.saveHandlebarsTemplate(githubContent.formTemplateId, payload)
-      }
-
-      val saveDeployment =
-        saveResult.flatMap(_ => EitherT.rightT[Future, String](deploymentService.save(deploymentRecord)))
-
-      saveDeployment.bimap(
-        error => {
-          logDeploymentStatus(s"failed with: $error")
-          error
-        },
-        _ => {
-          val formTemplateId = githubContent.formTemplateId
-          logDeploymentStatus(formTemplateId.value + " successfully deployed")
-          Ok(deployment_success(formTemplateId, filename))
-        }
-      )
+      deployGithubContent(Username.fromRetrieval(username), filename, githubContent)
     }.fold(error => BadRequest(error), identity)
   }
+
+  private def getTemplateVersion(json: CJson): Either[String, Int] =
+    json.hcursor
+      .downField("version")
+      .as[String]
+      .leftMap(_.getMessage)
+      .flatMap(versionAsString => Try(versionAsString.toInt).toEither.leftMap(_.getMessage))
 
   def deploymentExisting(
     formTemplateId: FormTemplateId,
@@ -222,6 +286,36 @@ class DeploymentController @Inject() (
                   validationResult,
                   (mongoTemplateHandelbars, githubContentHandelbars)
                 ) =>
+              val formActionOrError: Either[Call, String] = if (filename.isJson) {
+                val maybeMongoVersion: Option[Int] = getTemplateVersion(mongoTemplate.content.jsonContent).toOption
+
+                val maybeGithubVersion: Option[Int] = getTemplateVersion(githubContent.content.jsonContent).toOption
+
+                (maybeMongoVersion, maybeGithubVersion) match {
+                  case (Some(mongoVersion), Some(githubVersion)) if mongoVersion === githubVersion =>
+                    Left(
+                      uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController
+                        .confirmNoVersionChange(formTemplateId, filename)
+                    )
+                  case (Some(mongoVersion), Some(githubVersion)) if mongoVersion + 1 === githubVersion =>
+                    Left(
+                      uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController
+                        .confirmAllowOldVersionJourney(formTemplateId, filename)
+                    )
+                  case (Some(mongoVersion), githubVersion) =>
+                    val githubVersionDescription =
+                      githubVersion.fold("missing in the json template")(version => s"$version instead")
+                    Right(
+                      s"Github versions needs to be $mongoVersion or ${mongoVersion + 1}. But it is $githubVersionDescription. Deployment is disabled until this mismatch is resolved."
+                    )
+
+                  case (None, _) =>
+                    Right("Mongo template needs to have a version")
+                }
+              } else {
+                Left(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename))
+              }
+
               val validationWarning: Option[String] = validationResult.swap.toOption
               val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent, diffConfig.timeout)
               val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
@@ -248,12 +342,23 @@ class DeploymentController @Inject() (
                   validationWarning,
                   downloadLink,
                   existingTemplatesTable(reconciliationLookup.existingTemplates),
-                  reconciliationLookup
+                  reconciliationLookup,
+                  formActionOrError
                 )
               )
           }
         }
       }
+    }
+
+  def confirmNoVersionChange(formTemplateId: FormTemplateId, filename: Filename) =
+    authAction.async { implicit request =>
+      Ok(deployment_confirm_no_version_change(formTemplateId, filename)).pure[Future]
+    }
+
+  def confirmAllowOldVersionJourney(formTemplateId: FormTemplateId, filename: Filename) =
+    authAction.async { implicit request =>
+      Ok(deployment_confirm_allow_old_version_journey(formTemplateId, filename)).pure[Future]
     }
 
   def delete(formTemplateId: FormTemplateId) =

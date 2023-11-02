@@ -25,6 +25,7 @@
   validation_problem: validation_problem,
   main_template: main_template,
   formWithCSRF: FormWithCSRF,
+  govukErrorSummary: GovukErrorSummary,
   govukButton: GovukButton,
   govukTable: GovukTable
 )
@@ -41,12 +42,13 @@
   validationWarning: Option[String],
   downloadLink: Html,
   tableExisting: Table,
-  reconciliationLookup: ReconciliationLookup
+  reconciliationLookup: ReconciliationLookup,
+  formActionOrError: Either[Call, String]
 )(implicit request : Request[_], messages: Messages)
 
 @gformTemplatesRepo = {
     <a class="govuk-link" target="_blank" href="https://github.com/hmrc/gform-templates">gform-templates</a>
-}
+    }
 
 @main_template(title = "Deployment ", tab = "deployment") {
 
@@ -79,15 +81,30 @@
         </li>
     </ul>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deployFilename(filename), args = 'class -> "js-form") {
-        @if(inSync) {
+    @formActionOrError match {
+      case Left(formAction) => {
+        @formWithCSRF(action = formAction, args = 'class -> "js-form") {
+          @if(inSync) {
             <h3 class="govuk-heading-m">Template is up to date</h3>
-        } else {
+          } else {
             @diff
+          }
+          @govukButton(Button(
+             preventDoubleClick = Some(true),
+             content = Text("Deploy")
+          ))
         }
-        @govukButton(Button(
-            preventDoubleClick = Some(true),
-            content = Text("Deploy")
+      }
+      case Right(errorMessage) => {
+        @diff
+        @govukErrorSummary(ErrorSummary(
+          title = Text("Versions mismatch"),
+          description = Text(errorMessage)
         ))
+        @govukButton(Button(
+           content = Text("Deploy"),
+           disabled = true
+        ))
+      }
     }
 }
