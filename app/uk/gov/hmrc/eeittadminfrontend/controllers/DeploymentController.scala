@@ -33,7 +33,6 @@ import play.api.mvc.{ AnyContent, Call, MessagesControllerComponents, Request, R
 import play.twirl.api.{ Html, HtmlFormat }
 
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.Try
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
@@ -255,9 +254,8 @@ class DeploymentController @Inject() (
   private def getTemplateVersion(json: CJson): Either[String, Int] =
     json.hcursor
       .downField("version")
-      .as[String]
+      .as[Int]
       .leftMap(_.getMessage)
-      .flatMap(versionAsString => Try(versionAsString.toInt).toEither.leftMap(_.getMessage))
 
   def deploymentExisting(
     formTemplateId: FormTemplateId,
