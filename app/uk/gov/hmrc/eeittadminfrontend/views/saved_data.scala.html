@@ -15,40 +15,19 @@
  *@
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  govukTable: GovukTable
 )
 
-@(savedForm: SavedForm)(implicit messages: Messages)
+@(formTemplateId: FormTemplateId, hasSavedData: Boolean, savedDataVersioned: Table)(implicit messages: Messages)
 
-@main_template(title = s"Saved Data for ${savedForm.formTemplateId.value}", tab = "saved-data"){
-
-    <table class="govuk-table stats-table">
-        <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-                <th class="govuk-table__header" scope="col" title="Template Id">Form Template</th>
-                <th class="govuk-table__header" scope="col" title="Count of email forms">Count of email forms</th>
-                <th class="govuk-table__header" scope="col" title="Count of gov-gateway forms">Count of gov gateway forms</th>
-            </tr>
-        </thead>
-        <tbody class="govuk-table__body stats-results">
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell">
-                    @if(savedForm.emailCount >0 || savedForm.ggCount >0){
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.findSavedDataDetails(savedForm.formTemplateId)" class="govuk-link">
-                            @{savedForm.formTemplateId.value}
-                        </a>
-                    } else {
-                        @{savedForm.formTemplateId.value}
-                    }
-                </td>
-                <td class="govuk-table__cell">
-                @{savedForm.emailCount}
-                </td>
-                <td class="govuk-table__cell">
-                @{savedForm.ggCount}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+@main_template(title = s"Saved Data for ${formTemplateId.value}", tab = "saved-data"){
+    <h2 class="govuk-heading-m">Saved Data for @{formTemplateId.value}</h2>
+    @if(hasSavedData){
+      <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.findSavedDataDetails(formTemplateId)" class="govuk-link">
+        Breakdown by dates
+      </a>
+    }
+    @govukTable(savedDataVersioned)
 
 }
