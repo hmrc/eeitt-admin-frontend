@@ -31,7 +31,7 @@
  @pageLevelError.render
 
  @if(sdesSubmission.submittedAt.fold(true)(t => t.isAfter(Instant.now().minus(olderThan, ChronoUnit.HOURS)))) {
-  <h2 class="govuk-heading-m">Submission after @olderThan hours can be deleted</h2>
+  <h2 class="govuk-heading-m">Submission after @olderThan hours can be updated</h2>
  }
 
  <table class="govuk-table stats-table">
@@ -75,17 +75,17 @@
 
 
  @if(sdesSubmission.submittedAt.fold(false)(t => t.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS)))) {
-  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmRemoval(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmMark(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
    @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
-       content = Text(messages("generic.delete.confirm")),
+       content = Text(messages("generic.mark.confirm")),
        isPageHeading = true,
        classes = "govuk-label--l"
       ))
      )),
-     errorMessage = fieldErrors.get("remove"),
-     name = "remove",
+     errorMessage = fieldErrors.get("mark"),
+     name = "mark",
      items = List(RadioItem(
       value = Some("Yes"),
       content = Text(messages("generic.Yes"))

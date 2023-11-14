@@ -190,8 +190,8 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/sdes/notify/${correlationId.value}", "")
 
-  def deleteSdesSubmission(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doDelete(gformUrl + s"/sdes/${correlationId.value}")
+  def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp.doPut[String](gformUrl + s"/sdes/${correlationId.value}", "")
 
   def searchDmsWorkItem(
     page: Int,

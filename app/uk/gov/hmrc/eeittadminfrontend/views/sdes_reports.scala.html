@@ -120,12 +120,13 @@
                     <th class="govuk-table__header" scope="col" title="End date">End date</th>
                     <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
                     <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
+                    <th class="govuk-table__header" scope="col" title="Correlation Id">Correlation Id</th>
                     <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                     <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
                     <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
                     <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
                     <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
-                    <th class="govuk-table__header" scope="col" title="Delete notification (cannot be undone)">Delete</th>
+                    <th class="govuk-table__header" scope="col" title="Mark as processed">Mark as processed</th>
                 </tr>
             </thead>
             <tbody class="govuk-table__body stats-results" style="white-space: nowrap;">
@@ -147,6 +148,9 @@
                         @{sdesSubmission.status.toString}
                     </td>
                     <td class="govuk-table__cell">
+                        @{sdesSubmission.correlationId.value}
+                    </td>
+                    <td class="govuk-table__cell">
                         @{sdesSubmission.submissionRef.value}
                     </td>
                     <td class="govuk-table__cell">
@@ -159,15 +163,15 @@
                         @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
                     </td>
                     <td class="govuk-table__cell">
-                        @if(sdesSubmission.status =!= FileProcessed) {
+                        @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
                         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
                             Notify</a>
                         }
                     </td>
                     <td class="govuk-table__cell">
-                        @if(sdesSubmission.status =!= FileProcessed) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestRemoval(sdesSubmission.correlationId)" class="govuk-link">
-                            Delete</a>
+                        @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestMark(sdesSubmission.correlationId)" class="govuk-link">
+                            Mark as processed</a>
                         }
                     </td>
                 </tr>
