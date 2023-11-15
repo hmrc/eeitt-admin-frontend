@@ -25,7 +25,7 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedForm, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
@@ -126,10 +126,13 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       else "&filters=" + filters.mkString(",")}"
     )
 
+  def getAllSavedVersions(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[AllSavedVersions] =
+    wsHttp.GET[AllSavedVersions](gformUrl + s"/formStatistics/all-saved-versions")
+
   def getFormCount(
     formTemplateId: FormTemplateId
-  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[SavedForm] =
-    wsHttp.GET[SavedForm](gformUrl + s"/formStatistics/${formTemplateId.value}")
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Seq[VersionStats]] =
+    wsHttp.GET[Seq[VersionStats]](gformUrl + s"/formStatistics/${formTemplateId.value}")
 
   def getFormDetailCount(
     formTemplateId: FormTemplateId
