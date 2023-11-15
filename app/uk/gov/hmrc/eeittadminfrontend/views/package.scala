@@ -24,6 +24,7 @@ import uk.gov.hmrc.govukfrontend.views.html.components._
 
 import java.time.{ Instant, LocalDateTime, ZoneId }
 import java.time.format.DateTimeFormatter
+import scala.math.BigDecimal.double2bigDecimal
 
 package object views {
 
@@ -32,6 +33,7 @@ package object views {
 
   def formatLocalDate(localDateTime: LocalDateTime): String = dtf.format(localDateTime)
   def formatInstant(instant: Instant): String = dtf.format(instant.atZone(ZoneId.of("Europe/London")).toLocalDateTime)
+  def convertToMB(byte: Long): BigDecimal = (byte.toDouble / 1024 / 1024).setScale(3, BigDecimal.RoundingMode.DOWN)
 
   def commitToTable(authorization: Authorization, commit: Commit) =
     Table(

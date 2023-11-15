@@ -138,7 +138,7 @@
                     @{workItem.numberOfFiles}
                 </td>
                 <td class="govuk-table__cell">
-                    @{BigDecimal(workItem.size.toDouble / (1024 * 1024)).setScale(3, DOWN)}
+                    @{convertToMB(workItem.size)}
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.status.name}

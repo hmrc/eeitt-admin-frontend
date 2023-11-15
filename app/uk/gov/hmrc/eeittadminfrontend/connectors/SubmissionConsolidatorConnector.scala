@@ -75,8 +75,8 @@ class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClient, sc: Service
   ): Future[SdesReportData] =
     wsHttp.GET[SdesReportData](s"$submissionConsolidatorUrl/sdes/${correlationId.value}")
 
-  def deleteSdesSubmission(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doDelete(s"$submissionConsolidatorUrl/sdes/${correlationId.value}")
+  def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp.doPut[String](s"$submissionConsolidatorUrl/sdes/${correlationId.value}", "")
 
   def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp

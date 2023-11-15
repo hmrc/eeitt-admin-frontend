@@ -98,17 +98,17 @@ class SubmissionSdesController @Inject() (
       }
     }
 
-  def requestRemoval(correlationId: CorrelationId) =
+  def requestMark(correlationId: CorrelationId) =
     authAction.async { implicit request =>
       val (pageError, fieldErrors) =
-        request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
+        request.flash.get("markParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
           (
             Errors(
               new components.GovukErrorSummary()(
                 ErrorSummary(
                   errorList = List(
                     ErrorLink(
-                      href = Some("#remove"),
+                      href = Some("#mark"),
                       content = content.Text(request.messages.messages("generic.error.selectOption"))
                     )
                   ),
@@ -117,7 +117,7 @@ class SubmissionSdesController @Inject() (
               )
             ),
             Map(
-              "remove" -> ErrorMessage(
+              "mark" -> ErrorMessage(
                 content = Text(request.messages.messages("generic.error.selectOption"))
               )
             )
@@ -128,28 +128,28 @@ class SubmissionSdesController @Inject() (
       }
     }
 
-  private val formRemoval: Form[String] = Form(
+  private val formMark: Form[String] = Form(
     Forms.single(
-      "remove" -> Forms.nonEmptyText
+      "mark" -> Forms.nonEmptyText
     )
   )
 
-  def confirmRemoval(correlationId: CorrelationId) = authAction.async { implicit request =>
-    formRemoval
+  def confirmMark(correlationId: CorrelationId) = authAction.async { implicit request =>
+    formMark
       .bindFromRequest()
       .fold(
         _ =>
           Redirect(
-            routes.SubmissionSdesController.requestRemoval(correlationId)
-          ).flashing("removeParamMissing" -> "true").pure[Future],
+            routes.SubmissionSdesController.requestMark(correlationId)
+          ).flashing("markParamMissing" -> "true").pure[Future],
         {
           case "Yes" =>
             gformConnector
-              .deleteSdesSubmission(correlationId)
+              .updateAsManualConfirmed(correlationId)
               .map(httpResponse =>
                 Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None, None))
                   .flashing(
-                    "success" -> s"Sdes submission successfully deleted."
+                    "success" -> s"Sdes submission successfully updated."
                   )
               )
           case "No" =>

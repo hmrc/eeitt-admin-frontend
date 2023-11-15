@@ -74,31 +74,48 @@ object NotificationStatus {
   case object FileProcessingFailure extends NotificationStatus
 
   case object FileProcessed extends NotificationStatus
+  case object FileProcessedManualConfirmed extends NotificationStatus
 
   val values: Set[NotificationStatus] =
     Set(
       FileReady,
       FileReceived,
       FileProcessingFailure,
-      FileProcessed
+      FileProcessed,
+      FileProcessedManualConfirmed
+    )
+
+  val updatableStatuses: Set[NotificationStatus] =
+    Set(
+      FileReady,
+      FileReceived,
+      FileProcessingFailure
+    )
+
+  val notifiableStatuses: Set[NotificationStatus] =
+    Set(
+      FileReady,
+      FileProcessingFailure
     )
 
   implicit val catsEq: Eq[NotificationStatus] = Eq.fromUniversalEquals
 
   implicit val format: Format[NotificationStatus] = new Format[NotificationStatus] {
     override def writes(o: NotificationStatus): JsValue = o match {
-      case FileReady             => JsString("FileReady")
-      case FileReceived          => JsString("FileReceived")
-      case FileProcessingFailure => JsString("FileProcessingFailure")
-      case FileProcessed         => JsString("FileProcessed")
+      case FileReady                    => JsString("FileReady")
+      case FileReceived                 => JsString("FileReceived")
+      case FileProcessingFailure        => JsString("FileProcessingFailure")
+      case FileProcessed                => JsString("FileProcessed")
+      case FileProcessedManualConfirmed => JsString("FileProcessedManualConfirmed")
     }
 
     override def reads(json: JsValue): JsResult[NotificationStatus] =
       json match {
-        case JsString("FileReady")             => JsSuccess(FileReady)
-        case JsString("FileReceived")          => JsSuccess(FileReceived)
-        case JsString("FileProcessingFailure") => JsSuccess(FileProcessingFailure)
-        case JsString("FileProcessed")         => JsSuccess(FileProcessed)
+        case JsString("FileReady")                    => JsSuccess(FileReady)
+        case JsString("FileReceived")                 => JsSuccess(FileReceived)
+        case JsString("FileProcessingFailure")        => JsSuccess(FileProcessingFailure)
+        case JsString("FileProcessed")                => JsSuccess(FileProcessed)
+        case JsString("FileProcessedManualConfirmed") => JsSuccess(FileProcessedManualConfirmed)
         case JsString(err) =>
           JsError(s"only for valid FileReady, FileReceived, FileProcessingFailure or FileProcessed.$err is not allowed")
         case _ => JsError("Failure")
@@ -106,17 +123,19 @@ object NotificationStatus {
   }
 
   def fromName(notificationStatus: NotificationStatus): String = notificationStatus match {
-    case FileReady             => "FileReady"
-    case FileReceived          => "FileReceived"
-    case FileProcessingFailure => "FileProcessingFailure"
-    case FileProcessed         => "FileProcessed"
+    case FileReady                    => "FileReady"
+    case FileReceived                 => "FileReceived"
+    case FileProcessingFailure        => "FileProcessingFailure"
+    case FileProcessed                => "FileProcessed"
+    case FileProcessedManualConfirmed => "FileProcessedManualConfirmed"
   }
 
   def fromString(notificationStatus: String): NotificationStatus = notificationStatus match {
-    case "FileReady"             => FileReady
-    case "FileReceived"          => FileReceived
-    case "FileProcessingFailure" => FileProcessingFailure
-    case "FileProcessed"         => FileProcessed
+    case "FileReady"                    => FileReady
+    case "FileReceived"                 => FileReceived
+    case "FileProcessingFailure"        => FileProcessingFailure
+    case "FileProcessed"                => FileProcessed
+    case "FileProcessedManualConfirmed" => FileProcessedManualConfirmed
   }
 }
 
