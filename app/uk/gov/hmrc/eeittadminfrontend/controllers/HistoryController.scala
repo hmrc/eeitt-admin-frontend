@@ -113,25 +113,25 @@ class HistoryController @Inject() (
           val toDateInput = toDateTimeComponent(answers, Map.empty[String, String])
           gformConnector.historyWithFilter(hf).map { historyOverviewFull =>
             val table = overviewTableFull(fullOverviewTableRows(historyOverviewFull))
-            Ok(history_by_date(table, fromDateInput, toDateInput))
+            Ok(history_by_date(table, fromDateInput, toDateInput, historyOverviewFull.size))
           }
         case (Invalid(fromErrors), Invalid(toErrors)) =>
           val fromDateInput = fromDateTimeComponent(answers, fromErrors)
           val toDateInput = toDateTimeComponent(answers, toErrors)
           Future.successful(
-            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput, 0))
           )
         case (Valid(_), Invalid(toErrors)) =>
           val fromDateInput = fromDateTimeComponent(answers, Map.empty[String, String])
           val toDateInput = toDateTimeComponent(answers, toErrors)
           Future.successful(
-            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput, 0))
           )
         case (Invalid(fromErrors), Valid(_)) =>
           val fromDateInput = fromDateTimeComponent(answers, fromErrors)
           val toDateInput = toDateTimeComponent(answers, Map.empty[String, String])
           Future.successful(
-            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+            Ok(history_by_date(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput, 0))
           )
       }
     }
