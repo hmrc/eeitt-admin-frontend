@@ -95,6 +95,7 @@ object NotificationStatus {
   val notifiableStatuses: Set[NotificationStatus] =
     Set(
       FileReady,
+      FileReceived,
       FileProcessingFailure
     )
 
