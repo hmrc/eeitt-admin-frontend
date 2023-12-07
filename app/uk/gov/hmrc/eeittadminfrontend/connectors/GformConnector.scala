@@ -25,7 +25,7 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
+import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
@@ -446,4 +446,43 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
         gformUrl + s"/history/filter",
         historyFilter
       )
+
+  def sdesDestinationsStats()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SdesSubmissionsStats]] =
+    wsHttp
+      .GET[Seq[SdesSubmissionsStats]](
+        gformUrl + s"/sdes/submissions/all-destinations"
+      )
+
+  def runSdesMigration()(implicit ec: ExecutionContext): Future[Either[String, String]] =
+    wsHttp
+      .doEmptyPost(
+        gformUrl + s"/sdes/submissions/migration/DataStore/DataStoreLegacy"
+      )
+      .map { response =>
+        response.status match {
+          case 200 => Right(response.body)
+          case 400 => Left(response.body)
+          case unknown =>
+            throw new Exception(
+              s"Wrong status code $unknown when running sdes submissions migration. Response body ${response.body}"
+            )
+        }
+      }
+
+  def rollbackSdesMigration()(implicit ec: ExecutionContext): Future[Either[String, String]] =
+    wsHttp
+      .doEmptyPost(
+        gformUrl + s"/sdes/submissions/migration/DataStoreLegacy/DataStore"
+      )
+      .map { response =>
+        response.status match {
+          case 200 => Right(response.body)
+          case 400 => Left(response.body)
+          case unknown =>
+            throw new Exception(
+              s"Wrong status code $unknown when running rollback of sdes submissions migration. Response body ${response.body}"
+            )
+        }
+      }
+
 }
