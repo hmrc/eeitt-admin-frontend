@@ -19,7 +19,7 @@
 
 @this(main_template: main_template)
 
-@(pagination: Pagination, redirects: List[FormRedirect])(implicit messages: Messages)
+@(pagination: Pagination, redirects: List[FormRedirect])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
 <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(page)" class="govuk-link">@label</a>

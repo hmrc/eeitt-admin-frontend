@@ -25,7 +25,7 @@
 
 @(lastCommitCheck: LastCommitCheck,
   authorization: Authorization
-)
+)(implicit messages: Messages)
 
 @upToDate(check: LastCommitCheck.UpToDate) = {
     <p class="govuk-body">Cache of Github templates is <span class="govuk-!-font-weight-bold">up to date</span>.</p>
@@ -35,7 +35,7 @@
 
 @outOfDate(check: LastCommitCheck.OutOfDate) = {
     @govukWarningText(WarningText(
-        iconFallbackText = "Warning",
+        iconFallbackText = Some("Warning"),
         content = Text("There is newer commit in Github repository.")
     ))
     <p class="govuk-body">Cache commit info</p>

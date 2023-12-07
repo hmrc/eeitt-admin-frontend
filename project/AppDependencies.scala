@@ -11,7 +11,7 @@ object AppDependencies {
     ws,
     "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"   % "7.13.0",
     "uk.gov.hmrc"              %% "play-partials"                % "8.3.0-play-28",
-    "uk.gov.hmrc"              %% "play-frontend-hmrc"           % "6.8.0-play-28",
+    "uk.gov.hmrc"              %% "play-frontend-hmrc"           % "7.29.0-play-28",
     "uk.gov.hmrc"              %% "internal-auth-client-play-28" % "1.0.0",
     "org.reactivemongo"        %% "play2-reactivemongo"          % "1.0.4-play28",
     "com.github.pureconfig"    %% "pureconfig"                   % "0.15.0",

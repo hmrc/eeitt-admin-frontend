@@ -30,7 +30,8 @@
   lastCommitCheck: LastCommitCheck,
   authorization: Authorization
 )(
-    implicit messages: Messages
+    implicit messages: Messages,
+    request: Request[_]
 )
 
 @gformTemplatesRepo = {

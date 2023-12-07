@@ -18,7 +18,7 @@
 
 @this(main_template: main_template)
 
-@(formTemplateId: FormTemplateId, savedFormDetails: Seq[SavedFormDetail])(implicit messages: Messages)
+@(formTemplateId: FormTemplateId, savedFormDetails: Seq[SavedFormDetail])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = s"Saved Data for ${formTemplateId.value}", tab = "saved-data"){
     <h2 class="govuk-heading-m">Saved Data for @{formTemplateId.value}</h2>
