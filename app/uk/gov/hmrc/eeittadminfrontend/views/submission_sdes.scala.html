@@ -210,6 +210,9 @@
                         @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
                         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
                             Notify</a>
+                        } else {
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
+                            RENotify</a>
                         }
                     </td>
                     <td class="govuk-table__cell">

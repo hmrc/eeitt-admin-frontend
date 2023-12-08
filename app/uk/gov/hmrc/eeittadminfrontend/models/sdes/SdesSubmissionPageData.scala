@@ -144,34 +144,44 @@ sealed trait SdesDestination extends Product with Serializable
 
 object SdesDestination {
   case object Dms extends SdesDestination
+  case object HmrcIlluminate extends SdesDestination
+  case object DataStoreLegacy extends SdesDestination // Alias for HmrcIlluminate (deprecated)
   case object DataStore extends SdesDestination
 
-  val values: Set[SdesDestination] = Set(Dms, DataStore)
+  val values: Set[SdesDestination] = Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore)
 
   implicit val equal: Eq[SdesDestination] = Eq.fromUniversalEquals
   implicit val format: Format[SdesDestination] = new Format[SdesDestination] {
     override def writes(o: SdesDestination): JsValue = o match {
-      case Dms       => JsString("Dms")
-      case DataStore => JsString("DataStore")
+      case Dms             => JsString("Dms")
+      case HmrcIlluminate  => JsString("HmrcIlluminate")
+      case DataStoreLegacy => JsString("DataStoreLegacy")
+      case DataStore       => JsString("DataStore")
     }
 
     override def reads(json: JsValue): JsResult[SdesDestination] =
       json match {
-        case JsString("Dms")       => JsSuccess(Dms)
-        case JsString("DataStore") => JsSuccess(DataStore)
+        case JsString("Dms")             => JsSuccess(Dms)
+        case JsString("HmrcIlluminate")  => JsSuccess(HmrcIlluminate)
+        case JsString("DataStoreLegacy") => JsSuccess(DataStoreLegacy)
+        case JsString("DataStore")       => JsSuccess(DataStore)
         case JsString(err) =>
-          JsError(s"only for valid Dms, or DataStore.$err is not allowed")
+          JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy or DataStore. $err is not allowed")
         case _ => JsError("Failure")
       }
   }
 
   def fromName(destination: SdesDestination): String = destination match {
-    case Dms       => "Dms"
-    case DataStore => "DataStore"
+    case Dms             => "Dms"
+    case HmrcIlluminate  => "HmrcIlluminate"
+    case DataStoreLegacy => "DataStoreLegacy"
+    case DataStore       => "DataStore"
   }
 
   def fromString(destination: String): SdesDestination = destination match {
-    case "Dms"       => Dms
-    case "DataStore" => DataStore
+    case "Dms"             => Dms
+    case "HmrcIlluminate"  => HmrcIlluminate
+    case "DataStoreLegacy" => DataStoreLegacy
+    case "DataStore"       => DataStore
   }
 }

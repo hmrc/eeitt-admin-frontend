@@ -37,7 +37,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 class SdesReportsController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
-  conntector: SubmissionConsolidatorConnector,
+  connector: SubmissionConsolidatorConnector,
   messagesControllerComponents: MessagesControllerComponents,
   sdes_reports: uk.gov.hmrc.eeittadminfrontend.views.html.sdes_reports,
   sdes_reports_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.sdes_reports_confirmation,
@@ -55,7 +55,7 @@ class SdesReportsController @Inject() (
     showBeforeAt: Option[Boolean]
   ) =
     authAction.async { implicit request =>
-      conntector
+      connector
         .getSdesSubmissions(page, pageSize, processed, status, showBeforeAt)
         .map { sdesReportPageData =>
           val pagination =
@@ -78,7 +78,7 @@ class SdesReportsController @Inject() (
       logger.info(
         s"${username.value} sends a notification to SDES for correlation id ${correlationId.value}, submission id  ${submissionRef.value}"
       )
-      conntector.notifySDES(correlationId).map { response =>
+      connector.notifySDES(correlationId).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
           Redirect(routes.SdesReportsController.sdesSubmissions(page, None, None, None))
@@ -119,7 +119,7 @@ class SdesReportsController @Inject() (
             )
           )
         }
-      conntector.getSdesSubmission(correlationId).map { sdesReportData =>
+      connector.getSdesSubmission(correlationId).map { sdesReportData =>
         Ok(sdes_reports_confirmation(sdesReportData, sdesConfig.olderThan, pageError, fieldErrors))
       }
     }
@@ -140,7 +140,7 @@ class SdesReportsController @Inject() (
           ).flashing("markParamMissing" -> "true").pure[Future],
         {
           case "Yes" =>
-            conntector
+            connector
               .updateAsManualConfirmed(correlationId)
               .map(httpResponse =>
                 Redirect(routes.SdesReportsController.sdesSubmissions(0, None, None, None))

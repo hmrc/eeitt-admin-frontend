@@ -145,6 +145,11 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.history.path),
                 content = Text("WIP Forms"),
                 active = if (tab == "history") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesDestinationsMigrationController.sdesDestinationsMigration(None, None).path),
+                content = Text("SDES Submissions migration"),
+                active = if (tab == "sdes-submissions-migration") true else false
             ))
         )
     )
