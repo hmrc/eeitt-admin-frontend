@@ -31,6 +31,7 @@ object SdesWorkItemPageData {
 case class SdesWorkItemData(
   id: String,
   envelopeId: EnvelopeId,
+  destination: SdesDestination,
   formTemplateId: FormTemplateId,
   submissionRef: SubmissionRef,
   numberOfFiles: Int,

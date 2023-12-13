@@ -112,6 +112,7 @@
                 <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Destination">Destination</th>
                 <th class="govuk-table__header" scope="col" title="Count of the files in the envelope">File count</th>
                 <th class="govuk-table__header" scope="col" title="Size of envelope">Size(MB)</th>
                 <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
@@ -133,6 +134,9 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{workItem.destination}
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.numberOfFiles}
