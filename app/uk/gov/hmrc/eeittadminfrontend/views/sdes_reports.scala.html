@@ -111,74 +111,72 @@
     }
 
     <h2 class="govuk-heading-m">There are @{pagination.count} submissions in total. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
-    <div style="overflow-x:auto;">
-        <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
-            <thead class="govuk-table__head">
-                <tr class="govuk-table__row">
-                    <th class="govuk-table__header" scope="col" title="Consolidator Job Id">Consolidator Job Id</th>
-                    <th class="govuk-table__header" scope="col" title="Start date">Start date</th>
-                    <th class="govuk-table__header" scope="col" title="End date">End date</th>
-                    <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
-                    <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
-                    <th class="govuk-table__header" scope="col" title="Correlation Id">Correlation Id</th>
-                    <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
-                    <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
-                    <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
-                    <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
-                    <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
-                    <th class="govuk-table__header" scope="col" title="Mark as processed">Mark as processed</th>
-                </tr>
-            </thead>
-            <tbody class="govuk-table__body stats-results" style="white-space: nowrap;">
-            @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
-                <tr class="govuk-table__row">
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.consolidatorJobId.getOrElse("")}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.startTimestamp.map(formatInstant).getOrElse("")}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.endTimestamp.map(formatInstant).getOrElse("")}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.envelopeId.value}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.status.toString}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.correlationId.value}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.submissionRef.value}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}
-                    </td>
-                    <td class="govuk-table__cell">
-                        <span style="word-break:break-all;">@{sdesSubmission.failureReason}</span>
-                    </td>
-                    <td class="govuk-table__cell">
-                        @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
-                    </td>
-                    <td class="govuk-table__cell">
-                        @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
-                            Notify</a>
-                        }
-                    </td>
-                    <td class="govuk-table__cell">
-                        @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestMark(sdesSubmission.correlationId)" class="govuk-link">
-                            Mark as processed</a>
-                        }
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-   </div>
+    <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
+        <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header" scope="col" title="Consolidator Job Id">Consolidator Job Id</th>
+                <th class="govuk-table__header" scope="col" title="Start date">Start date</th>
+                <th class="govuk-table__header" scope="col" title="End date">End date</th>
+                <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
+                <th class="govuk-table__header" scope="col" title="Correlation Id">Correlation Id</th>
+                <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
+                <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
+                <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
+                <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
+                <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
+                <th class="govuk-table__header" scope="col" title="Mark as processed">Mark as processed</th>
+            </tr>
+        </thead>
+        <tbody class="govuk-table__body stats-results" style="white-space: nowrap;">
+        @for(sdesSubmission <- sdesSubmissions.sdesSubmissions) {
+            <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.consolidatorJobId.getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.startTimestamp.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.endTimestamp.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.envelopeId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.status.toString}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.correlationId.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.submissionRef.value}
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    <span style="word-break:break-all;">@{sdesSubmission.failureReason}</span>
+                </td>
+                <td class="govuk-table__cell">
+                    @{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}
+                </td>
+                <td class="govuk-table__cell">
+                    @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">
+                        Notify</a>
+                    }
+                </td>
+                <td class="govuk-table__cell">
+                    @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.requestMark(sdesSubmission.correlationId)" class="govuk-link">
+                        Mark as processed</a>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
 
     <div class="govuk-body">
         @if(pagination.isFirstPage) {
