@@ -24,7 +24,7 @@
   govukNotificationBanner: GovukNotificationBanner
 )
 
-@(sdesSubmissionsStats: Table, maybeErrorBanner: Option[NotificationBanner], maybeSuccessBanner: Option[NotificationBanner])(implicit messages: Messages)
+@(sdesSubmissionsStats: Table, maybeErrorBanner: Option[NotificationBanner], maybeSuccessBanner: Option[NotificationBanner])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = s"SDES Submissions migration", tab = "sdes-submissions-migration"){
 

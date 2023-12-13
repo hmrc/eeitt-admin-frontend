@@ -20,7 +20,7 @@
   main_template: main_template
 )
 
-@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages)
+@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = "Submissions ", tab = "submissions") {
     <h2 class="govuk-heading-m">Form templates</h2>

@@ -22,7 +22,7 @@
   main_template: main_template
 )
 
-@(formTemplateId: FormTemplateId, pagination: Pagination, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit messages: Messages)
+@(formTemplateId: FormTemplateId, pagination: Pagination, submissions: List[(Submission, Envelope, AttachmentCheck)])(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
     <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submission(formTemplateId, page)" class="govuk-link">@label</a>

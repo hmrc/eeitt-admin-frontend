@@ -46,7 +46,7 @@
   serviceInfoContent: Html = HtmlFormat.empty,
   scriptElem: Option[Html] = None,
   backLink: Option[String] = None
-)(implicit messages: Messages)
+)(implicit messages: Messages, request: Request[_])
 
 @head = {
     <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/diff2html.min.css")" />

@@ -27,7 +27,8 @@
   controlPanel: Html,
   diff: Html
 )(
-  implicit messages: Messages
+  implicit messages: Messages,
+  request: Request[_]
 )
 
 @main_template(title = s"WIP Forms", tab = "history"){

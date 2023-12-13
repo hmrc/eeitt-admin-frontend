@@ -19,7 +19,7 @@
 
 @this(main_template: main_template)
 
-@(formTemplateRawIds: List[FormTemplateRawId])(implicit messages: Messages)
+@(formTemplateRawIds: List[FormTemplateRawId])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = s"WIP Forms", tab = "history"){
 
