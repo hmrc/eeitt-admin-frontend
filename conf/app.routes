@@ -120,4 +120,7 @@ GET         /history/diff1/:formTemplateRawId/:historyId1               uk.gov.h
 GET         /history/diff2/:formTemplateRawId/:historyId1/:historyId2   uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.diffFor2(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId, historyId2: HistoryId)
 GET         /history/open/:historyId                                    uk.gov.hmrc.eeittadminfrontend.controllers.HistoryController.open(historyId: HistoryId)
 
+GET         /sdes-destinations-migration                                uk.gov.hmrc.eeittadminfrontend.controllers.SdesDestinationsMigrationController.sdesDestinationsMigration(error: Option[String], success: Option[String])
+GET         /sdes-destinations-migration/run                            uk.gov.hmrc.eeittadminfrontend.controllers.SdesDestinationsMigrationController.runMigration
+
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
