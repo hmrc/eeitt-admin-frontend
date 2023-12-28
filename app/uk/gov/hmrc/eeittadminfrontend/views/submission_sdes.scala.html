@@ -185,7 +185,7 @@
                     @{sdesSubmission.formTemplateId.value}
                 </td>
                 <td class="govuk-table__cell">
-                    @{sdesSubmission.correlationId.value}
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.showHistory(sdesSubmission.correlationId)" class="govuk-link">@{sdesSubmission.correlationId.value}</a>
                 </td>
                 <td class="govuk-table__cell">
                     @{sdesSubmission.numberOfFiles}

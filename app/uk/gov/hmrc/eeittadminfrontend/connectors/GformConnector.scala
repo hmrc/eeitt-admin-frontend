@@ -24,7 +24,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -485,4 +485,18 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
         }
       }
 
+  def getSdesHistoryById(
+    correlationId: CorrelationId
+  )(implicit ec: ExecutionContext): Future[Either[String, SdesHistoryView]] = {
+    val url = gformUrl + s"/sdes/history/${correlationId.value}"
+    wsHttp
+      .doGet(url)
+      .map { response =>
+        if (response.status == 200) Right(response.json.as[SdesHistoryView])
+        else Left(s"Correlation ${correlationId.value} not found in history")
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve correlationId $correlationId: " + ex.getMessage)
+      }
+  }
 }
