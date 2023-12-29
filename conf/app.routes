@@ -73,6 +73,7 @@ GET         /sdes-submissions/notify/:correlationId/:page               uk.gov.h
 GET         /sdes-submissions/request-mark/:correlationId               uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestMark(correlationId: CorrelationId)
 GET         /sdes-submissions/confirm-mark/:correlationId               uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.confirmMark(correlationId: CorrelationId)
 GET         /sdes-submissions/request-search/:page                      uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.requestSearch(page: Int)
+GET         /sdes-submissions/history/:correlationId                    uk.gov.hmrc.eeittadminfrontend.controllers.SubmissionSdesController.showHistory(correlationId: CorrelationId)
 
 GET         /sdes-reports/:page                                         uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.sdesSubmissions(page: Int, processed: Option[Boolean], status: Option[NotificationStatus], showBeforeAt: Option[Boolean])
 GET         /sdes-reports/notify/:correlationId/:page                   uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int)

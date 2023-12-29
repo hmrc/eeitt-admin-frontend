@@ -21,6 +21,7 @@ import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Forms.{ boolean, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
+import play.api.libs.json.Json
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
@@ -195,4 +196,11 @@ class SubmissionSdesController @Inject() (
       )
   }
 
+  def showHistory(correlationId: CorrelationId) =
+    authAction.async { _ =>
+      gformConnector.getSdesHistoryById(correlationId).map {
+        case Right(payload) => Ok(Json.prettyPrint(Json.toJson(payload)))
+        case Left(error)    => BadRequest(error)
+      }
+    }
 }
