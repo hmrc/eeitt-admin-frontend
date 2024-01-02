@@ -19,8 +19,9 @@ package uk.gov.hmrc.eeittadminfrontend.models.fileupload
 import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 import play.api.libs.json.Format
 
-case class EnvelopeId(value: String) extends AnyVal
-
+case class EnvelopeId(value: String) extends AnyVal {
+  override def toString = value
+}
 object EnvelopeId {
   implicit val format: Format[EnvelopeId] = ValueClassFormatter.format(EnvelopeId.apply)(_.value)
 }

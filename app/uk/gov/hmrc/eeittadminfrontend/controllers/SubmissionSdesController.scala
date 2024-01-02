@@ -16,21 +16,34 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
+import cats.data.Validated
+import cats.data.Validated.{ Invalid, Valid }
+import cats.syntax.eq._
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Forms.{ boolean, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc.MessagesControllerComponents
+import play.api.mvc.{ MessagesControllerComponents, Request }
+import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
+import uk.gov.hmrc.eeittadminfrontend.history.DateFilter
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesDestination, SubmissionRef }
-import uk.gov.hmrc.govukfrontend.views.Aliases.Text
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesDestination, SdesFilter, SdesSubmissionPageData, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.validators.DateValidator.validateDateFilter
+import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateComponent
+import uk.gov.hmrc.govukfrontend.views.Aliases.{ Button, CheckboxItem, Input, Label, Select, SelectItem, TableRow, Text }
 import uk.gov.hmrc.govukfrontend.views.html.components
+import uk.gov.hmrc.govukfrontend.views.html.components.GovukDateInput
+import uk.gov.hmrc.govukfrontend.views.viewmodels.checkboxes.Checkboxes
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
+import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
+import uk.gov.hmrc.govukfrontend.views.viewmodels.dateinput.DateInput
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errorsummary.{ ErrorLink, ErrorSummary }
+import uk.gov.hmrc.govukfrontend.views.viewmodels.table.Table
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import javax.inject.Inject
@@ -49,33 +62,260 @@ class SubmissionSdesController @Inject() (
   private val pageSize = 100
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  private def fromDateComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
+    dateComponent("from", "Start date", answers, errors)
+
+  private def toDateComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
+    dateComponent("to", "End date", answers, errors)
+
   def sdesSubmissions(
     page: Int,
-    processed: Option[Boolean],
+    isProcessed: Option[Boolean],
+    envelopeId: Option[EnvelopeId],
     formTemplateId: Option[FormTemplateId],
     status: Option[NotificationStatus],
-    showBeforeAt: Option[Boolean],
-    destination: Option[SdesDestination]
+    destination: Option[SdesDestination],
+    beforeCreatedAt: Option[Boolean],
+    fromDay: Option[String],
+    fromMonth: Option[String],
+    fromYear: Option[String],
+    toDay: Option[String],
+    toMonth: Option[String],
+    toYear: Option[String]
   ) =
     authAction.async { implicit request =>
+      val answers: Map[String, String] = Map(
+        "from-day"   -> fromDay.getOrElse(""),
+        "from-month" -> fromMonth.getOrElse(""),
+        "from-year"  -> fromYear.getOrElse(""),
+        "to-day"     -> toDay.getOrElse(""),
+        "to-month"   -> toMonth.getOrElse(""),
+        "to-year"    -> toYear.getOrElse("")
+      ).collect {
+        case (field, value) if value.trim.nonEmpty =>
+          (field, value.trim)
+      }
+
+      val fromDateFilter: Validated[Map[String, String], Option[DateFilter]] =
+        validateDateFilter("from", fromDay, fromMonth, fromYear, None, None)
+
+      val toDateFilter: Validated[Map[String, String], Option[DateFilter]] =
+        validateDateFilter("to", toDay, toMonth, toYear, None, None)
+
+      val filter = SdesFilter(
+        page,
+        pageSize,
+        isProcessed,
+        envelopeId,
+        formTemplateId,
+        status,
+        destination,
+        beforeCreatedAt,
+        None,
+        None
+      )
+      (fromDateFilter, toDateFilter) match {
+        case (Valid(fromDf), Valid(toDf)) =>
+          val fromDateInput = fromDateComponent(answers, Map.empty[String, String])
+          val toDateInput = toDateComponent(answers, Map.empty[String, String])
+          showFilter(filter.copy(from = fromDf, to = toDf), page, fromDateInput, toDateInput, false)
+        case (Invalid(fromErrors), Invalid(toErrors)) =>
+          val fromDateInput = fromDateComponent(answers, fromErrors)
+          val toDateInput = toDateComponent(answers, toErrors)
+          showFilter(filter, page, fromDateInput, toDateInput, true)
+        case (Valid(_), Invalid(toErrors)) =>
+          val fromDateInput = fromDateComponent(answers, Map.empty[String, String])
+          val toDateInput = toDateComponent(answers, toErrors)
+          showFilter(filter, page, fromDateInput, toDateInput, true)
+        case (Invalid(fromErrors), Valid(_)) =>
+          val fromDateInput = fromDateComponent(answers, fromErrors)
+          val toDateInput = toDateComponent(answers, Map.empty[String, String])
+          showFilter(filter, page, fromDateInput, toDateInput, true)
+      }
+    }
+
+  private def showFilter(
+    filter: SdesFilter,
+    page: Int,
+    fromDateInput: DateInput,
+    toDateInput: DateInput,
+    hasError: Boolean
+  )(implicit request: Request[_]) = {
+    val filterTable = createFilterTable(filter: SdesFilter, fromDateInput, toDateInput)
+    if (hasError) {
+      val pagination =
+        Pagination(0, page, 0, pageSize)
+
+      Ok(
+        submission_sdes(
+          pagination,
+          SdesSubmissionPageData.empty,
+          filter.isProcessed,
+          filter.formTemplateId,
+          filter.status,
+          filter.beforeCreatedAt,
+          filter.destination,
+          filter.envelopeId,
+          filterTable
+        )
+      ).pure[Future]
+    } else {
       gformConnector
-        .getSdesSubmissions(page, pageSize, processed, formTemplateId, status, showBeforeAt, destination)
+        .getSdesSubmissions(filter)
         .map { sdesSubmissionPageData =>
           val pagination =
             Pagination(sdesSubmissionPageData.count, page, sdesSubmissionPageData.sdesSubmissions.size, pageSize)
+
           Ok(
             submission_sdes(
               pagination,
               sdesSubmissionPageData,
-              processed,
-              formTemplateId,
-              status,
-              showBeforeAt,
-              destination
+              filter.isProcessed,
+              filter.formTemplateId,
+              filter.status,
+              filter.beforeCreatedAt,
+              filter.destination,
+              filter.envelopeId,
+              filterTable
             )
           )
         }
     }
+  }
+
+  private def createFilterTable(filter: SdesFilter, fromDateInput: DateInput, toDateInput: DateInput) = {
+    val govukErrorMessage: components.GovukErrorMessage = new components.GovukErrorMessage()
+    val govukHint: components.GovukHint = new components.GovukHint()
+    val govukLabel: components.GovukLabel = new components.GovukLabel()
+    val govukFieldset: components.GovukFieldset = new components.GovukFieldset()
+    val govukInput: components.GovukInput =
+      new components.GovukInput(govukErrorMessage, govukHint, govukLabel)
+    val govukSelect: components.GovukSelect =
+      new components.GovukSelect(govukErrorMessage, govukHint, govukLabel)
+    val govukButton: components.GovukButton = new components.GovukButton()
+    val govukCheckboxes: components.GovukCheckboxes =
+      new components.GovukCheckboxes(govukErrorMessage, govukFieldset, govukHint, govukLabel)
+    val govukDateInput: components.GovukDateInput =
+      new GovukDateInput(govukErrorMessage, govukHint, govukFieldset, govukInput)
+    val tableAttributes = Map("style" -> "border:none;")
+
+    def inputComponent(id: String, label: String, value: Option[String]) = govukInput(
+      Input(
+        id = id,
+        name = id,
+        value = value,
+        label = Label(
+          content = Text(label)
+        )
+      )
+    )
+
+    def createSelect(id: String, label: String, items: Seq[SelectItem]) = govukSelect(
+      Select(
+        id = id,
+        name = id,
+        items = items,
+        label = Label(
+          content = Text(label)
+        )
+      )
+    )
+
+    def tableRow(value: Html) = TableRow(attributes = tableAttributes, content = HtmlContent(value))
+
+    val queryByFormTemplateId =
+      tableRow(inputComponent("formTemplateId", "Form Template Id", filter.formTemplateId.map(_.value)))
+    val queryByEnvelopeId = tableRow(inputComponent("envelopeId", "Envelope Id", filter.envelopeId.map(_.value)))
+
+    val destinationItems = Seq(
+      SelectItem(
+        value = None,
+        text = ""
+      )
+    ) ++ SdesDestination.values
+      .map(d =>
+        SelectItem(
+          value = Some(d.toString),
+          text = d.toString,
+          selected = filter.destination.fold(false)(destination => d === destination)
+        )
+      )
+      .toSeq
+    val queryByDestination = tableRow(
+      createSelect(
+        "destination",
+        "Destination",
+        destinationItems
+      )
+    )
+
+    val statusItems = Seq(
+      SelectItem(
+        value = None,
+        text = ""
+      )
+    ) ++ NotificationStatus.values
+      .map(ns =>
+        SelectItem(
+          value = Some(ns.toString),
+          text = ns.toString,
+          selected = filter.status.fold(false)(status => ns === status)
+        )
+      )
+      .toSeq
+    val queryByStatus = tableRow(
+      createSelect(
+        "notificationStatus",
+        "Status",
+        statusItems
+      )
+    )
+
+    val queryByShowBeforeAt = tableRow(
+      govukCheckboxes(
+        Checkboxes(
+          name = "showBeforeAt",
+          classes = "govuk-checkboxes--small",
+          items = Seq(
+            CheckboxItem(
+              content = Text("Not processed more than 10 hours"),
+              value = "true",
+              checked = filter.beforeCreatedAt.getOrElse(false)
+            )
+          )
+        )
+      )
+    )
+
+    val queryFromDate = tableRow(
+      govukDateInput(
+        fromDateInput
+      )
+    )
+
+    val queryToDate = tableRow(
+      govukDateInput(
+        toDateInput
+      )
+    )
+
+    val queryButton = tableRow(
+      govukButton(
+        Button(
+          preventDoubleClick = Some(true),
+          content = Text("Search")
+        )
+      )
+    )
+    Table(
+      rows = Seq(
+        Seq(queryByEnvelopeId, queryByFormTemplateId),
+        Seq(queryByStatus, queryByDestination),
+        Seq(queryFromDate, queryToDate),
+        Seq(queryByShowBeforeAt, queryButton)
+      )
+    )
+  }
 
   def notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int) =
     authAction.async { implicit request =>
@@ -86,12 +326,18 @@ class SubmissionSdesController @Inject() (
       gformConnector.notifySDES(correlationId).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None))
+          Redirect(
+            routes.SubmissionSdesController
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+          )
             .flashing(
               "success" -> s"Envelope successfully notified. Correlation id: ${correlationId.value}, submission id: ${submissionRef.value}"
             )
         } else {
-          Redirect(routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None))
+          Redirect(
+            routes.SubmissionSdesController
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+          )
             .flashing(
               "failed" -> s"Unexpected SDES response with correlation id: ${correlationId.value}, submission id: ${submissionRef.value} : ${response.body}"
             )
@@ -148,25 +394,54 @@ class SubmissionSdesController @Inject() (
             gformConnector
               .updateAsManualConfirmed(correlationId)
               .map(httpResponse =>
-                Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None, None))
+                Redirect(
+                  routes.SubmissionSdesController
+                    .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None, None, None)
+                )
                   .flashing(
                     "success" -> s"Sdes submission successfully updated."
                   )
               )
           case "No" =>
-            Redirect(routes.SubmissionSdesController.sdesSubmissions(0, None, None, None, None, None)).pure[Future]
+            Redirect(
+              routes.SubmissionSdesController
+                .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None, None, None)
+            )
+              .pure[Future]
         }
       )
   }
 
-  private val form: Form[(Option[String], Option[String], Option[Boolean], Option[String])] = play.api.data.Form(
-    Forms.tuple(
-      "formTemplateId"     -> optional(text),
-      "notificationStatus" -> optional(text),
-      "showBeforeAt"       -> optional(boolean),
-      "destination"        -> optional(text)
+  private val form: Form[
+    (
+      Option[String],
+      Option[String],
+      Option[Boolean],
+      Option[String],
+      Option[String],
+      Option[String],
+      Option[String],
+      Option[String],
+      Option[String],
+      Option[String],
+      Option[String]
     )
-  )
+  ] =
+    play.api.data.Form(
+      Forms.tuple(
+        "formTemplateId"     -> optional(text),
+        "notificationStatus" -> optional(text),
+        "showBeforeAt"       -> optional(boolean),
+        "destination"        -> optional(text),
+        "envelopeId"         -> optional(text),
+        "from-day"           -> optional(text),
+        "from-month"         -> optional(text),
+        "from-year"          -> optional(text),
+        "to-day"             -> optional(text),
+        "to-month"           -> optional(text),
+        "to-year"            -> optional(text)
+      )
+    )
 
   def requestSearch(page: Int) = authAction.async { implicit request =>
     form
@@ -174,23 +449,44 @@ class SubmissionSdesController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None)
+            routes.SubmissionSdesController
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
           ).pure[Future],
         {
-          case (maybeFormTemplateId, maybeStatus, maybeShowBeforeAt, maybeDestination) =>
+          case (
+                maybeFormTemplateId,
+                maybeStatus,
+                maybeShowBeforeAt,
+                maybeDestination,
+                maybeEnvelopeId,
+                maybeFromDay,
+                maybeFromMonth,
+                maybeFromYear,
+                maybeToDay,
+                maybeToMonth,
+                maybeToYear
+              ) =>
             Redirect(
               routes.SubmissionSdesController.sdesSubmissions(
                 0,
                 None,
+                maybeEnvelopeId.map(EnvelopeId(_)),
                 maybeFormTemplateId.map(FormTemplateId(_)),
                 maybeStatus.map(NotificationStatus.fromString),
+                maybeDestination.map(SdesDestination.fromString),
                 maybeShowBeforeAt,
-                maybeDestination.map(SdesDestination.fromString)
+                maybeFromDay,
+                maybeFromMonth,
+                maybeFromYear,
+                maybeToDay,
+                maybeToMonth,
+                maybeToYear
               )
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.SubmissionSdesController.sdesSubmissions(page, None, None, None, None, None)
+              routes.SubmissionSdesController
+                .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
             ).pure[Future]
         }
       )

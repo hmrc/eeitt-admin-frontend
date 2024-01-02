@@ -30,6 +30,7 @@ case class SdesSubmissionPageData(
 
 object SdesSubmissionPageData {
   implicit val format: OFormat[SdesSubmissionPageData] = Json.format[SdesSubmissionPageData]
+  val empty = SdesSubmissionPageData(List.empty[SdesSubmissionData], 0)
 }
 
 case class SdesSubmissionData(
