@@ -24,7 +24,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, ProcessingStatus, SdesDestination, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -157,31 +157,15 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
 
-  def getSdesSubmissions(
-    page: Int,
-    pageSize: Int,
-    maybeProcessed: Option[Boolean] = None,
-    formTemplateId: Option[FormTemplateId],
-    status: Option[NotificationStatus],
-    showBeforeAt: Option[Boolean],
-    destination: Option[SdesDestination]
-  )(implicit
+  def getSdesSubmissions(sdesFilter: SdesFilter)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ) = {
-    val queryStringByProcessed = maybeProcessed.fold("")(p => s"processed=$p")
-    val queryStringByTemplateId = formTemplateId.fold(queryStringByProcessed)(formTemplateId =>
-      s"formTemplateId=$formTemplateId&$queryStringByProcessed"
-    )
-    val queryStringByStatus = status.fold(queryStringByTemplateId)(status => s"status=$status&$queryStringByTemplateId")
-    val queryStringByDestination =
-      destination.fold(queryStringByStatus)(destination => s"destination=$destination&$queryStringByStatus")
-    val queryString =
-      showBeforeAt.fold(queryStringByDestination)(showBeforeAt =>
-        s"showBeforeAt=$showBeforeAt&$queryStringByDestination"
+  ): Future[SdesSubmissionPageData] =
+    wsHttp
+      .POST[SdesFilter, SdesSubmissionPageData](
+        gformUrl + s"/sdes/search",
+        sdesFilter
       )
-    wsHttp.GET[SdesSubmissionPageData](gformUrl + s"/sdes/search/$page/$pageSize?$queryString")
-  }
 
   def getSdesSubmission(correlationId: CorrelationId)(implicit
     hc: HeaderCarrier,
@@ -204,9 +188,10 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ) = {
-    val queryStringByFormTemplate = formTemplateId.fold("")(id => s"formTemplateId=$id")
-    val queryString = status.fold(queryStringByFormTemplate)(s => s"status=${s.name}&$queryStringByFormTemplate")
+  ): Future[SdesWorkItemPageData] = {
+    val queryByFormTemplate = formTemplateId.map(id => s"formTemplateId=$id")
+    val queryByStatus = status.map(s => s"status=$s")
+    val queryString = List(queryByFormTemplate, queryByStatus).flatten.mkString("&")
     wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/dms-work-item/search/$page/$pageSize?$queryString")
   }
 
@@ -227,9 +212,10 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ) = {
-    val queryStringByFormTemplate = formTemplateId.fold("")(id => s"formTemplateId=$id")
-    val queryString = status.fold(queryStringByFormTemplate)(s => s"status=${s.name}&$queryStringByFormTemplate")
+  ): Future[SdesWorkItemPageData] = {
+    val queryByFormTemplate = formTemplateId.map(id => s"formTemplateId=$id")
+    val queryByStatus = status.map(s => s"status=$s")
+    val queryString = List(queryByFormTemplate, queryByStatus).flatten.mkString("&")
     wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/data-store-work-item/search/$page/$pageSize?$queryString")
   }
 

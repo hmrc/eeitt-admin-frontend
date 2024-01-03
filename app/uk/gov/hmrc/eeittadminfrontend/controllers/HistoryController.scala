@@ -18,25 +18,22 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.data.{ NonEmptyList, Validated }
 import cats.data.Validated.{ Invalid, Valid }
-import cats.syntax.all._
-import java.time.{ LocalDate, LocalDateTime }
 import play.api.libs.circe.Circe
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import play.twirl.api.{ Html, HtmlFormat }
+
 import scala.concurrent.Future
-import scala.util.Try
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.ContentValue
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
 import uk.gov.hmrc.eeittadminfrontend.history.{ DateFilter, HistoryComparison, HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateRawId
 import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
+import uk.gov.hmrc.eeittadminfrontend.validators.DateValidator.validateDateFilter
+import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateTimeComponent
 import uk.gov.hmrc.govukfrontend.views.html.components.{ HeadCell, HtmlContent, Table, TableRow, Text }
-import uk.gov.hmrc.govukfrontend.views.viewmodels.content
-import uk.gov.hmrc.govukfrontend.views.viewmodels.dateinput.{ DateInput, InputItem }
-import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
-import uk.gov.hmrc.govukfrontend.views.viewmodels.fieldset.{ Fieldset, Legend }
+import uk.gov.hmrc.govukfrontend.views.viewmodels.dateinput.DateInput
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import javax.inject.Inject
@@ -281,79 +278,6 @@ class HistoryController @Inject() (
   private def toDateTimeComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
     dateTimeComponent("to", "Templates created before date", answers, errors)
 
-  private def dateTimeComponent(
-    prefix: String,
-    legend: String,
-    answers: Map[String, String],
-    errors: Map[String, String]
-  ): DateInput = {
-
-    val errorMessage =
-      if (errors.isEmpty) None
-      else Some(ErrorMessage(content = HtmlContent(errors.values.mkString("<br>"))))
-
-    def errorClass(id: String): String =
-      if (errors.contains(id)) "govuk-input--error" else ""
-
-    val dayId = prefix + "-day"
-    val monthId = prefix + "-month"
-    val yearId = prefix + "-year"
-    val hourId = prefix + "-hour"
-    val minuteId = prefix + "-minute"
-
-    val items = List(
-      InputItem(
-        id = dayId,
-        name = dayId,
-        label = Some("Day"),
-        value = answers.get(dayId),
-        classes = s"${errorClass(dayId)} govuk-input--width-2"
-      ),
-      InputItem(
-        id = monthId,
-        name = monthId,
-        label = Some("Month"),
-        value = answers.get(monthId),
-        classes = s"${errorClass(monthId)} govuk-input--width-2"
-      ),
-      InputItem(
-        id = yearId,
-        name = yearId,
-        label = Some("Year"),
-        value = answers.get(yearId),
-        classes = s"${errorClass(yearId)} govuk-input--width-4"
-      ),
-      InputItem(
-        id = hourId,
-        name = hourId,
-        label = Some("Hour"),
-        value = answers.get(hourId),
-        classes = s"${errorClass(hourId)} govuk-input--width-2"
-      ),
-      InputItem(
-        id = minuteId,
-        name = minuteId,
-        label = Some("Minute"),
-        value = answers.get(minuteId),
-        classes = s"${errorClass(minuteId)} govuk-input--width-2"
-      )
-    )
-
-    val fieldset = Fieldset(
-      legend = Some(
-        Legend(
-          content = content.Text(legend)
-        )
-      )
-    )
-    DateInput(
-      id = prefix,
-      items = items.toList,
-      errorMessage = errorMessage,
-      fieldset = Some(fieldset)
-    )
-  }
-
   /*
    * Receives historyId and determine what historyId comes next (if any) and display the diff.
    */
@@ -464,121 +388,4 @@ class HistoryController @Inject() (
       firstCellIsHeader = false
     )
   }
-
-  private def validateDay(day: String, id: String): Validated[Map[String, String], Int] =
-    if (day.matches("[0-9]+")) {
-      val d = day.toInt
-      if (d > 31) {
-        Invalid(Map(id -> s"Day cannot be greater then 31"))
-      } else {
-        Valid(d)
-      }
-    } else Invalid(Map(id -> s"Not a valid day: $day"))
-
-  private def validateMonth(month: String, id: String): Validated[Map[String, String], Int] =
-    if (month.matches("[0-9]+")) {
-      val m = month.toInt
-      if (m > 12) {
-        Invalid(Map(id -> s"Month cannot be greater then 12"))
-      } else {
-        Valid(m)
-      }
-    } else Invalid(Map(id -> s"Not a valid month: $month"))
-
-  private def validateYear(year: String, id: String): Validated[Map[String, String], Int] =
-    if (year.matches("[0-9]+")) {
-      val y = year.toInt
-      if (y < 2000) {
-        Invalid(Map(id -> s"Year must be 2000 or more"))
-      } else if (y > 2099) {
-        Invalid(Map(id -> s"Year must less then 2099"))
-      } else {
-        Valid(y)
-      }
-    } else Invalid(Map(id -> s"Not a valid year: $year"))
-
-  private def validateHour(hour: String, id: String): Validated[Map[String, String], Int] =
-    if (hour.matches("[0-9]+")) {
-      val h = hour.toInt
-      if (h > 23) {
-        Invalid(Map(id -> s"Hour cannot be greater then 23"))
-      } else {
-        Valid(h)
-      }
-    } else Invalid(Map(id -> s"Not a valid hour: $hour"))
-
-  private def validateMinute(minute: String, id: String): Validated[Map[String, String], Int] =
-    if (minute.matches("[0-9]+")) {
-      val h = minute.toInt
-      if (h > 59) {
-        Invalid(Map(id -> s"Minute cannot be greater then 59"))
-      } else {
-        Valid(h)
-      }
-    } else Invalid(Map(id -> s"Not a valid minute: $minute"))
-
-  private def validateLocalDate(
-    prefix: String,
-    day: Int,
-    month: Int,
-    year: Int
-  ): Validated[Map[String, String], LocalDate] = {
-    val localDate = Try(LocalDate.of(year, month, day))
-    localDate.fold(error => Invalid(Map(prefix + "-day" -> error.getMessage)), localDate => Valid(localDate))
-  }
-
-  private def validateLocalDateTime(
-    prefix: String,
-    day: Int,
-    month: Int,
-    year: Int,
-    hour: Int,
-    minute: Int
-  ): Validated[Map[String, String], LocalDateTime] = {
-    val localDateTime = Try(LocalDateTime.of(year, month, day, hour, minute))
-    localDateTime.fold(
-      error => Invalid(Map(prefix + "-day" -> error.getMessage)),
-      localDateTime => Valid(localDateTime)
-    )
-  }
-
-  private def validateDateFilter(
-    prefix: String,
-    maybeDay: Option[String],
-    maybeMonth: Option[String],
-    maybeYear: Option[String],
-    maybeHour: Option[String],
-    maybeMinute: Option[String]
-  ): Validated[Map[String, String], Option[DateFilter]] =
-    (maybeDay, maybeMonth, maybeYear, maybeHour, maybeMinute) match {
-      case (Some(day), Some(month), Some(year), Some(hour), Some(minute)) =>
-        (
-          validateDay(day, prefix + "-day"),
-          validateMonth(month, prefix + "-month"),
-          validateYear(year, prefix + "-year"),
-          validateHour(hour, prefix + "-hour"),
-          validateMinute(minute, prefix + "-minute")
-        ).tupled
-          .andThen { case (day, month, year, hour, minute) =>
-            validateLocalDateTime(prefix, day, month, year, hour, minute)
-          }
-          .map(localDateTime => Some(DateFilter.DateTime(localDateTime)))
-
-      case (Some(day), Some(month), Some(year), None, None) =>
-        (
-          validateDay(day, prefix + "-day"),
-          validateMonth(month, prefix + "-month"),
-          validateYear(year, prefix + "-year")
-        ).tupled
-          .andThen { case (day, month, year) =>
-            validateLocalDate(prefix, day, month, year)
-          }
-          .map(localDate => Some(DateFilter.DateOnly(localDate)))
-      case (None, None, None, None, None) => Valid(None)
-      case (None, _, _, _, _)             => Invalid(Map(prefix + "-day" -> "Missing day"))
-      case (_, None, _, _, _)             => Invalid(Map(prefix + "-month" -> "Missing month"))
-      case (_, _, None, _, _)             => Invalid(Map(prefix + "-year" -> "Missing year"))
-      case (_, _, _, None, _)             => Invalid(Map(prefix + "-hour" -> "Missing hour"))
-      case (_, _, _, _, None)             => Invalid(Map(prefix + "-minute" -> "Missing minute"))
-    }
 }
