@@ -21,7 +21,7 @@ import cats.data.Validated.{ Invalid, Valid }
 import cats.syntax.eq._
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.data.Forms.{ boolean, optional, text }
+import play.api.data.Forms.{ optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
@@ -30,14 +30,12 @@ import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.history.DateFilter
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesDestination, SdesFilter, SdesSubmissionPageData, SubmissionRef }
 import uk.gov.hmrc.eeittadminfrontend.validators.DateValidator.validateDateFilter
 import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateComponent
-import uk.gov.hmrc.govukfrontend.views.Aliases.{ Button, CheckboxItem, Input, Label, Select, SelectItem, TableRow, Text }
+import uk.gov.hmrc.govukfrontend.views.Aliases.{ Button, Input, Label, Select, SelectItem, TableRow, Text }
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.html.components.GovukDateInput
-import uk.gov.hmrc.govukfrontend.views.viewmodels.checkboxes.Checkboxes
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.dateinput.DateInput
@@ -71,11 +69,9 @@ class SubmissionSdesController @Inject() (
   def sdesSubmissions(
     page: Int,
     isProcessed: Option[Boolean],
-    envelopeId: Option[EnvelopeId],
-    formTemplateId: Option[FormTemplateId],
+    searchKey: Option[String],
     status: Option[NotificationStatus],
     destination: Option[SdesDestination],
-    beforeCreatedAt: Option[Boolean],
     fromDay: Option[String],
     fromMonth: Option[String],
     fromYear: Option[String],
@@ -106,11 +102,9 @@ class SubmissionSdesController @Inject() (
         page,
         pageSize,
         isProcessed,
-        envelopeId,
-        formTemplateId,
+        searchKey,
         status,
         destination,
-        beforeCreatedAt,
         None,
         None
       )
@@ -151,11 +145,9 @@ class SubmissionSdesController @Inject() (
           pagination,
           SdesSubmissionPageData.empty,
           filter.isProcessed,
-          filter.formTemplateId,
+          filter.searchKey,
           filter.status,
-          filter.beforeCreatedAt,
           filter.destination,
-          filter.envelopeId,
           filterTable
         )
       ).pure[Future]
@@ -171,11 +163,9 @@ class SubmissionSdesController @Inject() (
               pagination,
               sdesSubmissionPageData,
               filter.isProcessed,
-              filter.formTemplateId,
+              filter.searchKey,
               filter.status,
-              filter.beforeCreatedAt,
               filter.destination,
-              filter.envelopeId,
               filterTable
             )
           )
@@ -193,8 +183,6 @@ class SubmissionSdesController @Inject() (
     val govukSelect: components.GovukSelect =
       new components.GovukSelect(govukErrorMessage, govukHint, govukLabel)
     val govukButton: components.GovukButton = new components.GovukButton()
-    val govukCheckboxes: components.GovukCheckboxes =
-      new components.GovukCheckboxes(govukErrorMessage, govukFieldset, govukHint, govukLabel)
     val govukDateInput: components.GovukDateInput =
       new GovukDateInput(govukErrorMessage, govukHint, govukFieldset, govukInput)
     val tableAttributes = Map("style" -> "border:none;")
@@ -221,11 +209,18 @@ class SubmissionSdesController @Inject() (
       )
     )
 
-    def tableRow(value: Html) = TableRow(attributes = tableAttributes, content = HtmlContent(value))
+    def tableRow(value: Html, additionalAttributes: Map[String, String] = Map.empty) =
+      TableRow(attributes = tableAttributes ++ additionalAttributes, content = HtmlContent(value))
 
-    val queryByFormTemplateId =
-      tableRow(inputComponent("formTemplateId", "Form Template Id", filter.formTemplateId.map(_.value)))
-    val queryByEnvelopeId = tableRow(inputComponent("envelopeId", "Envelope Id", filter.envelopeId.map(_.value)))
+    val queryBySearchKey =
+      tableRow(
+        inputComponent(
+          "searchKey",
+          "Search key (Envelope Id/Submission Reference/Form Template Id)",
+          filter.searchKey
+        ),
+        additionalAttributes = Map("colspan" -> "2")
+      )
 
     val destinationItems = Seq(
       SelectItem(
@@ -271,22 +266,6 @@ class SubmissionSdesController @Inject() (
       )
     )
 
-    val queryByShowBeforeAt = tableRow(
-      govukCheckboxes(
-        Checkboxes(
-          name = "showBeforeAt",
-          classes = "govuk-checkboxes--small",
-          items = Seq(
-            CheckboxItem(
-              content = Text("Not processed more than 10 hours"),
-              value = "true",
-              checked = filter.beforeCreatedAt.getOrElse(false)
-            )
-          )
-        )
-      )
-    )
-
     val queryFromDate = tableRow(
       govukDateInput(
         fromDateInput
@@ -309,10 +288,10 @@ class SubmissionSdesController @Inject() (
     )
     Table(
       rows = Seq(
-        Seq(queryByEnvelopeId, queryByFormTemplateId),
+        Seq(queryBySearchKey),
         Seq(queryByStatus, queryByDestination),
         Seq(queryFromDate, queryToDate),
-        Seq(queryByShowBeforeAt, queryButton)
+        Seq(queryButton)
       )
     )
   }
@@ -328,7 +307,7 @@ class SubmissionSdesController @Inject() (
         if (status >= 200 && status < 300) {
           Redirect(
             routes.SubmissionSdesController
-              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None)
           )
             .flashing(
               "success" -> s"Envelope successfully notified. Correlation id: ${correlationId.value}, submission id: ${submissionRef.value}"
@@ -336,7 +315,7 @@ class SubmissionSdesController @Inject() (
         } else {
           Redirect(
             routes.SubmissionSdesController
-              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None)
           )
             .flashing(
               "failed" -> s"Unexpected SDES response with correlation id: ${correlationId.value}, submission id: ${submissionRef.value} : ${response.body}"
@@ -396,7 +375,7 @@ class SubmissionSdesController @Inject() (
               .map(httpResponse =>
                 Redirect(
                   routes.SubmissionSdesController
-                    .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None, None, None)
+                    .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
                 )
                   .flashing(
                     "success" -> s"Sdes submission successfully updated."
@@ -405,7 +384,7 @@ class SubmissionSdesController @Inject() (
           case "No" =>
             Redirect(
               routes.SubmissionSdesController
-                .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None, None, None)
+                .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
             )
               .pure[Future]
         }
@@ -415,8 +394,6 @@ class SubmissionSdesController @Inject() (
   private val form: Form[
     (
       Option[String],
-      Option[String],
-      Option[Boolean],
       Option[String],
       Option[String],
       Option[String],
@@ -429,11 +406,9 @@ class SubmissionSdesController @Inject() (
   ] =
     play.api.data.Form(
       Forms.tuple(
-        "formTemplateId"     -> optional(text),
+        "searchKey"          -> optional(text),
         "notificationStatus" -> optional(text),
-        "showBeforeAt"       -> optional(boolean),
         "destination"        -> optional(text),
-        "envelopeId"         -> optional(text),
         "from-day"           -> optional(text),
         "from-month"         -> optional(text),
         "from-year"          -> optional(text),
@@ -450,15 +425,13 @@ class SubmissionSdesController @Inject() (
         _ =>
           Redirect(
             routes.SubmissionSdesController
-              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+              .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None)
           ).pure[Future],
         {
           case (
-                maybeFormTemplateId,
+                maybeSearchKey,
                 maybeStatus,
-                maybeShowBeforeAt,
                 maybeDestination,
-                maybeEnvelopeId,
                 maybeFromDay,
                 maybeFromMonth,
                 maybeFromYear,
@@ -470,11 +443,9 @@ class SubmissionSdesController @Inject() (
               routes.SubmissionSdesController.sdesSubmissions(
                 0,
                 None,
-                maybeEnvelopeId.map(EnvelopeId(_)),
-                maybeFormTemplateId.map(FormTemplateId(_)),
+                maybeSearchKey,
                 maybeStatus.map(NotificationStatus.fromString),
                 maybeDestination.map(SdesDestination.fromString),
-                maybeShowBeforeAt,
                 maybeFromDay,
                 maybeFromMonth,
                 maybeFromYear,
@@ -486,7 +457,7 @@ class SubmissionSdesController @Inject() (
           case _ =>
             Redirect(
               routes.SubmissionSdesController
-                .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None, None, None)
+                .sdesSubmissions(page, None, None, None, None, None, None, None, None, None, None)
             ).pure[Future]
         }
       )

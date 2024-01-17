@@ -479,7 +479,7 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       .doGet(url)
       .map { response =>
         if (response.status == 200) Right(response.json.as[SdesHistoryView])
-        else Left(s"Correlation ${correlationId.value} not found in history")
+        else Left(s"Correlation ${correlationId.value} not found in event history")
       }
       .recover { case ex =>
         Left(s"Unknown problem when trying to retrieve correlationId $correlationId: " + ex.getMessage)
