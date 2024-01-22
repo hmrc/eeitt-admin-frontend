@@ -18,23 +18,19 @@ package uk.gov.hmrc.eeittadminfrontend.models.sdes
 
 import play.api.libs.json.{ Format, Json }
 import uk.gov.hmrc.eeittadminfrontend.history.DateFilter
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
-import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 
 final case class SdesFilter(
   page: Int,
   pageSize: Int,
   isProcessed: Option[Boolean],
-  envelopeId: Option[EnvelopeId],
-  formTemplateId: Option[FormTemplateId],
+  searchKey: Option[String],
   status: Option[NotificationStatus],
   destination: Option[SdesDestination],
-  beforeCreatedAt: Option[Boolean],
   from: Option[DateFilter],
   to: Option[DateFilter]
 )
 
 object SdesFilter {
   implicit val format: Format[SdesFilter] = Json.format[SdesFilter]
-  def empty(page: Int, pageSize: Int) = SdesFilter(page, pageSize, None, None, None, None, None, None, None, None)
+  def empty(page: Int, pageSize: Int) = SdesFilter(page, pageSize, None, None, None, None, None, None)
 }

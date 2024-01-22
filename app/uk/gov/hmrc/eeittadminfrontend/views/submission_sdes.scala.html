@@ -37,15 +37,13 @@
 @(pagination: Pagination,
         sdesSubmissionPageData: SdesSubmissionPageData,
         isProcessed: Option[Boolean],
-        formTemplateId: Option[FormTemplateId],
+        searchKey: Option[String],
         status: Option[NotificationStatus],
-        beforeCreatedAt: Option[Boolean],
         destination: Option[SdesDestination],
-        envelopeId: Option[EnvelopeId],
         searchTable: Table)(implicit messages: Messages, request: Request[_])
 
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, isProcessed, envelopeId, formTemplateId, status, destination, beforeCreatedAt, None, None, None, None, None, None)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(page, isProcessed, searchKey, status, destination,  None, None, None, None, None, None)" class="govuk-link">@label</a>
 }
 
 @main_template(title = s"SDES Submissions", tab = "sdes-submissions") {
