@@ -93,38 +93,42 @@
                 <th class="govuk-table__header" scope="col" title="Mark as processed">Mark as processed</th>
             </tr>
         </thead>
-        <tbody class="govuk-table__body stats-results" style="white-space: nowrap;">
+        <tbody class="govuk-table__body stats-results">
         @for(sdesSubmission <- sdesSubmissionPageData.sdesSubmissions) {
             <tr class="govuk-table__row">
-                <td class="govuk-table__cell">
-                @if(sdesSubmission.destination === SdesDestination.Dms) {
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(sdesSubmission.envelopeId)" class="govuk-link">@{
-                        sdesSubmission.envelopeId.value
-                    }</a>
-                } else {@{sdesSubmission.envelopeId.value}}
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                    @if(sdesSubmission.destination === SdesDestination.Dms) {
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(sdesSubmission.envelopeId)" class="govuk-link">@{
+                            sdesSubmission.envelopeId.value
+                        }</a>
+                    } else {@{sdesSubmission.envelopeId.value}}
+                    </span>
                 </td>
-                <td class="govuk-table__cell">@{sdesSubmission.status.toString}</td>
-                <td class="govuk-table__cell">@{sdesSubmission.submissionRef.value}</td>
-                <td class="govuk-table__cell">@{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}</td>
-                <td class="govuk-table__cell">@{sdesSubmission.formTemplateId.value}</td>
-                <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.showHistory(sdesSubmission.correlationId)" class="govuk-link">@{sdesSubmission.correlationId.value}</a>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.status.toString}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submissionRef.value}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.formTemplateId.value}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.showHistory(sdesSubmission.correlationId)" class="govuk-link">@{sdesSubmission.correlationId.value}</a>
+                    </span>
                 </td>
-                <td class="govuk-table__cell">@{sdesSubmission.numberOfFiles}</td>
-                <td class="govuk-table__cell">@{sdesSubmission.uploadCount}</td>
-                <td class="govuk-table__cell">@{convertToMB(sdesSubmission.size)}</td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.numberOfFiles}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.uploadCount}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{convertToMB(sdesSubmission.size)}</span></td>
                 <td class="govuk-table__cell"><span style="word-break: break-all;">@{sdesSubmission.failureReason}</span></td>
-                <td class="govuk-table__cell">@{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}</td>
-                <td class="govuk-table__cell">@{sdesSubmission.destination}</td>
-                <td class="govuk-table__cell">
-                @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
-                }
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.destination}</span></td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                        @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
+                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.notifySDES(sdesSubmission.correlationId, sdesSubmission.submissionRef, pagination.page)" class="govuk-link">Notify</a>
+                        }
+                    </span>
                 </td>
-                <td class="govuk-table__cell">
-                @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestMark(sdesSubmission.correlationId)" class="govuk-link">Mark as processed</a>
-                }
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                        @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
+                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestMark(sdesSubmission.correlationId)" class="govuk-link">Mark as processed</a>
+                        }
+                    </span>
                 </td>
             </tr>
         }
