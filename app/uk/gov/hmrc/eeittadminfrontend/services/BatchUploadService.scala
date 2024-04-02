@@ -17,11 +17,12 @@
 package uk.gov.hmrc.eeittadminfrontend.services
 
 import akka.stream.Materializer
+
 import javax.inject.Inject
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
+import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, UploadedForm, UploadedFormType }
 
 import java.io.File
 import java.util.zip.ZipFile
@@ -30,30 +31,34 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.jdk.CollectionConverters._
 import akka.stream.scaladsl._
 import cats.effect.{ IO, Resource }
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
 
 class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   ec: ExecutionContext,
   materializer: Materializer
 ) {
 
-  val processedTemplates: mutable.ArrayDeque[(FormTemplateId, String)] = mutable.ArrayDeque()
+  val processedTemplates: mutable.ArrayDeque[UploadedForm] = mutable.ArrayDeque()
   var done = true
 
-  def uploadZip(file: File): Future[List[(FormTemplateId, String)]] = {
+  def uploadZip(file: File): Future[List[UploadedForm]] = {
     processedTemplates.clear()
     done = false
 
-    val flow = Source(loadTeplatesFromZip(file)).mapAsyncUnordered(2) { case (templateId, formData) =>
+    val flowTemplates = Source(loadTemplatesFromZip(file)).mapAsync(2) { case (templateId, formData) =>
       processTemplate(templateId, formData)
     }
 
-    val flowHandlebars = Source(loadHandlebarsTeplatesFromZip(file)).mapAsyncUnordered(2) {
-      case (templateId, formData) =>
-        processHandlebarsTemplate(templateId, formData)
+    val flowHandlebars = Source(loadHandlebarsTemplatesFromZip(file)).mapAsync(2) { case (templateId, formData) =>
+      processHandlebarsTemplate(templateId, formData)
+    }
+
+    val flowHandlebarsSchema = Source(loadHandlebarsSchemasFromZip(file)).mapAsync(2) { case (templateId, formData) =>
+      processHandlebarsSchema(templateId, formData)
     }
 
     //Run flow on background, some form may take up to 60s to load.
-    (flow ++ flowHandlebars)
+    (flowHandlebarsSchema ++ flowHandlebars ++ flowTemplates)
       .runWith(Sink.foreach { data =>
         processedTemplates += data
       })
@@ -63,7 +68,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
 
   }
 
-  private def loadFromZip(file: File, fileExtension: String): List[(FormTemplateId, Array[Byte])] =
+  private def loadFromZip(directory: String, file: File, fileExtension: String): List[(FormTemplateId, Array[Byte])] =
     Resource
       .fromAutoCloseable(IO(new ZipFile(file)))
       .use { zip =>
@@ -73,24 +78,28 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
             .asScala
             .filterNot(_.isDirectory)
             .filter(x => x.getName.endsWith(fileExtension))
+            .filter(_.getName.startsWith(directory))
             .map { zipEntry =>
               val templateFile = Array.fill[Byte](zipEntry.getSize.toInt)(0)
               IOUtils.readFully(zip.getInputStream(zipEntry), templateFile)
-              val formTemplateId = FormTemplateId(zipEntry.getName.replaceAll(fileExtension, ""))
+              val formTemplateId =
+                FormTemplateId(zipEntry.getName.replaceFirst(directory, "").replaceAll(fileExtension, ""))
               (formTemplateId, templateFile)
             }
             .toList
             .sortBy(_._1.value)
-            .reverse
         )
       }
       .unsafeRunSync()
 
-  private def loadTeplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
-    loadFromZip(file, ".json")
+  private def loadTemplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+    loadFromZip(GithubPath.RootPath.zipPath, file, ".json")
 
-  private def loadHandlebarsTeplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
-    loadFromZip(file, ".hbs")
+  private def loadHandlebarsTemplatesFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+    loadFromZip(GithubPath.HandlebarsPath.zipPath, file, ".hbs")
+
+  private def loadHandlebarsSchemasFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
+    loadFromZip(GithubPath.HandlebarsSchemaPath.zipPath, file, ".json")
 
   private def processTemplate(templateId: FormTemplateId, template: Array[Byte]) = {
     val jsonTemplate = Json.parse(template)
@@ -100,10 +109,10 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
         result.fold(err => err, _ => "Ok")
       }
       .map { uploadResult =>
-        (templateId, uploadResult)
+        UploadedForm(templateId, UploadedFormType.FormTemplate, uploadResult)
       }
       .recover { case e: Exception =>
-        (templateId, s"Unable to upload: ${e.getMessage}")
+        UploadedForm(templateId, UploadedFormType.FormTemplate, s"Unable to upload: ${e.getMessage}")
       }
   }
 
@@ -114,10 +123,25 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
         result.fold(err => err, _ => "Ok")
       }
       .map { uploadResult =>
-        (templateId, uploadResult)
+        UploadedForm(templateId, UploadedFormType.Handlebars, uploadResult)
       }
       .recover { case e: Exception =>
-        (templateId, s"Unable to upload: ${e.getMessage}")
+        UploadedForm(templateId, UploadedFormType.Handlebars, s"Unable to upload: ${e.getMessage}")
       }
+
+  private def processHandlebarsSchema(templateId: FormTemplateId, template: Array[Byte]) = {
+    val jsonTemplate = Json.parse(template)
+    gformConnector
+      .saveHandlebarsSchema(templateId, jsonTemplate)
+      .map { result =>
+        result.fold(err => err, _ => "Ok")
+      }
+      .map { uploadResult =>
+        UploadedForm(templateId, UploadedFormType.HandlebarsSchema, uploadResult)
+      }
+      .recover { case e: Exception =>
+        UploadedForm(templateId, UploadedFormType.HandlebarsSchema, s"Unable to upload: ${e.getMessage}")
+      }
+  }
 
 }

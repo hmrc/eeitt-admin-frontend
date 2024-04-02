@@ -23,25 +23,29 @@ POST       /upload-gform-templates                          uk.gov.hmrc.eeittadm
 GET        /upload-gform-templates                          uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.uploadGformTemplatesStatus
 GET        /handlebars-template                             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getHandlebarsTemplate
 POST       /handlebars-template                             uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteHandlebarsTemplate
+GET        /handlebars-schema                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getHandlebarsSchema
+POST       /handlebars-schema                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.deleteHandlebarsSchema
 
 GET        /download/:formTemplateId                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.download(formTemplateId: FormTemplateId)
 GET        /download-handlebars/:formTemplateId             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.downloadHandlebarsTemplate(formTemplateId: FormTemplateId)
+GET        /download-handlebars-schema/:formTemplateId      uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.downloadHandlebarsSchema(formTemplateId: FormTemplateId)
 
-GET        /deployments                                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
-GET        /deployment/home                                 uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentHome
-GET        /deployment/existing/:formTemplateId             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentExisting(formTemplateId: FormTemplateId, filename: Filename)
-POST       /deployment/no-version-change/:formTemplateId    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.confirmNoVersionChange(formTemplateId: FormTemplateId, filename: Filename)
-POST       /deployment/version-change/:formTemplateId       uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.confirmAllowOldVersionJourney(formTemplateId: FormTemplateId, filename: Filename)
-GET        /deployment/new/:formTemplateId                  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename, sha: BlobSha)
-GET        /deployment/deleted/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId, json: Boolean)
-GET        /deployment/history/:formTemplateId/:sha1/:sha2  uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha)
-GET        /deployment/history/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history1(formTemplateId: FormTemplateId)
-POST       /deployment/refresh-cache                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache(redirectUrl: RedirectUrl)
-POST       /deployment/delete/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
-POST       /deployment/delete-handlebars/:formTemplateId    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deleteHandlebarsTemplate(formTemplateId: FormTemplateId)
-POST       /deployment/:filename                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
-GET        /deployment/:filename                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilenameGet(filename: Filename)
-POST       /deployment/cutNewVersion/:formTemplateId        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.cutNewVersion(formTemplateId: FormTemplateId, filename: Filename)
+GET        /deployments                                            uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployments
+GET        /deployment/home                                        uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentHome
+GET        /deployment/existing/:formTemplateId                    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentExisting(formTemplateId: FormTemplateId, filename: Filename)
+POST       /deployment/no-version-change/:formTemplateId           uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.confirmNoVersionChange(formTemplateId: FormTemplateId, filename: Filename)
+POST       /deployment/version-change/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.confirmAllowOldVersionJourney(formTemplateId: FormTemplateId, filename: Filename)
+GET        /deployment/new/:formTemplateId                         uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename, sha: BlobSha)
+GET        /deployment/deleted/:formTemplateId                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId, path: GithubPath)
+GET        /deployment/history/:formTemplateId/:sha1/:sha2         uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha)
+GET        /deployment/history/:formTemplateId                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history1(formTemplateId: FormTemplateId)
+POST       /deployment/refresh-cache                               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache(redirectUrl: RedirectUrl)
+POST       /deployment/delete/:formTemplateId                      uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.delete(formTemplateId: FormTemplateId)
+POST       /deployment/delete-handlebars/:formTemplateId           uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deleteHandlebarsTemplate(formTemplateId: FormTemplateId)
+POST       /deployment/delete-handlebars-schema/:formTemplateId    uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deleteHandlebarsSchema(formTemplateId: FormTemplateId)
+POST       /deployment/:filename                                   uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilename(filename: Filename)
+GET        /deployment/:filename                                   uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilenameGet(filename: Filename)
+POST       /deployment/cutNewVersion/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.cutNewVersion(formTemplateId: FormTemplateId, filename: Filename)
 
 GET         /envelope                        uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelope
 GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showEnvelope(envelopeId: EnvelopeId)

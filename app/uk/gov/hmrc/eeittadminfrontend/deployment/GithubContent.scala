@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
 case class GithubContent(
@@ -24,4 +25,6 @@ case class GithubContent(
   blobSha: BlobSha,
   commitSha: CommitSha,
   path: GithubPath
-)
+) {
+  val fullPath: FullPath = FullPath(s"${asPath(path)}${formTemplateId.value}")
+}

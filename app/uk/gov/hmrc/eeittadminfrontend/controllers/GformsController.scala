@@ -44,6 +44,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.errorsummary.{ ErrorLink, Erro
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import play.api.data.Forms.text
 import play.api.data.Forms
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
 
 import java.io.{ BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream }
 import java.time.Instant
@@ -92,23 +93,30 @@ class GformsController @Inject() (
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private def fileByteData(
-    fileList1: Seq[(FormTemplateId, JsValue)],
-    fileList2: Seq[(FormTemplateId, String)]
+    fileListFormTemplates: Seq[(FormTemplateId, JsValue)],
+    fileListHandlebars: Seq[(FormTemplateId, String)],
+    fileListHandlebarsSchemas: Seq[(FormTemplateId, JsValue)]
   ): ByteArrayInputStream = {
 
     val baos = new ByteArrayOutputStream()
     val zos = new ZipOutputStream(new BufferedOutputStream(baos))
 
     try {
-      fileList1.foreach { case (formTemplateId, formTemplate) =>
-        zos.putNextEntry(new ZipEntry(formTemplateId.value + ".json"))
+      fileListFormTemplates.foreach { case (formTemplateId, formTemplate) =>
+        zos.putNextEntry(new ZipEntry(GithubPath.RootPath.zipPath + formTemplateId.value + ".json"))
         zos.write(Json.prettyPrint(formTemplate).getBytes())
         zos.closeEntry()
       }
 
-      fileList2.foreach { case (formTemplateId, formTemplate) =>
-        zos.putNextEntry(new ZipEntry(formTemplateId.value + ".hbs"))
+      fileListHandlebars.foreach { case (formTemplateId, formTemplate) =>
+        zos.putNextEntry(new ZipEntry(GithubPath.HandlebarsPath.zipPath + formTemplateId.value + ".hbs"))
         zos.write(formTemplate.getBytes())
+        zos.closeEntry()
+      }
+
+      fileListHandlebarsSchemas.foreach { case (formTemplateId, formTemplate) =>
+        zos.putNextEntry(new ZipEntry(GithubPath.HandlebarsSchemaPath.zipPath + formTemplateId.value + ".json"))
+        zos.write(Json.prettyPrint(formTemplate).getBytes())
         zos.closeEntry()
       }
     } finally zos.close()
@@ -120,7 +128,7 @@ class GformsController @Inject() (
     authAction.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s" $username ask for all templates as a zip blob")
-      val blobFuture: Future[Seq[(FormTemplateId, JsValue)]] =
+      val blobTemplates: Future[Seq[(FormTemplateId, JsValue)]] =
         gformConnector.getAllGformsTemplates.flatMap {
           case JsArray(templates) =>
             val formTemplateIds = templates.collect {
@@ -152,13 +160,31 @@ class GformsController @Inject() (
             }
           case _ => Future.successful(Seq.empty)
         }
+      val blobHandlebarsSchemas: Future[Seq[(FormTemplateId, JsValue)]] =
+        gformConnector.getAllHandlebarsSchemas.flatMap {
+          case templates: JsArray =>
+            val formTemplateIds = templates.value.collect { case JsString(template) =>
+              FormTemplateId(template)
+            }
+            Future.traverse(formTemplateIds.toSeq) { formTemplateId =>
+              gformConnector
+                .getHandlebarsSchema(formTemplateId)
+                .map(_.map(_.schema))
+                .map {
+                  case Right(formTemplate) => (formTemplateId, formTemplate)
+                  case Left(error)         => (formTemplateId, JsString(error))
+                }
+            }
+          case _ => Future.successful(Seq.empty)
+        }
       for {
-        blobs      <- blobFuture
-        handlebars <- blobHandlebars
+        handlebarsSchemas <- blobHandlebarsSchemas
+        handlebars        <- blobHandlebars
+        templates         <- blobTemplates
       } yield {
         val now = Instant.now()
         Ok.chunked(
-          StreamConverters.fromInputStream(() => fileByteData(blobs, handlebars))
+          StreamConverters.fromInputStream(() => fileByteData(templates, handlebars, handlebarsSchemas))
         ).withHeaders(
           CONTENT_TYPE -> "application/zip",
           CONTENT_DISPOSITION ->
@@ -190,12 +216,14 @@ class GformsController @Inject() (
       val username = request.retrieval.value
       logger.info(s"$username Queried for all form templates")
       for {
-        templates  <- gformConnector.getAllGformsTemplates
-        handlebars <- gformConnector.getAllHandlebarsTemplates
+        templates        <- gformConnector.getAllGformsTemplates
+        handlebars       <- gformConnector.getAllHandlebarsTemplates
+        handlebarsSchema <- gformConnector.getAllHandlebarsSchemas
       } yield {
         val mergedJson = Json.obj(
           "formTemplates"       -> Json.toJsFieldJsValueWrapper(templates),
-          "handlebarsTemplates" -> Json.toJsFieldJsValueWrapper(handlebars)
+          "handlebarsTemplates" -> Json.toJsFieldJsValueWrapper(handlebars),
+          "handlebarsSchemas"   -> Json.toJsFieldJsValueWrapper(handlebarsSchema)
         )
         Ok(mergedJson)
       }
@@ -207,15 +235,21 @@ class GformsController @Inject() (
       logger.info(s"$username Reload all form templates")
 
       for {
-        maybeTemplateIds           <- gformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
+        maybeHandlebarsSchemaIds   <- gformConnector.getAllHandlebarsSchemas.map(_.as[List[FormTemplateId]])
         maybeHandlebarsTemplateIds <- gformConnector.getAllHandlebarsTemplates.map(_.as[List[FormTemplateId]])
-        result                     <- fetchAndSave(maybeTemplateIds.filterNot(_.value.startsWith("specimen-")), maybeHandlebarsTemplateIds)
+        maybeTemplateIds           <- gformConnector.getAllGformsTemplates.map(_.as[List[FormTemplateId]])
+        result <- fetchAndSave(
+                    maybeTemplateIds.filterNot(_.value.startsWith("specimen-")),
+                    maybeHandlebarsTemplateIds,
+                    maybeHandlebarsSchemaIds
+                  )
       } yield Ok(Json.toJson(result))
     }
 
   def fetchAndSave(
     formTemplateIds: List[FormTemplateId],
-    maybeHandlebarsTemplateIds: List[FormTemplateId]
+    maybeHandlebarsTemplateIds: List[FormTemplateId],
+    maybeHandlebarsSchemaIds: List[FormTemplateId]
   )(implicit request: AuthenticatedRequest[AnyContent, Retrieval.Username]): Future[RefreshResult] = {
     val username = request.retrieval.value
 
@@ -250,10 +284,29 @@ class GformsController @Inject() (
           } yield result
       }
 
+    val handlebarsSchemaResult: Future[RefreshTemplateResults] =
+      maybeHandlebarsSchemaIds.foldLeft(Future.successful(RefreshTemplateResults.empty)) {
+        case (resultsAcc, formTemplateId) =>
+          logger.info(s"$username Refreshing formTemplateId: $formTemplateId")
+          for {
+            results         <- resultsAcc
+            templateOrError <- gformConnector.getHandlebarsSchema(formTemplateId).map(_.map(_.schema))
+            resultTemplates <- templateOrError match {
+                                 case Left(error)   => Future.successful(Left(error))
+                                 case Right(schema) => gformConnector.saveHandlebarsSchema(formTemplateId, schema)
+                               }
+            _ = logger.info(s"$username Refreshing formTemplateId: $formTemplateId finished: $resultTemplates")
+            result <- processResult(formTemplateId, results, resultTemplates)
+          } yield result
+      }
+
     for {
-      templatesResults  <- templatesResult
-      handlebarsResults <- handlebarsResult
-    } yield RefreshTemplateResults(templatesResults.results ++ handlebarsResults.results)
+      templatesResults       <- templatesResult
+      handlebarsResults      <- handlebarsResult
+      handlebarsSchemaResult <- handlebarsSchemaResult
+    } yield RefreshTemplateResults(
+      templatesResults.results ++ handlebarsResults.results ++ handlebarsSchemaResult.results
+    )
   }
 
   private def processResult(
@@ -533,7 +586,13 @@ class GformsController @Inject() (
   )
 
   val handlebarsForm: Form[FormTemplateId] = Form(
-    mapping("formTemplateId" -> text)(FormTemplateId.apply)(
+    mapping("handlebarsTemplateId" -> text)(FormTemplateId.apply)(
+      FormTemplateId.unapply
+    )
+  )
+
+  val handlebarsSchemaForm: Form[FormTemplateId] = Form(
+    mapping("handlebarsSchemaId" -> text)(FormTemplateId.apply)(
       FormTemplateId.unapply
     )
   )
@@ -566,6 +625,40 @@ class GformsController @Inject() (
           handlebarsId => {
             logger.info(s"$username deleted ${handlebarsId.value} ")
             gformConnector.deleteHandlebarsTemplate(handlebarsId).map { deleteResults =>
+              Ok(Json.toJson(deleteResults))
+            }
+          }
+        )
+    }
+
+  def getHandlebarsSchema =
+    authAction.async { implicit request =>
+      val username = request.retrieval.value
+      handlebarsSchemaForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
+          handlebarsSchemaId => {
+            logger.info(s"$username Queried for ${handlebarsSchemaId.value}")
+            gformConnector.getHandlebarsSchema(handlebarsSchemaId).map {
+              case Left(ex) =>
+                Ok(s"Problem when fetching form template: ${handlebarsSchemaId.value}. Reason: $ex")
+              case Right(r) => Ok(Json.prettyPrint(r.schema))
+            }
+          }
+        )
+    }
+
+  def deleteHandlebarsSchema =
+    authAction.async { implicit request =>
+      val username = request.retrieval.value
+      handlebarsSchemaForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
+          handlebarsSchemaId => {
+            logger.info(s"$username deleted ${handlebarsSchemaId.value} ")
+            gformConnector.deleteHandlebarsSchema(handlebarsSchemaId).map { deleteResults =>
               Ok(Json.toJson(deleteResults))
             }
           }

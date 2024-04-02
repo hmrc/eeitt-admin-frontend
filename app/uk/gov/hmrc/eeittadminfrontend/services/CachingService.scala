@@ -76,7 +76,7 @@ class CachingService @Inject() (githubService: GithubService) {
       val githubPath = GithubPath(githubTemplate.path)
       val blobSha = BlobSha(githubTemplate.sha)
       (
-        githubService.retrieveFormTemplate(filename, blobSha),
+        githubService.retrieveFormTemplate(filename, blobSha, githubPath),
         githubService.getCommitByPath(githubPath)
       ).parMapN { case ((formTemplateId, contentValue), commit) =>
         val githubContent = GithubContent(
@@ -84,7 +84,7 @@ class CachingService @Inject() (githubService: GithubService) {
           contentValue,
           blobSha,
           CommitSha(commit.sha),
-          GithubPath(githubTemplate.path)
+          githubPath
         )
         logger.info(s"Adding ${filename.value} - ${githubContent.formTemplateId} to cache")
         cache.put(filename, githubContent)

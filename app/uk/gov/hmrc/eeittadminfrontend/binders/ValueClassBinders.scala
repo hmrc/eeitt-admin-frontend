@@ -19,7 +19,8 @@ package uk.gov.hmrc.eeittadminfrontend.binders
 import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
-import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.history.HistoryId
 import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, FormTemplateRawId, ShutterMessageId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
@@ -35,6 +36,12 @@ object ValueClassBinders {
   implicit val formIdBinder: PathBindable[FormId] = valueClassBinder(_.value)
   implicit val bannerIdBinder: PathBindable[BannerId] = valueClassBinder(_.value)
   implicit val shutterMessageIdBinder: PathBindable[ShutterMessageId] = valueClassBinder(_.value)
+
+  implicit val githubPathBinder: QueryStringBindable[GithubPath] = new QueryStringBindable[GithubPath] {
+    override def unbind(key: String, githubPath: GithubPath): String = asPath(githubPath)
+    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GithubPath]] =
+      params.get(key).flatMap(_.headOption).map(value => Right(GithubPath(value)))
+  }
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(
     uri => Uri.fromString(uri).toOption.get,

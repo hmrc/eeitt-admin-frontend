@@ -43,16 +43,21 @@ class GithubService @Inject() (githubConnector: GithubConnector) {
 
   def getCommit(commitSha: CommitSha): EitherT[IO, String, RefCommit] = EitherT(githubConnector.getCommit(commitSha))
 
-  def retrieveFormTemplate(filename: Filename, sha: BlobSha): EitherT[IO, String, (FormTemplateId, ContentValue)] =
+  def retrieveFormTemplate(
+    filename: Filename,
+    sha: BlobSha,
+    githubPath: GithubPath
+  ): EitherT[IO, String, (FormTemplateId, ContentValue)] =
     getBlob(filename, sha).flatMap { content =>
       logger.debug(s"Downloading url blob $sha from Github Completed")
 
-      val formTemplateId: Either[DecodingFailure, FormTemplateId] =
-        if (filename.isJson) {
-          content.jsonContent.hcursor.downField("_id").as[String].map(FormTemplateId.apply)
-        } else {
-          FormTemplateId(filename.name).asRight
+      val formTemplateId: Either[DecodingFailure, FormTemplateId] = {
+        githubPath match {
+          case GithubPath.RootPath =>
+            content.jsonContent.hcursor.downField("_id").as[String].map(FormTemplateId.apply)
+          case _ => FormTemplateId(filename.name).asRight
         }
+      }
 
       val githubContent: Either[String, (FormTemplateId, ContentValue)] = formTemplateId.bimap(
         _.getMessage(),

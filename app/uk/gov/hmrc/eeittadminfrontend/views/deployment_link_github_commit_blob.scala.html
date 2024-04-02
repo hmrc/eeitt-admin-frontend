@@ -16,6 +16,7 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.deployment.{Filename, CommitSha}
 @import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
+@import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
 @import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
 
 @(authorization: Authorization,
@@ -26,6 +27,6 @@
 
 <a target="_blank"
    title="Show Github content"
-   href="https://github.com/@authorization.repoOwner/@authorization.repoName/blob/@commitSha.value/@path.value">
+   href="https://github.com/@authorization.repoOwner/@authorization.repoName/blob/@commitSha.value/@asPath(path)">
     @filename.value
 </a>

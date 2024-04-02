@@ -167,7 +167,7 @@
         <h2 class="govuk-heading-m">Find a Handlebars Template</h2>
         @govukInput(Input(
             id = "value",
-            name = "formTemplateId",
+            name = "handlebarsTemplateId",
             label = Label(
             isPageHeading = true,
             classes = "govuk-label--s",
@@ -183,12 +183,44 @@
         <h2 class="govuk-heading-m">Delete A Handlebars Template</h2>
         @govukInput(Input(
             id = "value",
-            name = "formTemplateId",
+            name = "handlebarsTemplateId",
             label = Label(
             isPageHeading = true,
             classes = "govuk-label--s",
             content = Text("Handlebars Template ID:")
         )))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Delete")
+        ))
+    }
+
+    @formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getHandlebarsSchema) {
+        <h2 class="govuk-heading-m">Find a Handlebars Schema</h2>
+        @govukInput(Input(
+            id = "value",
+            name = "handlebarsSchemaId",
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Handlebars Schema ID:")
+            )))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Search")
+        ))
+    }
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteHandlebarsSchema) {
+        <h2 class="govuk-heading-m">Delete A Handlebars Schema</h2>
+        @govukInput(Input(
+            id = "value",
+            name = "handlebarsSchemaId",
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Handlebars Schema ID:")
+            )))
         @govukButton(Button(
             preventDoubleClick = Some(true),
             content = Text("Delete")

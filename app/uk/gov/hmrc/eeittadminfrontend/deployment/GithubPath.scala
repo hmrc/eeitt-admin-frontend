@@ -16,4 +16,32 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
-case class GithubPath(value: String)
+import cats.Eq
+
+sealed trait GithubPath extends Product with Serializable
+object GithubPath {
+  case object HandlebarsPath extends GithubPath {
+    val zipPath = "handlebars/"
+  }
+
+  case object HandlebarsSchemaPath extends GithubPath {
+    val zipPath = "handlebarsSchemas/"
+  }
+
+  case object RootPath extends GithubPath {
+    val zipPath = "formTemplates/"
+  }
+
+  def asPath(path: GithubPath): String = path match {
+    case HandlebarsPath       => "handlebars/"
+    case HandlebarsSchemaPath => "jsonSchemas/"
+    case RootPath             => ""
+  }
+
+  def apply(path: String): GithubPath = path match {
+    case _ if path.startsWith("handlebars/")  => HandlebarsPath
+    case _ if path.startsWith("jsonSchemas/") => HandlebarsSchemaPath
+    case _                                    => RootPath
+  }
+  implicit val equal: Eq[GithubPath] = Eq.fromUniversalEquals
+}

@@ -21,11 +21,13 @@ import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
 sealed trait Reconciliation extends Product with Serializable {
   def formTemplateId: FormTemplateId
+  def path: GithubPath
 }
 
 object Reconciliation {
-  case class New(formTemplateId: FormTemplateId, filename: Filename, call: Call) extends Reconciliation
-  case class Existing(formTemplateId: FormTemplateId, filename: Filename, call: Call, inSync: Boolean)
+  case class New(formTemplateId: FormTemplateId, path: GithubPath, filename: Filename, call: Call)
       extends Reconciliation
-  case class Deleted(formTemplateId: FormTemplateId, call: Call) extends Reconciliation
+  case class Existing(formTemplateId: FormTemplateId, path: GithubPath, filename: Filename, call: Call, inSync: Boolean)
+      extends Reconciliation
+  case class Deleted(formTemplateId: FormTemplateId, path: GithubPath, call: Call) extends Reconciliation
 }

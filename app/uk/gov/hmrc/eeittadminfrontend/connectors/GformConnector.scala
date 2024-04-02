@@ -22,10 +22,9 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
-import uk.gov.hmrc.eeittadminfrontend.models.CircePlayHelpers
+import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
@@ -378,6 +377,46 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     wsHttp.GET[JsArray](gformUrl + s"/formtemplates-with-handlebars/$formTemplateId")
+
+  def getAllHandlebarsSchemas(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    wsHttp.GET[JsArray](gformUrl + "/handlebars-schemas")
+
+  def getHandlebarsSchema(
+    formTemplateId: FormTemplateId
+  )(implicit ec: ExecutionContext): Future[Either[String, HandlebarsSchema]] = {
+    val url = gformUrl + s"/handlebars-schemas/${formTemplateId.value}"
+    wsHttp
+      .doGet(url)
+      .map { response =>
+        if (response.status == 200) Right(response.json.as[HandlebarsSchema])
+        else Left(s"Handlebars schema ${formTemplateId.value} not found")
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve handlebars schema $formTemplateId: " + ex.getMessage)
+      }
+  }
+
+  def saveHandlebarsSchema(formTemplateId: FormTemplateId, schema: JsValue)(implicit
+    ec: ExecutionContext
+  ): Future[Either[String, Unit]] =
+    wsHttp
+      .doPost[JsValue](gformUrl + s"/handlebars-schemas/${formTemplateId.value}", schema, List.empty[(String, String)])
+      .map { response =>
+        if (response.status == 204)
+          Right(())
+        else
+          Left((Json.parse(response.body) \ "error").as[String])
+      }
+      .recover { case ex =>
+        val message = s"Unknown problem when trying to save handlebars schema $formTemplateId: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+
+  def deleteHandlebarsSchema(
+    formTemplateId: FormTemplateId
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResult] =
+    wsHttp.DELETE[DeleteResult](gformUrl + s"/handlebars-schemas/${formTemplateId.value}")
 
   def getEnvelopeById(
     envelopeId: EnvelopeId

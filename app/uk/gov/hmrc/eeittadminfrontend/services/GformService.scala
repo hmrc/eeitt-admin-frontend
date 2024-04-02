@@ -22,12 +22,12 @@ import cats.syntax.all._
 
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.libs.json.{ JsArray, JsString }
+import play.api.libs.json.{ JsArray, JsString, JsValue }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.ContentValue.JsonContent
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ ContentValue, Filename, GithubContent, MongoContent }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ ContentValue, Filename, GithubContent, GithubPath, MongoContent }
 import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, DeleteResult, DeleteResults, FormTemplateId }
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -55,7 +55,11 @@ class GformService @Inject() (gformConnector: GformConnector) {
     logger.debug(s"Loading $formTemplateId from MongoDB")
     gformConnector
       .getGformsTemplate(formTemplateId)
-      .map(_.map(json => MongoContent(formTemplateId, JsonContent(CircePlayHelpers.playToCirceUnsafe(json)))))
+      .map(
+        _.map(json =>
+          MongoContent(formTemplateId, JsonContent(CircePlayHelpers.playToCirceUnsafe(json)), GithubPath.RootPath)
+        )
+      )
   }
 
   def saveTemplate(
@@ -87,15 +91,27 @@ class GformService @Inject() (gformConnector: GformConnector) {
     )
   )
 
+  def saveHandlebarsSchema(
+    formTemplateId: FormTemplateId,
+    payload: JsValue
+  )(implicit
+    ec: ExecutionContext
+  ): EitherT[Future, String, Unit] = EitherT(
+    gformConnector.saveHandlebarsSchema(
+      formTemplateId,
+      payload
+    )
+  )
+
   def getRawHandlebarsTemplate(
     formTemplateId: FormTemplateId
   )(implicit
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
-    logger.debug(s"Loading ${formTemplateId.value} from MongoDB")
+    logger.debug(s"Loading raw handlebars template ${formTemplateId.value} from MongoDB")
     gformConnector
       .getRawHandlebarsTemplate(formTemplateId)
-      .map(_.map(res => MongoContent(formTemplateId, ContentValue.TextContent(res))))
+      .map(_.map(res => MongoContent(formTemplateId, ContentValue.TextContent(res), GithubPath.HandlebarsPath)))
   }
 
   def getHandlebarsTemplate(
@@ -103,10 +119,10 @@ class GformService @Inject() (gformConnector: GformConnector) {
   )(implicit
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
-    logger.debug(s"Loading ${formTemplateId.value} from MongoDB")
+    logger.debug(s"Loading handlebars template ${formTemplateId.value} handlebars from MongoDB")
     gformConnector
       .getHandlebarsTemplate(formTemplateId)
-      .map(_.map(res => MongoContent(formTemplateId, ContentValue.TextContent(res))))
+      .map(_.map(res => MongoContent(formTemplateId, ContentValue.TextContent(res), GithubPath.HandlebarsPath)))
   }
 
   def deleteHandlebarsTemplate(
@@ -115,7 +131,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[DeleteResult] = {
-    logger.debug(s"Loading ${formTemplateId.value} from MongoDB")
+    logger.debug(s"Deleting handlebars template ${formTemplateId.value} from MongoDB")
     gformConnector
       .deleteHandlebarsTemplate(formTemplateId)
   }
@@ -125,6 +141,20 @@ class GformService @Inject() (gformConnector: GformConnector) {
     hc: HeaderCarrier
   ): Future[Either[String, List[FormTemplateId]]] =
     gformConnector.getAllHandlebarsTemplates.map {
+      case JsArray(templates) =>
+        val templateIds = templates.collect { case JsString(template) =>
+          FormTemplateId(template)
+        }
+        Right(templateIds.toList)
+      case _ =>
+        Right(List.empty[FormTemplateId])
+    }
+
+  def getAllHandlebarsSchemas(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): Future[Either[String, List[FormTemplateId]]] =
+    gformConnector.getAllHandlebarsSchemas.map {
       case JsArray(templates) =>
         val templateIds = templates.collect { case JsString(template) =>
           FormTemplateId(template)
@@ -159,33 +189,65 @@ class GformService @Inject() (gformConnector: GformConnector) {
         Future.successful(Right(List.empty[FormTemplateId]))
       }
 
+  def getHandlebarsSchema(
+    formTemplateId: FormTemplateId
+  )(implicit
+    ec: ExecutionContext
+  ): Future[Either[String, MongoContent]] = {
+    logger.debug(s"Loading ${formTemplateId.value} handlebars schema from MongoDB")
+    gformConnector
+      .getHandlebarsSchema(formTemplateId)
+      .map(
+        _.map(res =>
+          MongoContent(
+            formTemplateId,
+            ContentValue.JsonContent(CircePlayHelpers.playToCirceUnsafe(res.schema)),
+            GithubPath.HandlebarsSchemaPath
+          )
+        )
+      )
+  }
+
+  def deleteHandlebarsSchema(formTemplateId: FormTemplateId)(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): Future[DeleteResult] = {
+    logger.debug(s"Deleting handlebars schema ${formTemplateId.value} from MongoDB")
+    gformConnector
+      .deleteHandlebarsSchema(formTemplateId)
+  }
+
   def retrieveContentsForHandlebars(
     formTemplateId: FormTemplateId,
     githubContents: List[(Filename, GithubContent)],
-    isJson: Boolean
+    githubPath: GithubPath
   )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Either[String, (List[MongoContent], List[(Filename, GithubContent)])]] =
-    if (isJson) {
-      (for {
-        templateHandlebarsIds <- EitherT(getHandlebarsTemplateIds(formTemplateId))
-        mongoHandlebarsIds    <- EitherT(getAllHandlebarsTemplates)
-        handlebars =
-          templateHandlebarsIds
-            .traverse(handlebarsTemplateId => mongoHandlebarsIds.find(_ === handlebarsTemplateId))
-            .getOrElse(List.empty[FormTemplateId])
-        mongoContentsForHandlebars <- handlebars.traverse(id => EitherT(getRawHandlebarsTemplate(id)))
-        res <- EitherT.fromEither[Future] {
-                 mongoContentsForHandlebars
-                   .traverse { id =>
-                     githubContents
-                       .find(_._1.value === s"${id.formTemplateId.value}.hbs")
-                       .map(_._2)
-                       .toRight(s"Github content not found for handlebars template with ID: ${id.formTemplateId.value}")
-                   }
-               }
-        githubContents2 = res.map(g => (Filename(s"${g.formTemplateId.value}.hbs") -> g))
-      } yield mongoContentsForHandlebars -> githubContents2).value
-    } else Future.successful(Right((List.empty[MongoContent], List.empty[(Filename, GithubContent)])))
+    githubPath match {
+      case GithubPath.HandlebarsPath =>
+        (for {
+          templateHandlebarsIds <- EitherT(getHandlebarsTemplateIds(formTemplateId))
+          mongoHandlebarsIds    <- EitherT(getAllHandlebarsTemplates)
+          handlebars =
+            templateHandlebarsIds
+              .traverse(handlebarsTemplateId => mongoHandlebarsIds.find(_ === handlebarsTemplateId))
+              .getOrElse(List.empty[FormTemplateId])
+          mongoContentsForHandlebars <- handlebars.traverse(id => EitherT(getRawHandlebarsTemplate(id)))
+          res <- EitherT.fromEither[Future] {
+                   mongoContentsForHandlebars
+                     .traverse { id =>
+                       githubContents
+                         .find(_._1.value === s"${id.formTemplateId.value}.hbs")
+                         .map(_._2)
+                         .toRight(
+                           s"Github content not found for handlebars template with ID: ${id.formTemplateId.value}"
+                         )
+                     }
+                 }
+          githubContents2 = res.map(g => (Filename(s"${g.formTemplateId.value}.hbs") -> g))
+        } yield mongoContentsForHandlebars -> githubContents2).value
+      case _ => Future.successful(Right((List.empty[MongoContent], List.empty[(Filename, GithubContent)])))
+    }
 }
