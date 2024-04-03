@@ -31,11 +31,12 @@ import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.mvc.{ AnyContent, Call, MessagesControllerComponents, Request, Result }
 import play.twirl.api.{ Html, HtmlFormat }
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
 
 import scala.concurrent.{ ExecutionContext, Future }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, GithubContent, MongoContent, Reconciliation, ReconciliationLookup }
+import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, FullPath, GithubContent, GithubPath, MongoContent, Reconciliation, ReconciliationLookup }
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
-import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
+import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId, Username }
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
@@ -84,6 +85,13 @@ class DeploymentController @Inject() (
     EitherT(gformService.getHandlebarsTemplate(formTemplateId)).fold(
       error => Ok(s"Problem when fetching handlebars template: ${formTemplateId.value}. Reason: $error"),
       mongoContent => Ok(handlebars_template(formTemplateId, Html(mongoContent.content.textContent)))
+    )
+  }
+
+  def downloadHandlebarsSchema(formTemplateId: FormTemplateId) = authAction.async { request =>
+    EitherT(gformService.getHandlebarsSchema(formTemplateId)).fold(
+      error => Ok(s"Problem when fetching handlebars schema: ${formTemplateId.value}. Reason: $error"),
+      mongoContent => Ok(PrettyPrintJson.asString(mongoContent.content.jsonContent))
     )
   }
 
@@ -216,11 +224,16 @@ class DeploymentController @Inject() (
       commitSha = githubContent.commitSha
     )
 
-    val saveResult = githubContent.content match {
-      case ContentValue.JsonContent(json) =>
-        gformService.saveTemplate(githubContent.formTemplateId, json)
-      case ContentValue.TextContent(payload) =>
-        gformService.saveHandlebarsTemplate(githubContent.formTemplateId, payload)
+    val saveResult = githubContent.path match {
+      case GithubPath.RootPath =>
+        gformService.saveTemplate(githubContent.formTemplateId, githubContent.content.jsonContent)
+      case GithubPath.HandlebarsPath =>
+        gformService.saveHandlebarsTemplate(githubContent.formTemplateId, githubContent.content.textContent)
+      case GithubPath.HandlebarsSchemaPath =>
+        gformService.saveHandlebarsSchema(
+          githubContent.formTemplateId,
+          CircePlayHelpers.circeToPlayUnsafe(githubContent.content.jsonContent)
+        )
     }
 
     val saveDeployment =
@@ -264,9 +277,24 @@ class DeploymentController @Inject() (
     authAction.async { implicit request =>
       withLastCommit { lastCommitCheck =>
         withGithubContentFromCache(filename) { githubContent =>
+          val mongoContent = githubContent.path match {
+            case GithubPath.RootPath             => gformService.getFormTemplate(formTemplateId)
+            case GithubPath.HandlebarsPath       => gformService.getRawHandlebarsTemplate(formTemplateId)
+            case GithubPath.HandlebarsSchemaPath => gformService.getHandlebarsSchema(formTemplateId)
+          }
+
+          val downloadAction = githubContent.path match {
+            case GithubPath.RootPath =>
+              routes.DeploymentController.download(formTemplateId)
+            case GithubPath.HandlebarsPath =>
+              routes.DeploymentController.downloadHandlebarsTemplate(formTemplateId)
+            case GithubPath.HandlebarsSchemaPath =>
+              routes.DeploymentController.downloadHandlebarsSchema(formTemplateId)
+          }
+          val downloadLink =
+            uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId, downloadAction)
           (
-            if (filename.isJson) EitherT(gformService.getFormTemplate(formTemplateId))
-            else EitherT(gformService.getRawHandlebarsTemplate(formTemplateId)),
+            EitherT(mongoContent),
             githubService.getCommit(githubContent.commitSha).mapK(ioToFuture),
             EitherT.right[String](deploymentService.find(formTemplateId)),
             EitherT.liftF[Future, String, Either[String, Unit]](
@@ -274,7 +302,7 @@ class DeploymentController @Inject() (
             ),
             EitherT(
               gformService
-                .retrieveContentsForHandlebars(formTemplateId, cachingService.githubContents, filename.isJson)
+                .retrieveContentsForHandlebars(formTemplateId, cachingService.githubContents, githubContent.path)
             )
           ).parMapN {
             case (
@@ -282,9 +310,9 @@ class DeploymentController @Inject() (
                   commit,
                   deploymentRecords,
                   validationResult,
-                  (mongoTemplateHandelbars, githubContentHandelbars)
+                  (mongoTemplateHandlebars, githubContentHandlebars)
                 ) =>
-              val formActionOrError: Either[Call, String] = if (filename.isJson) {
+              val formActionOrError: Either[Call, String] = if (githubContent.path === GithubPath.RootPath) {
                 val maybeMongoVersion: Option[Int] = getTemplateVersion(mongoTemplate.content.jsonContent).toOption
 
                 val maybeGithubVersion: Option[Int] = getTemplateVersion(githubContent.content.jsonContent).toOption
@@ -318,13 +346,8 @@ class DeploymentController @Inject() (
               val diff = DiffMaker.getDiff(filename, mongoTemplate, githubContent, diffConfig.timeout)
               val inSync = DiffMaker.inSync(mongoTemplate, githubContent)
               val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
-              val downloadLink = if (filename.isJson) {
-                uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId)
-              } else {
-                uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_handlebars(formTemplateId)
-              }
               val reconciliationLookup: ReconciliationLookup =
-                toReconciliationLookup(mongoTemplateHandelbars, githubContentHandelbars)
+                toReconciliationLookup(mongoTemplateHandlebars, githubContentHandlebars)
 
               Ok(
                 deployment_existing(
@@ -379,20 +402,44 @@ class DeploymentController @Inject() (
       }
     }
 
-  def deploymentDeleted(formTemplateId: FormTemplateId, isJson: Boolean = false) = authAction.async {
-    implicit request =>
-      val downloadLink = if (isJson) {
-        uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_gform(formTemplateId)
-      } else {
-        uk.gov.hmrc.eeittadminfrontend.views.html.deployment_link_download_handlebars(formTemplateId)
+  def deleteHandlebarsSchema(formTemplateId: FormTemplateId) =
+    authAction.async { implicit request =>
+      val username = request.retrieval.value
+      logger.info(s"$username is deleting ${formTemplateId.value}")
+      gformService.deleteHandlebarsSchema(formTemplateId).map { deleteResult =>
+        logger.info(s"$username deleted ${formTemplateId.value}: $deleteResult")
+        Ok(Json.toJson(deleteResult))
       }
+    }
 
-      val deleteAction = if (isJson) {
+  def deploymentDeleted(formTemplateId: FormTemplateId, githubPath: GithubPath) = authAction.async { implicit request =>
+    val downloadLink = githubPath match {
+      case GithubPath.RootPath =>
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .deployment_link_download_gform(formTemplateId, routes.DeploymentController.download(formTemplateId))
+      case GithubPath.HandlebarsPath =>
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .deployment_link_download_gform(
+            formTemplateId,
+            routes.DeploymentController.downloadHandlebarsTemplate(formTemplateId)
+          )
+      case GithubPath.HandlebarsSchemaPath =>
+        uk.gov.hmrc.eeittadminfrontend.views.html
+          .deployment_link_download_gform(
+            formTemplateId,
+            routes.DeploymentController.downloadHandlebarsSchema(formTemplateId)
+          )
+    }
+
+    val deleteAction = githubPath match {
+      case GithubPath.RootPath =>
         uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId)
-      } else {
+      case GithubPath.HandlebarsPath =>
         uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deleteHandlebarsTemplate(formTemplateId)
-      }
-      Ok(deployment_deleted(formTemplateId, downloadLink, deleteAction)).pure[Future]
+      case GithubPath.HandlebarsSchemaPath =>
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deleteHandlebarsSchema(formTemplateId)
+    }
+    Ok(deployment_deleted(formTemplateId, downloadLink, deleteAction)).pure[Future]
   }
 
   def deploymentNew(
@@ -469,13 +516,19 @@ class DeploymentController @Inject() (
             logger.info(s"$username Loading ${mongoTemplateIds.size} templates from MongoDB")
             EitherT(gformService.getAllHandlebarsTemplates)
           }
+          mongoHandlebarsSchemaIds <- {
+            logger.info(s"$username Loading ${mongoHandlebarsIds.size} handlebar templates from MongoDB")
+            EitherT(gformService.getAllHandlebarsSchemas)
+          }
           mongoContentsForTemplate <- {
-            logger.info(s"$username Loading ${mongoHandlebarsIds.size} handlebars templates from MongoDB")
+            logger.info(s"$username Loading ${mongoHandlebarsSchemaIds.size} handlebar schemas from MongoDB")
             mongoTemplateIds.parTraverse(formTemplateId => EitherT(gformService.getFormTemplate(formTemplateId)))
           }
           mongoContentsForHandlebars <-
             mongoHandlebarsIds.parTraverse(id => EitherT(gformService.getRawHandlebarsTemplate(id)))
-          mongoTemplates = mongoContentsForTemplate ++ mongoContentsForHandlebars
+          mongoContentsForHandlebarsSchema <-
+            mongoHandlebarsSchemaIds.parTraverse(id => EitherT(gformService.getHandlebarsSchema(id)))
+          mongoTemplates = mongoContentsForTemplate ++ mongoContentsForHandlebars ++ mongoContentsForHandlebarsSchema
           reconciliationLookup = toReconciliationLookup(mongoTemplates, cachingService.githubContents)
         } yield Ok(
           deploymentsView(
@@ -494,8 +547,8 @@ class DeploymentController @Inject() (
     githubTemplates: List[(Filename, GithubContent)]
   ): ReconciliationLookup = {
 
-    val mongoLookup: Map[FormTemplateId, MongoContent] =
-      mongoTemplates.map(a => a.formTemplateId -> a).toMap
+    val mongoLookup: Map[FullPath, MongoContent] =
+      mongoTemplates.map(a => a.fullPath -> a).toMap
 
     val reconciliations: List[Reconciliation] = githubTemplates.map { case (filename, githubContent) =>
       reconciliation(
@@ -508,36 +561,56 @@ class DeploymentController @Inject() (
     val n: List[Reconciliation.New] = reconciliations.collect { case r: Reconciliation.New => r }
     val e: List[Reconciliation.Existing] = reconciliations.collect { case r: Reconciliation.Existing => r }
 
-    val allGithubTemplatesId: List[FormTemplateId] = reconciliations.map(_.formTemplateId)
+    val allGithubFullPaths: List[FullPath] =
+      reconciliations.map(r => FullPath(s"${asPath(r.path)}${r.formTemplateId.value}"))
     val deletedTemplates: List[Reconciliation.Deleted] =
       mongoLookup.keys.toList
-        .filter(ftId => !allGithubTemplatesId.contains_(ftId))
+        .filter(fPath => !allGithubFullPaths.contains_(fPath))
         .sortBy(_.value)
-        .map(formTemplateId =>
-          mongoLookup.get(formTemplateId).map(_.content) match {
-            case Some(ContentValue.JsonContent(_)) =>
+        .map(fullPath =>
+          mongoLookup.get(fullPath).map(_.path) match {
+            case Some(GithubPath.RootPath) =>
+              val formTemplateId = FormTemplateId(fullPath.value)
               Reconciliation
-                .Deleted(formTemplateId, routes.DeploymentController.deploymentDeleted(formTemplateId, true))
-            case Some(ContentValue.TextContent(_)) =>
+                .Deleted(
+                  formTemplateId,
+                  GithubPath.RootPath,
+                  routes.DeploymentController.deploymentDeleted(formTemplateId, GithubPath.RootPath)
+                )
+            case Some(GithubPath.HandlebarsPath) =>
+              val formTemplateId = FormTemplateId(fullPath.value.replaceFirst(asPath(GithubPath.HandlebarsPath), ""))
               Reconciliation
-                .Deleted(formTemplateId, routes.DeploymentController.deploymentDeleted(formTemplateId, false))
-            case None => throw new RuntimeException(s"Content not found for form template: $formTemplateId")
+                .Deleted(
+                  formTemplateId,
+                  GithubPath.HandlebarsPath,
+                  routes.DeploymentController.deploymentDeleted(formTemplateId, GithubPath.HandlebarsPath)
+                )
+            case Some(GithubPath.HandlebarsSchemaPath) =>
+              val formTemplateId = FormTemplateId(fullPath.value.replaceFirst(asPath(GithubPath.HandlebarsPath), ""))
+              Reconciliation
+                .Deleted(
+                  formTemplateId,
+                  GithubPath.HandlebarsSchemaPath,
+                  routes.DeploymentController.deploymentDeleted(formTemplateId, GithubPath.HandlebarsSchemaPath)
+                )
+            case None => throw new RuntimeException(s"Content not found for form template: ${fullPath.value}")
           }
         )
     ReconciliationLookup(n.groupBy(_.formTemplateId), e.groupBy(_.formTemplateId), deletedTemplates)
   }
 
   private def reconciliation(
-    mongoLookup: Map[FormTemplateId, MongoContent],
+    mongoLookup: Map[FullPath, MongoContent],
     githubContent: GithubContent,
     filename: Filename
   ): Reconciliation = {
-
     val formTemplateId = githubContent.formTemplateId
-    mongoLookup.get(formTemplateId) match {
+    val fullPath = githubContent.fullPath
+    mongoLookup.get(fullPath) match {
       case None =>
         Reconciliation.New(
           formTemplateId,
+          githubContent.path,
           filename,
           routes.DeploymentController.deploymentNew(
             formTemplateId,
@@ -546,14 +619,28 @@ class DeploymentController @Inject() (
           )
         )
       case Some(mongoContent) =>
-        val inSync = DiffMaker.inSync(mongoContent, githubContent)
-        Reconciliation.Existing(
-          formTemplateId,
-          filename,
-          routes.DeploymentController
-            .deploymentExisting(formTemplateId, filename),
-          inSync
-        )
+        if (mongoContent.path === githubContent.path) {
+          val inSync = DiffMaker.inSync(mongoContent, githubContent)
+          Reconciliation.Existing(
+            formTemplateId,
+            githubContent.path,
+            filename,
+            routes.DeploymentController
+              .deploymentExisting(formTemplateId, filename),
+            inSync
+          )
+        } else {
+          Reconciliation.New(
+            formTemplateId,
+            githubContent.path,
+            filename,
+            routes.DeploymentController.deploymentNew(
+              formTemplateId,
+              filename,
+              githubContent.blobSha
+            )
+          )
+        }
     }
   }
 

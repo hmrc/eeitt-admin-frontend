@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 
-case class MongoContent(formTemplateId: FormTemplateId, content: ContentValue)
+case class MongoContent(formTemplateId: FormTemplateId, content: ContentValue, path: GithubPath) {
+  val fullPath: FullPath = FullPath(s"${asPath(path)}${formTemplateId.value}")
+}

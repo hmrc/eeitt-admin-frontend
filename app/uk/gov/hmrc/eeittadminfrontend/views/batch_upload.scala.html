@@ -18,7 +18,7 @@
   main_template: main_template
 )
 
-@(uploadedForms: List[(FormTemplateId, String)], done: Boolean)(implicit request: Request[_], messages: Messages)
+@(uploadedForms: List[UploadedForm], done: Boolean)(implicit request: Request[_], messages: Messages)
 
 @main_template(title = "Gform", tab = "gforms") {
 
@@ -39,14 +39,16 @@
         <thead class="govuk-table__head">
             <tr class="govuk-table__row">
                 <th class="govuk-table__header" scope="col">Form id</th>
+                <th class="govuk-table__header" scope="col">Type</th>
                 <th class="govuk-table__header" scope="col">Upload Status</th>
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
-        @for(form <- uploadedForms.sortBy(_._1.value)) {
+        @for(form <- uploadedForms) {
             <tr class="govuk-table__row">
-                <td class="govuk-table__cell">@form._1</td>
-                <td class="govuk-table__cell">@form._2</td>
+                <td class="govuk-table__cell">@form.formTemplateId</td>
+                <td class="govuk-table__cell">@form.uploadedFormType.value</td>
+                <td class="govuk-table__cell">@form.status</td>
             </tr>
         }
         </tbody>

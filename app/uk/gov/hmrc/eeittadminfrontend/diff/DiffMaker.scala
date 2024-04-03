@@ -28,7 +28,8 @@ import scala.concurrent.{ Await, ExecutionContext, Future, TimeoutException }
 
 object DiffMaker {
 
-  def inSync(mongo: MongoContent, github: GithubContent): Boolean = mongo.content === github.content
+  def inSync(mongo: MongoContent, github: GithubContent): Boolean =
+    mongo.content === github.content && mongo.path === github.path
 
   def getDiff(
     originalFilename: String,

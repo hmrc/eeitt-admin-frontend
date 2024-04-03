@@ -28,6 +28,8 @@ import org.http4s.{ Header, Request, Uri }
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.{ Client, JavaNetClientBuilder }
 import org.slf4j.{ Logger, LoggerFactory }
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
+
 import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, CommitSha, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.models.github.Authorization
@@ -79,7 +81,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
       scheme = Some(Uri.Scheme.https),
       authority = Some(Uri.Authority(host = Uri.RegName("api.github.com"))),
       path = s"repos/$repoOwner/$repoName/commits"
-    ).withQueryParam("path", githubPath.value)
+    ).withQueryParam("path", asPath(githubPath))
 
     httpClient
       .expect[List[Commit]](
@@ -114,9 +116,13 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
       }
 
     val searchResults: IO[GHResponse[NonEmptyList[Content]]] = for {
-      resultForRoot       <- gh.repos.getContents(repoOwner, repoName, ".", main)
-      resultForHandleBars <- gh.repos.getContents(repoOwner, repoName, "handlebars", main)
-    } yield combineGHResponses(resultForRoot, resultForHandleBars)
+      resultForRoot              <- gh.repos.getContents(repoOwner, repoName, ".", main)
+      resultForHandleBars        <- gh.repos.getContents(repoOwner, repoName, "handlebars", main)
+      resultForHandleBarsSchemas <- gh.repos.getContents(repoOwner, repoName, "jsonSchemas", main)
+    } yield {
+      val combineWithHandleBars = combineGHResponses(resultForRoot, resultForHandleBars)
+      combineGHResponses(combineWithHandleBars, resultForHandleBarsSchemas)
+    }
 
     searchResults.map { response =>
       response.result match {
@@ -125,7 +131,7 @@ class GithubConnector @Inject() (authorization: Authorization, proxyProvider: Pr
             githubExtensions.exists(content.name.endsWith)
           }
           val maybeJsons: Option[NonEmptyList[Content]] = NonEmptyList.fromList(jsonFiles)
-          maybeJsons.fold(logError[NonEmptyList[Content]]("No json file found."))(Right(_))
+          maybeJsons.fold(logError[NonEmptyList[Content]]("No json/hbs file found."))(Right(_))
         case Left(e) =>
           logError(s"Templates search failed because ${e.getMessage}", e)
       }
