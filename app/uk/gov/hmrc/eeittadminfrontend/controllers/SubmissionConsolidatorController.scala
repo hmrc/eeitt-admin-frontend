@@ -47,12 +47,12 @@ class SubmissionConsolidatorController @Inject() (
   )
 
   def submissionConsolidatorPage() =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       Future.successful(Ok(submission_consolidator(manualConsolidationForm)))
     }
 
   def consolidate() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval.value
       manualConsolidationForm
         .bindFromRequest()

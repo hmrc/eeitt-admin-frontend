@@ -34,7 +34,7 @@ class ShutterFormTemplateController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def delete(formTemplateId: FormTemplateId) =
-    authAction.async { request =>
+    authorizedDelete.async { request =>
       gformConnector.deleteShutterFormTemplate(formTemplateId).map { maybeShutter =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter
@@ -43,7 +43,7 @@ class ShutterFormTemplateController @Inject() (
     }
 
   def save(shutterMessageId: ShutterMessageId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val formTemplateIds =
         request.body.asFormUrlEncoded.map(_.tail.flatMap(_._2).toList).fold(List.empty[FormTemplateId]) {
           formTemplateIds => formTemplateIds.map(FormTemplateId.apply)

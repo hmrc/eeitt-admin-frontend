@@ -34,7 +34,7 @@ class LegacyFormsController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val pageSize = 100
-  def legacyForms(page: Int) = authAction.async { implicit request =>
+  def legacyForms(page: Int) = authorizedRead.async { implicit request =>
     gformConnector.getFormTemplatesRedirects(page, pageSize).map { pageData =>
       val pagination =
         Pagination(pageData.count, page, pageData.formRedirects.size, pageSize)

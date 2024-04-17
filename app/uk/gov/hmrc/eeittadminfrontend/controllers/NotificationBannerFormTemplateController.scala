@@ -34,7 +34,7 @@ class NotificationBannerFormTemplateController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def delete(formTemplateId: FormTemplateId) =
-    authAction.async { request =>
+    authorizedDelete.async { request =>
       gformConnector.deleteNotificationBannerFormTemplate(formTemplateId).map { maybeNotificationBanner =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
@@ -43,7 +43,7 @@ class NotificationBannerFormTemplateController @Inject() (
     }
 
   def save(bannerId: BannerId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val formTemplateIds =
         request.body.asFormUrlEncoded.map(_.tail.flatMap(_._2).toList).fold(List.empty[FormTemplateId]) {
           formTemplateIds => formTemplateIds.map(FormTemplateId.apply)

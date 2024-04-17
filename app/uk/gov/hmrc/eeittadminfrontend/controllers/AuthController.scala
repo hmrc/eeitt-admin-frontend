@@ -29,7 +29,7 @@ class AuthController @Inject() (
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def login: Action[AnyContent] =
-    authAction { request =>
+    authorizedRead { request =>
       val username = request.retrieval.value
       logger.info(s"User '$username' logged in")
       Redirect(routes.GformsController.gformPage)

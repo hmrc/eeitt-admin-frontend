@@ -79,7 +79,7 @@ class SubmissionSdesController @Inject() (
     toMonth: Option[String],
     toYear: Option[String]
   ) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val answers: Map[String, String] = Map(
         "from-day"   -> fromDay.getOrElse(""),
         "from-month" -> fromMonth.getOrElse(""),
@@ -297,7 +297,7 @@ class SubmissionSdesController @Inject() (
   }
 
   def notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval
       logger.info(
         s"${username.value} sends a notification to SDES for correlation id ${correlationId.value}, submission id  ${submissionRef.value}"
@@ -325,7 +325,7 @@ class SubmissionSdesController @Inject() (
     }
 
   def requestMark(correlationId: CorrelationId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("markParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
           (
@@ -360,7 +360,7 @@ class SubmissionSdesController @Inject() (
     )
   )
 
-  def confirmMark(correlationId: CorrelationId) = authAction.async { implicit request =>
+  def confirmMark(correlationId: CorrelationId) = authorizedWrite.async { implicit request =>
     formMark
       .bindFromRequest()
       .fold(
@@ -418,7 +418,7 @@ class SubmissionSdesController @Inject() (
       )
     )
 
-  def requestSearch(page: Int) = authAction.async { implicit request =>
+  def requestSearch(page: Int) = authorizedRead.async { implicit request =>
     form
       .bindFromRequest()
       .fold(
@@ -464,7 +464,7 @@ class SubmissionSdesController @Inject() (
   }
 
   def showHistory(correlationId: CorrelationId) =
-    authAction.async { _ =>
+    authorizedRead.async { _ =>
       gformConnector.getSdesHistoryById(correlationId).map {
         case Right(payload) => Ok(Json.prettyPrint(Json.toJson(payload)))
         case Left(error)    => BadRequest(error)

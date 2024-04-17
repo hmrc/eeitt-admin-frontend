@@ -48,12 +48,12 @@ class FileUploadController @Inject() (
   )
 
   def fileUpload() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       Future.successful(Ok(file_upload(envelopeIdForm)))
     }
 
   private def WithUserLogin(f: (EnvelopeId, Retrieval.Username) => HeaderCarrier => Future[Result]) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       envelopeIdForm
         .bindFromRequest()
         .fold(
@@ -72,7 +72,7 @@ class FileUploadController @Inject() (
     }
 
   def showEnvelope(envelopeId: EnvelopeId) =
-    authAction.async { request =>
+    authorizedRead.async { request =>
       fileUploadConnector.getEnvelopeById(envelopeId).map {
         case Right(payload) => Ok(Json.prettyPrint(payload))
         case Left(error)    => BadRequest(error)
@@ -80,7 +80,7 @@ class FileUploadController @Inject() (
     }
 
   def downloadEnvelope(envelopeId: EnvelopeId) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username Download an envelopeId $envelopeId")
       fileUploadConnector.downloadEnvelopeId(envelopeId).map {

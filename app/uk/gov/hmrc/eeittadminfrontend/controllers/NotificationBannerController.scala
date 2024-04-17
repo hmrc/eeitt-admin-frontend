@@ -45,14 +45,14 @@ class NotificationBannerController @Inject() (
   val formNotificationBannerForSpecificForm: Form[String] = Form(Forms.single("messageForTemplate" -> text))
 
   def notificationBanner() =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       gformConnector.findNotificationBanner().map { notificationBanners =>
         Ok(notification_banner(notificationBanners, None))
       }
     }
 
   def deleteNotificationBanner(bannerId: BannerId) =
-    authAction.async { request =>
+    authorizedDelete.async { request =>
       gformConnector.deleteNotificationBanner(bannerId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner
@@ -61,7 +61,7 @@ class NotificationBannerController @Inject() (
     }
 
   def saveNotificationBanner() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       formNotificationBanner
         .bindFromRequest()
         .fold(
@@ -90,7 +90,7 @@ class NotificationBannerController @Inject() (
     }
 
   def saveNotificationBannerForTemplate() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       formNotificationBannerForSpecificForm
         .bindFromRequest()
         .fold(
@@ -119,7 +119,7 @@ class NotificationBannerController @Inject() (
     }
 
   def addFormTemplate(bannerId: BannerId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       for {
         excludeFormTemplateIds <- gformConnector.findNotificationBanner().map(_.flatMap(_.formTemplateIds))
         res <- gformConnector.getAllGformsTemplates.map {

@@ -52,7 +52,7 @@ class DmsWorkItemController @Inject() (
     formTemplateId: Option[FormTemplateId],
     status: Option[ProcessingStatus]
   ) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       gformConnector.searchDmsWorkItem(page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
         val pagination = Pagination(sdesWorkItemPageData.count, page, sdesWorkItemPageData.count.toInt, pageSize)
         Ok(dms_workitem(pagination, sdesWorkItemPageData, formTemplateId, status))
@@ -60,7 +60,7 @@ class DmsWorkItemController @Inject() (
     }
 
   def enqueue(page: Int, id: String, submissionRef: SubmissionRef) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval
       logger.info(s"${username.value} sends a reprocess request for $id, submission id: ${submissionRef.value}")
       gformConnector.enqueueDmsWorkItem(id).map { response =>
@@ -80,7 +80,7 @@ class DmsWorkItemController @Inject() (
     }
 
   def requestRemoval(id: String) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
           (
@@ -115,7 +115,7 @@ class DmsWorkItemController @Inject() (
     )
   )
 
-  def confirmRemoval(id: String) = authAction.async { implicit request =>
+  def confirmRemoval(id: String) = authorizedDelete.async { implicit request =>
     formRemoval
       .bindFromRequest()
       .fold(
@@ -146,7 +146,7 @@ class DmsWorkItemController @Inject() (
     )
   )
 
-  def requestSearch(page: Int) = authAction.async { implicit request =>
+  def requestSearch(page: Int) = authorizedRead.async { implicit request =>
     form
       .bindFromRequest()
       .fold(
