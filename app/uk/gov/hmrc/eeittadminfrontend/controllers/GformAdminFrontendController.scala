@@ -26,13 +26,22 @@ abstract class GformAdminFrontendController(
   messagesControllerComponents: MessagesControllerComponents
 ) extends FrontendController(messagesControllerComponents) {
 
-  def authAction = frontendAuthComponents
-    .authorizedAction(
-      continueUrl = routes.AuthController.login,
-      predicate = Predicate.Permission(
-        Resource(ResourceType("eeitt-admin-frontend"), ResourceLocation("*")),
-        IAAction("*")
-      ),
-      retrieval = Retrieval.username
-    )
+  private val readAction = IAAction("READ")
+  private val writeAction = IAAction("WRITE")
+  private val deleteAction = IAAction("DELETE")
+  def authorizedRead = authAction("*", readAction)
+  def authorizedWrite = authAction("*", writeAction)
+  def authorizedDelete = authAction("*", deleteAction)
+
+  private def authAction =
+    (location: String, action: IAAction) =>
+      frontendAuthComponents
+        .authorizedAction(
+          continueUrl = routes.AuthController.login,
+          predicate = Predicate.Permission(
+            Resource(ResourceType("eeitt-admin-frontend"), ResourceLocation(location)),
+            action
+          ),
+          retrieval = Retrieval.username
+        )
 }

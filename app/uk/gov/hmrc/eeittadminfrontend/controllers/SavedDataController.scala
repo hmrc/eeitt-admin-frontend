@@ -39,7 +39,7 @@ class SavedDataController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def savedData() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       gformConnector.getAllSavedVersions.flatMap { allSavedVersions =>
         gformConnector.getAllGformsTemplates.map {
           case JsArray(formTemplateIds) =>
@@ -65,7 +65,7 @@ class SavedDataController @Inject() (
   )
 
   def findSavedData(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       for {
         formTemplate <- gformConnector.getGformsTemplate(formTemplateId)
         savedData    <- gformConnector.getFormCount(formTemplateId)
@@ -123,7 +123,7 @@ class SavedDataController @Inject() (
     }
 
   def findSavedDataDetails(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       gformConnector.getFormDetailCount(formTemplateId).map { case savedDataDetails =>
         Ok(saved_data_details(formTemplateId, savedDataDetails))
       }

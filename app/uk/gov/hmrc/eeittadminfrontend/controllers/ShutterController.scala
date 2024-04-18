@@ -46,14 +46,14 @@ class ShutterController @Inject() (
   val formShutterForSpecificForm: Form[String] = Form(Forms.single("messageForTemplate" -> text))
 
   def shutter(): mvc.Action[mvc.AnyContent] =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       gformConnector.findShutter().map { shutters =>
         Ok(shutter(shutters, Option.empty[ErrorMessage]))
       }
     }
 
   def deleteShutter(shutterMessageId: ShutterMessageId) =
-    authAction.async { request =>
+    authorizedWrite.async { request =>
       gformConnector.deleteShutter(shutterMessageId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter
@@ -62,7 +62,7 @@ class ShutterController @Inject() (
     }
 
   def saveShutter() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       formShutter
         .bindFromRequest()
         .fold(
@@ -91,7 +91,7 @@ class ShutterController @Inject() (
     }
 
   def saveShutterForTemplate() =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       formShutterForSpecificForm
         .bindFromRequest()
         .fold(
@@ -120,7 +120,7 @@ class ShutterController @Inject() (
     }
 
   def addFormTemplate(shutterMessageId: ShutterMessageId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       for {
         excludeFormTemplateIds <- gformConnector.findShutter().map(_.flatMap(_.formTemplateIds))
         res <- gformConnector.getAllGformsTemplates.map {

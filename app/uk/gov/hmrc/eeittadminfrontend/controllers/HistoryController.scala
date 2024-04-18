@@ -52,7 +52,7 @@ class HistoryController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport
     with Circe {
 
-  def history() = authAction.async { implicit request =>
+  def history() = authorizedRead.async { implicit request =>
     Future.successful(Ok(history_landing()))
   }
 
@@ -68,7 +68,7 @@ class HistoryController @Inject() (
     toHour: Option[String],
     toMinute: Option[String]
   ) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val answers: Map[String, String] = Map(
         "from-day"    -> fromDay.getOrElse(""),
         "from-month"  -> fromMonth.getOrElse(""),
@@ -133,7 +133,7 @@ class HistoryController @Inject() (
       }
     }
 
-  def historyByDateTimePost() = authAction.async { implicit request =>
+  def historyByDateTimePost() = authorizedRead.async { implicit request =>
     val answers: Map[String, String] = request.body.asFormUrlEncoded
       .map(_.collect {
         case (field, value :: _) if value.trim.nonEmpty =>
@@ -192,13 +192,13 @@ class HistoryController @Inject() (
       )
     }
 
-  def historyByFormTemplateId() = authAction.async { implicit request =>
+  def historyByFormTemplateId() = authorizedRead.async { implicit request =>
     gformConnector.historyAllTemplateIds.map { allIds =>
       Ok(history_by_form_template_id(allIds))
     }
   }
 
-  def diffFor1(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId) = authAction.async { implicit request =>
+  def diffFor1(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId) = authorizedRead.async { implicit request =>
     for {
       historyOverviews <- gformConnector.historyOverviewForTemplateId(formTemplateRawId)
       historyTemplate1 <- gformConnector.historyTemplate(historyId1)
@@ -226,8 +226,8 @@ class HistoryController @Inject() (
     }
   }
 
-  def diffFor2(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId, historyId2: HistoryId) = authAction.async {
-    implicit request =>
+  def diffFor2(formTemplateRawId: FormTemplateRawId, historyId1: HistoryId, historyId2: HistoryId) =
+    authorizedRead.async { implicit request =>
       for {
         historyOverviews  <- gformConnector.historyOverviewForTemplateId(formTemplateRawId)
         historyTemplate1  <- gformConnector.historyTemplate(historyId1)
@@ -270,7 +270,7 @@ class HistoryController @Inject() (
 
         Ok(history_of(formTemplateRawId, table, controlPanel, diffHtml))
       }
-  }
+    }
 
   private def fromDateTimeComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
     dateTimeComponent("from", "Templates created after date", answers, errors)
@@ -281,24 +281,25 @@ class HistoryController @Inject() (
   /*
    * Receives historyId and determine what historyId comes next (if any) and display the diff.
    */
-  def historyDwim(formTemplateRawId: FormTemplateRawId, historyId: HistoryId) = authAction.async { implicit request =>
-    gformConnector.nextHistoryId(formTemplateRawId, historyId).map { maybeHistoryId =>
-      maybeHistoryId match {
-        case Some(nextHistoryId) =>
-          Redirect(
-            routes.HistoryController
-              .diffFor2(formTemplateRawId, historyId, nextHistoryId)
-              .withFragment(historyId.value)
-          )
-        case None =>
-          Redirect(
-            routes.HistoryController.diffFor1(formTemplateRawId, historyId).withFragment(historyId.value)
-          )
+  def historyDwim(formTemplateRawId: FormTemplateRawId, historyId: HistoryId) = authorizedRead.async {
+    implicit request =>
+      gformConnector.nextHistoryId(formTemplateRawId, historyId).map { maybeHistoryId =>
+        maybeHistoryId match {
+          case Some(nextHistoryId) =>
+            Redirect(
+              routes.HistoryController
+                .diffFor2(formTemplateRawId, historyId, nextHistoryId)
+                .withFragment(historyId.value)
+            )
+          case None =>
+            Redirect(
+              routes.HistoryController.diffFor1(formTemplateRawId, historyId).withFragment(historyId.value)
+            )
+        }
       }
-    }
   }
 
-  def historyOverviewFor(formTemplateRawId: FormTemplateRawId) = authAction.async { implicit request =>
+  def historyOverviewFor(formTemplateRawId: FormTemplateRawId) = authorizedRead.async { implicit request =>
     gformConnector.historyOverviewForTemplateId(formTemplateRawId).map { historyOverviews =>
       historyOverviews match {
         case first :: second :: _ =>
@@ -322,7 +323,7 @@ class HistoryController @Inject() (
     }
   }
 
-  def open(historyId: HistoryId) = authAction.async { implicit request =>
+  def open(historyId: HistoryId) = authorizedRead.async { implicit request =>
     gformConnector.historyTemplate(historyId).map(historyTemplate => Ok(historyTemplate.value.spaces2))
   }
 

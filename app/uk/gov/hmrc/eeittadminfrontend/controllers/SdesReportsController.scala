@@ -54,7 +54,7 @@ class SdesReportsController @Inject() (
     status: Option[NotificationStatus],
     showBeforeAt: Option[Boolean]
   ) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       connector
         .getSdesSubmissions(page, pageSize, processed, status, showBeforeAt)
         .map { sdesReportPageData =>
@@ -73,7 +73,7 @@ class SdesReportsController @Inject() (
     }
 
   def notifySDES(correlationId: CorrelationId, submissionRef: SubmissionRef, page: Int) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval
       logger.info(
         s"${username.value} sends a notification to SDES for correlation id ${correlationId.value}, submission id  ${submissionRef.value}"
@@ -95,7 +95,7 @@ class SdesReportsController @Inject() (
     }
 
   def requestMark(correlationId: CorrelationId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("markParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
           (
@@ -130,7 +130,7 @@ class SdesReportsController @Inject() (
     )
   )
 
-  def confirmMark(correlationId: CorrelationId) = authAction.async { implicit request =>
+  def confirmMark(correlationId: CorrelationId) = authorizedWrite.async { implicit request =>
     formMark
       .bindFromRequest()
       .fold(
@@ -161,7 +161,7 @@ class SdesReportsController @Inject() (
     )
   )
 
-  def requestSearch(page: Int) = authAction.async { implicit request =>
+  def requestSearch(page: Int) = authorizedRead.async { implicit request =>
     form
       .bindFromRequest()
       .fold(

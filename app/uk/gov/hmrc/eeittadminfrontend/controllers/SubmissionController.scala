@@ -44,7 +44,7 @@ class SubmissionController @Inject() (
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def submissions() =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       gformConnector.getAllGformsTemplates.map {
         case JsArray(formTemplateIds) =>
           val ftIds: Seq[FormTemplateId] = formTemplateIds.collect {
@@ -59,7 +59,7 @@ class SubmissionController @Inject() (
     Ordering.by(_.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli())
 
   def submission(formTemplateId: FormTemplateId, page: Int) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval.value
       val checkedPage = Math.max(0, page)
       logger.info(s"$username looking at submissions for $formTemplateId page $checkedPage")

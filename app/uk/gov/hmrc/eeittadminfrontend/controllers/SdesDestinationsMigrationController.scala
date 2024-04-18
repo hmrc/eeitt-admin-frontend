@@ -42,55 +42,56 @@ class SdesDestinationsMigrationController @Inject() (
     )
   )
 
-  def sdesDestinationsMigration(error: Option[String], success: Option[String]) = authAction.async { implicit request =>
-    gformConnector
-      .sdesDestinationsStats()
-      .map { stats =>
-        val statsRows = stats.map { stat =>
-          sdesDestinationRow(
-            stat.destination,
-            stat.count
-          )
-        }
-        val head = Some(
-          Seq(
-            HeadCell(
-              content = Text("Destination")
-            ),
-            HeadCell(
-              content = Text("Number of sdes submissions")
+  def sdesDestinationsMigration(error: Option[String], success: Option[String]) = authorizedWrite.async {
+    implicit request =>
+      gformConnector
+        .sdesDestinationsStats()
+        .map { stats =>
+          val statsRows = stats.map { stat =>
+            sdesDestinationRow(
+              stat.destination,
+              stat.count
+            )
+          }
+          val head = Some(
+            Seq(
+              HeadCell(
+                content = Text("Destination")
+              ),
+              HeadCell(
+                content = Text("Number of sdes submissions")
+              )
             )
           )
-        )
-        val versionedTable = Table(
-          rows = statsRows,
-          head = head
-        )
-
-        val errorBanner = error.map { e =>
-          NotificationBanner(
-            title = Text("Migration failure"),
-            content = HtmlContent(e),
-            bannerType = Some("failure"),
-            role = Some("alert")
+          val versionedTable = Table(
+            rows = statsRows,
+            head = head
           )
-        }
 
-        val successBanner = success.map { e =>
-          NotificationBanner(
-            title = Text("Migration succeed"),
-            content = HtmlContent(e),
-            bannerType = Some("success"),
-            role = Some("alert")
-          )
-        }
+          val errorBanner = error.map { e =>
+            NotificationBanner(
+              title = Text("Migration failure"),
+              content = HtmlContent(e),
+              bannerType = Some("failure"),
+              role = Some("alert")
+            )
+          }
 
-        Ok(sdes_submissions_migration(versionedTable, errorBanner, successBanner))
-      }
+          val successBanner = success.map { e =>
+            NotificationBanner(
+              title = Text("Migration succeed"),
+              content = HtmlContent(e),
+              bannerType = Some("success"),
+              role = Some("alert")
+            )
+          }
+
+          Ok(sdes_submissions_migration(versionedTable, errorBanner, successBanner))
+        }
   }
 
   def runMigration() =
-    authAction.async { request =>
+    authorizedWrite.async { request =>
       gformConnector
         .runSdesMigration()
         .map { sdesReportPageData =>
@@ -105,7 +106,7 @@ class SdesDestinationsMigrationController @Inject() (
     }
 
   def rollbackMigration() =
-    authAction.async { request =>
+    authorizedDelete.async { request =>
       gformConnector
         .rollbackSdesMigration()
         .map { sdesReportPageData =>

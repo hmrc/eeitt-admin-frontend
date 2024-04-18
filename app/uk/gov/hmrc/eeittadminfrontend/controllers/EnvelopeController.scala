@@ -48,12 +48,12 @@ class EnvelopeController @Inject() (
   )
 
   def envelope() =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       Future.successful(Ok(envelope_html(envelopeIdForm)))
     }
 
   private def WithUserLogin(f: (EnvelopeId, Retrieval.Username) => HeaderCarrier => Future[Result]) =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       envelopeIdForm
         .bindFromRequest()
         .fold(
@@ -73,7 +73,7 @@ class EnvelopeController @Inject() (
     }
 
   def showEnvelope(envelopeId: EnvelopeId) =
-    authAction.async { request =>
+    authorizedRead.async { request =>
       displayEnvelope(envelopeId)
     }
 

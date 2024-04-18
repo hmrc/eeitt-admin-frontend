@@ -38,14 +38,14 @@ class StuckFormsController @Inject() (
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def stuckForms() =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       gformConnector.getSignedFormsDetails.map { signedFormDetails =>
         Ok(stuck_forms(signedFormDetails))
       }
     }
 
   def releaseForm(formId: FormId, envelopeId: EnvelopeId) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval
       logger.info(s"$username changing formId: ${formId.value}, envelopeId: ${envelopeId.value} status to InProgress")
       gformConnector.unstuckForm(formId).map { httpResponse =>
@@ -55,7 +55,7 @@ class StuckFormsController @Inject() (
     }
 
   def deleteForm(formId: FormId, envelopeId: EnvelopeId) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval
       logger.info(s"$username deleting formId: ${formId.value}, envelopeId: ${envelopeId.value}")
       gformConnector.deleteForm(formId).map { httpResponse =>

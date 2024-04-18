@@ -74,21 +74,21 @@ class DeploymentController @Inject() (
     def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
   }
 
-  def download(formTemplateId: FormTemplateId) = authAction.async { request =>
+  def download(formTemplateId: FormTemplateId) = authorizedRead.async { request =>
     EitherT(gformService.getFormTemplate(formTemplateId)).fold(
       error => Ok(s"Problem when fetching form template: $formTemplateId. Reason: $error"),
       mongoContent => Ok(PrettyPrintJson.asString(mongoContent.content.jsonContent))
     )
   }
 
-  def downloadHandlebarsTemplate(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
+  def downloadHandlebarsTemplate(formTemplateId: FormTemplateId) = authorizedRead.async { implicit request =>
     EitherT(gformService.getHandlebarsTemplate(formTemplateId)).fold(
       error => Ok(s"Problem when fetching handlebars template: ${formTemplateId.value}. Reason: $error"),
       mongoContent => Ok(handlebars_template(formTemplateId, Html(mongoContent.content.textContent)))
     )
   }
 
-  def downloadHandlebarsSchema(formTemplateId: FormTemplateId) = authAction.async { request =>
+  def downloadHandlebarsSchema(formTemplateId: FormTemplateId) = authorizedRead.async { request =>
     EitherT(gformService.getHandlebarsSchema(formTemplateId)).fold(
       error => Ok(s"Problem when fetching handlebars schema: ${formTemplateId.value}. Reason: $error"),
       mongoContent => Ok(PrettyPrintJson.asString(mongoContent.content.jsonContent))
@@ -129,7 +129,7 @@ class DeploymentController @Inject() (
     }
   }
 
-  def history1(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
+  def history1(formTemplateId: FormTemplateId) = authorizedRead.async { implicit request =>
     deploymentService.find(formTemplateId).flatMap { deploymentRecords =>
       val deploymentDiffs = mkDeploymentDiff(deploymentRecords)
       val (sha1, sha2) = deploymentDiffs.head.toSha
@@ -137,7 +137,7 @@ class DeploymentController @Inject() (
     }
   }
 
-  def history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha) = authAction.async { implicit request =>
+  def history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha) = authorizedRead.async { implicit request =>
     deploymentService.find(formTemplateId).flatMap { deploymentRecords =>
       val deploymentDiffs = mkDeploymentDiff(deploymentRecords)
       deploymentDiffs.map(_.toTableRow(authorization, sha1, sha2))
@@ -167,7 +167,7 @@ class DeploymentController @Inject() (
   }
 
   def cutNewVersion(formTemplateId: FormTemplateId, filename: Filename) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       withLastCommit { lastCommitCheck =>
         withGithubContentFromCache(filename) { githubContent =>
           val githubJson: CJson = githubContent.content.jsonContent
@@ -256,7 +256,7 @@ class DeploymentController @Inject() (
 
   def deployFilenameGet(filename: Filename) = deployFilename(filename)
 
-  def deployFilename(filename: Filename) = authAction.async { implicit request =>
+  def deployFilename(filename: Filename) = authorizedWrite.async { implicit request =>
     val username = request.retrieval
 
     withGithubContentFromCache(filename) { githubContent =>
@@ -274,7 +274,7 @@ class DeploymentController @Inject() (
     formTemplateId: FormTemplateId,
     filename: Filename
   ) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       withLastCommit { lastCommitCheck =>
         withGithubContentFromCache(filename) { githubContent =>
           val mongoContent = githubContent.path match {
@@ -373,17 +373,17 @@ class DeploymentController @Inject() (
     }
 
   def confirmNoVersionChange(formTemplateId: FormTemplateId, filename: Filename) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       Ok(deployment_confirm_no_version_change(formTemplateId, filename)).pure[Future]
     }
 
   def confirmAllowOldVersionJourney(formTemplateId: FormTemplateId, filename: Filename) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       Ok(deployment_confirm_allow_old_version_journey(formTemplateId, filename)).pure[Future]
     }
 
   def delete(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username is deleting ${formTemplateId.value}")
       gformService.deleteTemplate(formTemplateId).map { deleteResults =>
@@ -393,7 +393,7 @@ class DeploymentController @Inject() (
     }
 
   def deleteHandlebarsTemplate(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username is deleting ${formTemplateId.value}")
       gformService.deleteHandlebarsTemplate(formTemplateId).map { deleteResult =>
@@ -403,7 +403,7 @@ class DeploymentController @Inject() (
     }
 
   def deleteHandlebarsSchema(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username is deleting ${formTemplateId.value}")
       gformService.deleteHandlebarsSchema(formTemplateId).map { deleteResult =>
@@ -412,34 +412,36 @@ class DeploymentController @Inject() (
       }
     }
 
-  def deploymentDeleted(formTemplateId: FormTemplateId, githubPath: GithubPath) = authAction.async { implicit request =>
-    val downloadLink = githubPath match {
-      case GithubPath.RootPath =>
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .deployment_link_download_gform(formTemplateId, routes.DeploymentController.download(formTemplateId))
-      case GithubPath.HandlebarsPath =>
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .deployment_link_download_gform(
-            formTemplateId,
-            routes.DeploymentController.downloadHandlebarsTemplate(formTemplateId)
-          )
-      case GithubPath.HandlebarsSchemaPath =>
-        uk.gov.hmrc.eeittadminfrontend.views.html
-          .deployment_link_download_gform(
-            formTemplateId,
-            routes.DeploymentController.downloadHandlebarsSchema(formTemplateId)
-          )
-    }
+  def deploymentDeleted(formTemplateId: FormTemplateId, githubPath: GithubPath) = authorizedDelete.async {
+    implicit request =>
+      val downloadLink = githubPath match {
+        case GithubPath.RootPath =>
+          uk.gov.hmrc.eeittadminfrontend.views.html
+            .deployment_link_download_gform(formTemplateId, routes.DeploymentController.download(formTemplateId))
+        case GithubPath.HandlebarsPath =>
+          uk.gov.hmrc.eeittadminfrontend.views.html
+            .deployment_link_download_gform(
+              formTemplateId,
+              routes.DeploymentController.downloadHandlebarsTemplate(formTemplateId)
+            )
+        case GithubPath.HandlebarsSchemaPath =>
+          uk.gov.hmrc.eeittadminfrontend.views.html
+            .deployment_link_download_gform(
+              formTemplateId,
+              routes.DeploymentController.downloadHandlebarsSchema(formTemplateId)
+            )
+      }
 
-    val deleteAction = githubPath match {
-      case GithubPath.RootPath =>
-        uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId)
-      case GithubPath.HandlebarsPath =>
-        uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deleteHandlebarsTemplate(formTemplateId)
-      case GithubPath.HandlebarsSchemaPath =>
-        uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deleteHandlebarsSchema(formTemplateId)
-    }
-    Ok(deployment_deleted(formTemplateId, downloadLink, deleteAction)).pure[Future]
+      val deleteAction = githubPath match {
+        case GithubPath.RootPath =>
+          uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.delete(formTemplateId)
+        case GithubPath.HandlebarsPath =>
+          uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController
+            .deleteHandlebarsTemplate(formTemplateId)
+        case GithubPath.HandlebarsSchemaPath =>
+          uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deleteHandlebarsSchema(formTemplateId)
+      }
+      Ok(deployment_deleted(formTemplateId, downloadLink, deleteAction)).pure[Future]
   }
 
   def deploymentNew(
@@ -447,7 +449,7 @@ class DeploymentController @Inject() (
     filename: Filename,
     sha: BlobSha
   ) =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       withLastCommit { lastCommitCheck =>
         withGithubContentFromCache(filename) { githubContent =>
           (
@@ -482,12 +484,12 @@ class DeploymentController @Inject() (
         f(githubContent)
       }
 
-  def refreshCache(redirectUrl: RedirectUrl) = authAction.async { request =>
+  def refreshCache(redirectUrl: RedirectUrl) = authorizedRead.async { request =>
     cachingService.refreshCache
     Redirect(redirectUrl.get(OnlyRelative).url).pure[Future]
   }
 
-  def deploymentHome = authAction.async { implicit request =>
+  def deploymentHome = authorizedRead.async { implicit request =>
     Ok(deployment_home(authorization, cachingService.cacheStatus))
       .pure[Future]
   }
@@ -507,7 +509,7 @@ class DeploymentController @Inject() (
   }
 
   def deployments =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       withLastCommit { lastCommitCheck =>
         for {

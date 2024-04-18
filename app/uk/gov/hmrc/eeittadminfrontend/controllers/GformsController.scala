@@ -125,7 +125,7 @@ class GformsController @Inject() (
   }
 
   def getBlob =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s" $username ask for all templates as a zip blob")
       val blobTemplates: Future[Seq[(FormTemplateId, JsValue)]] =
@@ -194,7 +194,7 @@ class GformsController @Inject() (
     }
 
   def getGformByFormType =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       gFormForm
         .bindFromRequest()
@@ -212,7 +212,7 @@ class GformsController @Inject() (
     }
 
   def getAllTemplates =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username Queried for all form templates")
       for {
@@ -230,7 +230,7 @@ class GformsController @Inject() (
     }
 
   def reloadTemplates =
-    authAction.async { implicit request =>
+    authorizedWrite.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username Reload all form templates")
 
@@ -320,14 +320,14 @@ class GformsController @Inject() (
     }
 
   def getAllSchema =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       logger.info(s"$username Queried for all form Schema")
       gformConnector.getAllSchema.map(x => Ok(x))
     }
 
   def requestRemoval(formTemplateId: FormTemplateId) =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
           (
@@ -359,7 +359,7 @@ class GformsController @Inject() (
       "remove" -> Forms.nonEmptyText
     )
   )
-  def confirmRemoval(formTemplateId: FormTemplateId) = authAction.async { implicit request =>
+  def confirmRemoval(formTemplateId: FormTemplateId) = authorizedDelete.async { implicit request =>
     formRemoval
       .bindFromRequest()
       .fold(
@@ -380,7 +380,7 @@ class GformsController @Inject() (
   }
 
   def deleteGformTemplate =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       gFormForm
         .bindFromRequest()
@@ -399,13 +399,13 @@ class GformsController @Inject() (
     }
 
   def gformPage =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       Future.successful(Ok(gform_page(gFormForm)))
     }
 
   private def getFilterList(filters: String) = filters.split(",").toList
 
-  def gformFormTemplatesWithPIIInTitleHome() = authAction.async { implicit request =>
+  def gformFormTemplatesWithPIIInTitleHome() = authorizedRead.async { implicit request =>
     Future.successful(
       Ok(
         gform_formtemplates_pii_home(
@@ -416,7 +416,7 @@ class GformsController @Inject() (
     )
   }
 
-  def gformFormTemplatesWithPIIInTitle = authAction.async { implicit request =>
+  def gformFormTemplatesWithPIIInTitle = authorizedRead.async { implicit request =>
     gformFormTemplatesWithPIIInTitleForm
       .bindFromRequest()
       .fold(
@@ -460,7 +460,7 @@ class GformsController @Inject() (
   def gformFormTemplateWithPIIInTitleHome(
     formTemplateId: FormTemplateId,
     filters: String
-  ) = authAction.async { implicit request =>
+  ) = authorizedRead.async { implicit request =>
     getFormTemplatePIIDetails(formTemplateId, filters).map { formTemplateWithPIIInTitleDetails =>
       Ok(
         gform_formtemplate_pii(
@@ -473,7 +473,7 @@ class GformsController @Inject() (
 
   }
 
-  def gformFormTemplateWithPIIInTitle = authAction.async { implicit request =>
+  def gformFormTemplateWithPIIInTitle = authorizedRead.async { implicit request =>
     gformFormTemplateWithPIIInTitleForm
       .bindFromRequest()
       .fold(
@@ -508,7 +508,7 @@ class GformsController @Inject() (
       )
 
   def dbLookupFileUpload() =
-    authAction.async(parse.multipartFormData) { implicit request =>
+    authorizedWrite.async(parse.multipartFormData) { implicit request =>
       val collectionName = request.body.dataParts("collectionName").head
       if (collectionName.isEmpty)
         Future.successful(BadRequest("'collectionName' param is empty"))
@@ -551,14 +551,14 @@ class GformsController @Inject() (
       }
     }
 
-  def uploadGformTemplates() = authAction.async(parse.multipartFormData) { implicit request =>
+  def uploadGformTemplates() = authorizedWrite.async(parse.multipartFormData) { implicit request =>
     val file = temporaryFileToPath(request.body.file("file").get.ref)
     batchUploadService.uploadZip(file.toFile).map { result =>
       Redirect(routes.GformsController.uploadGformTemplatesStatus)
     }
   }
 
-  def uploadGformTemplatesStatus() = authAction.async { implicit request =>
+  def uploadGformTemplatesStatus() = authorizedWrite.async { implicit request =>
     Future.successful {
       Ok(
         batch_upload(batchUploadService.processedTemplates.toList, batchUploadService.done)
@@ -598,7 +598,7 @@ class GformsController @Inject() (
   )
 
   def getHandlebarsTemplate =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       handlebarsForm
         .bindFromRequest()
@@ -616,7 +616,7 @@ class GformsController @Inject() (
     }
 
   def deleteHandlebarsTemplate =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       handlebarsForm
         .bindFromRequest()
@@ -632,7 +632,7 @@ class GformsController @Inject() (
     }
 
   def getHandlebarsSchema =
-    authAction.async { implicit request =>
+    authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       handlebarsSchemaForm
         .bindFromRequest()
@@ -650,7 +650,7 @@ class GformsController @Inject() (
     }
 
   def deleteHandlebarsSchema =
-    authAction.async { implicit request =>
+    authorizedDelete.async { implicit request =>
       val username = request.retrieval.value
       handlebarsSchemaForm
         .bindFromRequest()
