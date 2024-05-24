@@ -16,7 +16,7 @@ object AppDependencies {
     "uk.gov.hmrc"              %% "play-partials-play-30"        % "9.1.0",
     "uk.gov.hmrc"              %% "play-frontend-hmrc-play-30"   % "9.10.0",
     "uk.gov.hmrc"              %% "internal-auth-client-play-30" % "2.0.0",
-    "uk.gov.hmrc.mongo"        %% "hmrc-mongo-play-30"           % "1.8.0",
+    "uk.gov.hmrc.mongo"        %% "hmrc-mongo-play-30"           % "1.9.0",
     "com.github.pureconfig"    %% "pureconfig"                   % "0.17.6",
     "org.typelevel"            %% "cats-core"                    % "2.10.0",
     "org.julienrf"             %% "play-json-derived-codecs"     % "11.0.0",
@@ -54,6 +54,6 @@ object AppDependencies {
       "com.github.tomakehurst"  % "wiremock-jre8"               % "3.0.1"             % scope,
       "org.scalamock"          %% "scalamock"                   % "6.0.0"             % scope,
       "org.scalatest"          %% "scalatest"                   % "3.2.18"            % scope,
-      "com.vladsch.flexmark"    % "flexmark-all"                % "0.64.6"            % scope
+      "com.vladsch.flexmark"    % "flexmark-all"                % "0.64.8"            % scope
     )
 }
