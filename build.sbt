@@ -2,6 +2,8 @@ import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "eeitt-admin-frontend"
+ThisBuild / majorVersion := 1
+ThisBuild / scalaVersion := "2.13.12"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(
@@ -10,12 +12,10 @@ lazy val microservice = Project(appName, file("."))
     SbtGitVersioning,
     SbtDistributablesPlugin
   )
-  .settings(DefaultBuildSettings.scalaSettings: _*)
-  .settings(DefaultBuildSettings.defaultSettings(): _*)
+  .settings(DefaultBuildSettings.scalaSettings *)
+  .settings(DefaultBuildSettings.defaultSettings() *)
   .settings(
     organization := "uk.gov.hmrc",
-    majorVersion := 1,
-    scalaVersion := "2.13.12",
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
