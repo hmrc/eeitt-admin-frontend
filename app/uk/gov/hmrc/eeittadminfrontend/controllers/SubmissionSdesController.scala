@@ -36,6 +36,7 @@ import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateComponent
 import uk.gov.hmrc.govukfrontend.views.Aliases.{ Button, Input, Label, Select, SelectItem, TableRow, Text }
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.html.components.GovukDateInput
+import uk.gov.hmrc.govukfrontend.views.html.helpers.{ GovukFormGroup, GovukHintAndErrorMessage }
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.dateinput.DateInput
@@ -178,13 +179,15 @@ class SubmissionSdesController @Inject() (
     val govukHint: components.GovukHint = new components.GovukHint()
     val govukLabel: components.GovukLabel = new components.GovukLabel()
     val govukFieldset: components.GovukFieldset = new components.GovukFieldset()
+    val govukFormGroup: GovukFormGroup = new GovukFormGroup()
+    val govukHintAndErrorMessage: GovukHintAndErrorMessage = new GovukHintAndErrorMessage(govukHint, govukErrorMessage)
     val govukInput: components.GovukInput =
-      new components.GovukInput(govukErrorMessage, govukHint, govukLabel)
+      new components.GovukInput(govukLabel, govukFormGroup, govukHintAndErrorMessage)
     val govukSelect: components.GovukSelect =
-      new components.GovukSelect(govukErrorMessage, govukHint, govukLabel)
+      new components.GovukSelect(govukLabel, govukFormGroup, govukHintAndErrorMessage)
     val govukButton: components.GovukButton = new components.GovukButton()
     val govukDateInput: components.GovukDateInput =
-      new GovukDateInput(govukErrorMessage, govukHint, govukFieldset, govukInput)
+      new GovukDateInput(govukFieldset, govukInput, govukFormGroup, govukHintAndErrorMessage)
     val tableAttributes = Map("style" -> "border:none;")
 
     def inputComponent(id: String, label: String, value: Option[String]) = govukInput(

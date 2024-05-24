@@ -19,6 +19,8 @@
 @import java.time.Instant
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionData
 @import java.time.temporal.ChronoUnit
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukFormGroup
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukHintAndErrorMessage
 
 @this(main_template: main_template)
 
@@ -76,7 +78,7 @@
 
  @if(sdesSubmission.submittedAt.fold(false)(t => t.isBefore(Instant.now().minus(olderThan, ChronoUnit.HOURS)))) {
   @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.confirmMark(sdesSubmission.correlationId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
-   @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(Radios(
+   @{new GovukRadios(new GovukFieldset(), new GovukHint(), new GovukLabel(), new GovukFormGroup(), new GovukHintAndErrorMessage(new GovukHint(), new GovukErrorMessage()))(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
        content = Text(messages("generic.mark.confirm")),

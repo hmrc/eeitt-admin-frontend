@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
-import akka.stream.Materializer
-
 import javax.inject.Inject
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
@@ -29,8 +27,9 @@ import java.util.zip.ZipFile
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.jdk.CollectionConverters._
-import akka.stream.scaladsl._
+import org.apache.pekko.stream.scaladsl._
 import cats.effect.{ IO, Resource }
+import org.apache.pekko.stream.Materializer
 import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
 
 class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
 import play.api.libs.json.Format
-import reactivemongo.api.bson.{ BSONHandler, Macros }
 import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 
 case class CommitSha(value: String) extends AnyVal {
@@ -25,6 +24,5 @@ case class CommitSha(value: String) extends AnyVal {
 }
 
 object CommitSha {
-  implicit val handler: BSONHandler[CommitSha] = Macros.valueHandler[CommitSha]
   implicit val format: Format[CommitSha] = ValueClassFormatter.format(CommitSha.apply)(_.value)
 }

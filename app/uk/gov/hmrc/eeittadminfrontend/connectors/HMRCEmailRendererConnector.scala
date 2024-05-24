@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
+import org.apache.pekko.http.scaladsl.model.{ StatusCode, StatusCodes }
 import javax.inject.Inject
 import org.slf4j.LoggerFactory
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, EmailRenderResponse, NotFound, ParametersNotFound, Successful, Unexpected }

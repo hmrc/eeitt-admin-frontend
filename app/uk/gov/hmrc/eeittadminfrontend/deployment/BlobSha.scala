@@ -17,7 +17,6 @@
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
 import play.api.libs.json.Format
-import reactivemongo.api.bson.{ BSONHandler, Macros }
 import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 
 case class BlobSha(value: String) extends AnyVal {
@@ -25,6 +24,5 @@ case class BlobSha(value: String) extends AnyVal {
 }
 
 object BlobSha {
-  implicit val handler: BSONHandler[BlobSha] = Macros.valueHandler[BlobSha]
   implicit val format: Format[BlobSha] = ValueClassFormatter.format(BlobSha.apply)(_.value)
 }

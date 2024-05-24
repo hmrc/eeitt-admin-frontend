@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{ Json, OFormat }
+import play.api.libs.json.{ Format, Json, OFormat }
 
 case class HandlebarsTemplate(_id: FormTemplateId, payload: String)
 
 object HandlebarsTemplate {
-  implicit val formatTemplateId = FormTemplateId.format
-  implicit val format: OFormat[HandlebarsTemplate] = Json.format
+  implicit val formatTemplateId: Format[FormTemplateId] = FormTemplateId.format
+  implicit val format: OFormat[HandlebarsTemplate] = Json.format[HandlebarsTemplate]
 }

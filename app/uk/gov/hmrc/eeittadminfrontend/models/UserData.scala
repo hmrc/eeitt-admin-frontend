@@ -17,12 +17,10 @@
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import play.api.libs.json.Format
-import reactivemongo.api.bson.{ BSONHandler, Macros }
 
 case class Username(value: String) extends AnyVal
 
 object Username {
-  implicit val handler: BSONHandler[Username] = Macros.valueHandler[Username]
   implicit val format: Format[Username] = ValueClassFormatter.format(Username.apply)(_.value)
 
   def fromRetrieval(retrieval: uk.gov.hmrc.internalauth.client.Retrieval.Username): Username = Username(retrieval.value)

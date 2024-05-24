@@ -16,33 +16,33 @@
 
 package uk.gov.hmrc.eeittadminfrontend.repo
 
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Sorts.descending
+
 import javax.inject.Inject
-import play.modules.reactivemongo.ReactiveMongoApi
+import javax.inject.Singleton
 import scala.concurrent.{ ExecutionContext, Future }
-import reactivemongo.api.Cursor
-import reactivemongo.api.bson.collection.BSONCollection
-import reactivemongo.api.bson.BSONDocument
-import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
+import uk.gov.hmrc.mongo.play.PlayMongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
-class DeploymentRepo @Inject() (
-  val reactiveMongoApi: ReactiveMongoApi
-)(implicit ec: ExecutionContext) {
-
-  private val collectionName: String = "deployment"
-  private val projection = BSONDocument("_id" -> false)
-
-  private def collection: Future[BSONCollection] =
-    reactiveMongoApi.database.map(_.collection[BSONCollection](collectionName))
+@Singleton
+class DeploymentRepo @Inject() (mongoComponent: PlayMongoComponent)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[DeploymentRecord](
+      mongoComponent,
+      "deployment",
+      DeploymentRecord.format,
+      Seq.empty
+    ) { underlying =>
 
   def get(formTemplateId: FormTemplateId): Future[List[DeploymentRecord]] =
-    collection.flatMap(
-      _.find(BSONDocument("formTemplateId" -> formTemplateId.value), Some(projection))
-        .sort(BSONDocument("createdAt" -> -1))
-        .cursor[DeploymentRecord]()
-        .collect[List](-1, Cursor.FailOnError[List[DeploymentRecord]]())
-    )
+    underlying.collection
+      .find(equal("formTemplateId", formTemplateId.value))
+      .sort(descending("createdAt"))
+      .toFuture()
+      .map(_.toList)
 
-  def save(deploymentRecord: DeploymentRecord): Future[WriteResult] = collection.flatMap(_.insert.one(deploymentRecord))
+  def save(deploymentRecord: DeploymentRecord): Future[Unit] =
+    collection.insertOne(deploymentRecord).toFuture().map(_ => ())
 }
