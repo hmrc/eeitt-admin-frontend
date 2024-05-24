@@ -34,7 +34,7 @@ final case class VersionStats(
 )
 
 object VersionStats {
-  implicit val format: OFormat[VersionStats] = Json.format
+  implicit val format: OFormat[VersionStats] = Json.format[VersionStats]
 }
 
 final case class CountData(
@@ -43,7 +43,7 @@ final case class CountData(
 )
 
 object CountData {
-  implicit val format: OFormat[CountData] = Json.format
+  implicit val format: OFormat[CountData] = Json.format[CountData]
 }
 
 case class SavedFormDetail(
@@ -60,7 +60,7 @@ object SavedFormDetail {
     JsString(date.format(dateTimeFormatter))
   }
 
-  implicit val localDateTimeFormat = Format(localDateReads, localDateWrites)
+  implicit val localDateTimeFormat: Format[LocalDate] = Format(localDateReads, localDateWrites)
 
   implicit val format: OFormat[SavedFormDetail] = Json.format[SavedFormDetail]
 }

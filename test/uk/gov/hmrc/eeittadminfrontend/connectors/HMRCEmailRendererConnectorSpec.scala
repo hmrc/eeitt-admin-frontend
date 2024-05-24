@@ -35,7 +35,7 @@ class HMRCEmailRendererConnectorSpec
     extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with BeforeAndAfterAll
     with HttpClientSupport {
 
-  override implicit val patienceConfig = PatienceConfig(Span(5, Seconds), Span(500, Millis))
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds), Span(500, Millis))
 
   override protected def beforeAll(): Unit =
     startServer()

@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.binders
 import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
-import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
+import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.{ HandlebarsPath, HandlebarsSchemaPath, RootPath }
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.history.HistoryId
 import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, FormTemplateRawId, ShutterMessageId }
@@ -37,10 +37,23 @@ object ValueClassBinders {
   implicit val bannerIdBinder: PathBindable[BannerId] = valueClassBinder(_.value)
   implicit val shutterMessageIdBinder: PathBindable[ShutterMessageId] = valueClassBinder(_.value)
 
-  implicit val githubPathBinder: QueryStringBindable[GithubPath] = new QueryStringBindable[GithubPath] {
-    override def unbind(key: String, githubPath: GithubPath): String = asPath(githubPath)
+  implicit val githubPathQueryBinder: QueryStringBindable[GithubPath] = new QueryStringBindable[GithubPath] {
+    override def unbind(key: String, githubPath: GithubPath): String = {
+      val value = githubPath match {
+        case HandlebarsPath       => "handlebars"
+        case HandlebarsSchemaPath => "jsonSchemas"
+        case RootPath             => "formTemplates"
+      }
+      s"$key=$value"
+    }
+
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GithubPath]] =
-      params.get(key).flatMap(_.headOption).map(value => Right(GithubPath(value)))
+      params.get(key).flatMap(_.headOption).map {
+        case "handlebars"    => Right(HandlebarsPath)
+        case "jsonSchemas"   => Right(HandlebarsSchemaPath)
+        case "formTemplates" => Right(RootPath)
+        case unknown         => throw new IllegalArgumentException(s"Query param $key has invalid value $unknown")
+      }
   }
 
   implicit val uriBinder: QueryStringBindable[Uri] = new QueryStringBindable.Parsing(

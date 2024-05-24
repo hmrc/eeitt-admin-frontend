@@ -98,7 +98,7 @@ object MarkDownUtil {
   private val INVISIBLE_CHAR_MAP: MapView[Char, UnicodeDescMapping] =
     INVISIBLE_UNICODE_DESC_MAPPING.groupBy(_.code).view.mapValues(_.head)
   def replaceInvisibleChars(input: String): String =
-    input.toCharArray.map(c => INVISIBLE_CHAR_MAP.get(c).map(_.mapping).getOrElse(c)).mkString("")
+    input.toCharArray.map(c => INVISIBLE_CHAR_MAP.get(c).map(_.mapping).getOrElse(c.toString)).mkString("")
 
   private val markdownControlCharacters =
     List("\\", "/", "`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "-", ".", "!")

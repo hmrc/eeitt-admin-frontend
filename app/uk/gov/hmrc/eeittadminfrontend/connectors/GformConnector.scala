@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 
 import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }

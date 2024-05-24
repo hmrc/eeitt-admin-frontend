@@ -14,8 +14,9 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.eeittadminfrontend.views._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukFormGroup
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukHintAndErrorMessage
 
 @this(main_template: main_template)
 
@@ -28,7 +29,7 @@
     @pageLevelError.render
 
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.confirmRemoval(formTemplateId), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-form") {
-        @{new GovukRadios(new GovukErrorMessage(), new GovukFieldset(), new GovukHint(), new GovukLabel())(
+        @{new GovukRadios(new GovukFieldset(), new GovukHint(), new GovukLabel(), new GovukFormGroup(), new GovukHintAndErrorMessage(new GovukHint(), new GovukErrorMessage()))(
             Radios(
                 fieldset = Some(Fieldset(legend = Some(Legend(
                                                 content = Text(messages("formTemplate.delete.confirm",formTemplateId.value)),

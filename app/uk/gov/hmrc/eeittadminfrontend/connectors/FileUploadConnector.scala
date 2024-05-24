@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import javax.inject.{ Inject, Singleton }
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._

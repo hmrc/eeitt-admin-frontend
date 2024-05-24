@@ -16,9 +16,12 @@
 
 package uk.gov.hmrc.eeittadminfrontend.deployment
 
+import julienrf.json.derived
+import play.api.libs.json.{ Format, OFormat }
+
 import java.time.Instant
-import reactivemongo.api.bson.{ BSONDocumentHandler, Macros }
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, Username }
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 case class DeploymentRecord(
   username: Username,
@@ -30,5 +33,8 @@ case class DeploymentRecord(
 )
 
 object DeploymentRecord {
-  implicit val deploymentHandler: BSONDocumentHandler[DeploymentRecord] = Macros.handler[DeploymentRecord]
+  implicit val format: OFormat[DeploymentRecord] = {
+    implicit val dtf: Format[Instant] = MongoJavatimeFormats.instantFormat
+    derived.oformat()
+  }
 }

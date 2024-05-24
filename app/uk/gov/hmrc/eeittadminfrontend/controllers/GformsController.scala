@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{ FileIO, Framing, Keep, Sink, StreamConverters }
+import org.apache.pekko.util.ByteString
 import cats.syntax.all._
 
 import javax.inject.Inject
