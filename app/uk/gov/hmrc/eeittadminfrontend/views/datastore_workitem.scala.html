@@ -64,10 +64,9 @@
         @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
-            classes = "govuk-!-font-size-14",
             value = formTemplateId.map(_.value),
             label = Label(
-                classes = "govuk-label--s govuk-!-font-size-14",
+                classes = "govuk-label--s",
                 content = Text("Form Template Id")
             )
         ))
@@ -76,7 +75,6 @@
             Select(
                 id = "processingStatus",
                 name = "processingStatus",
-                classes = "govuk-!-font-size-14",
                 items = Seq(
                             SelectItem(
                                 value = None,
@@ -90,7 +88,7 @@
                             )
                         ).toSeq,
                 label = Label(
-                    classes = "govuk-label--s govuk-!-font-size-14",
+                    classes = "govuk-label--s",
                     content = Text("Status")
                 )
             )
@@ -99,7 +97,7 @@
         @govukButton(Button(
             preventDoubleClick = Some(true),
             content = Text("Filter"),
-            classes = "govuk-label--s govuk-!-font-size-14",
+            classes = "govuk-label--s",
             inputType = Some("submit"),
             name = Some("filter")
         ))
@@ -107,7 +105,7 @@
 
     <h2 class="govuk-heading-m">Showing @{pagination.from} - @{pagination.to} work item.</h2>
 
-    <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
+    <table class="govuk-table stats-table govuk-body-s">
         <thead class="govuk-table__head">
             <tr class="govuk-table__row">
                 <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
