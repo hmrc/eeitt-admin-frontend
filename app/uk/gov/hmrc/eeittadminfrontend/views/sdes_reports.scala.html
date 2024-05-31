@@ -71,7 +71,6 @@
             Select(
                 id = "notificationStatus",
                 name = "notificationStatus",
-                classes = "govuk-!-font-size-14",
                 items = Seq(
                         SelectItem(
                             value = None,
@@ -85,7 +84,7 @@
                         )
                     ).toSeq,
                 label = Label(
-                    classes = "govuk-label--s govuk-!-font-size-14",
+                    classes = "govuk-label--s",
                     content = Text("Status")
                 )
             )
@@ -106,12 +105,12 @@
             content = Text("Filter"),
             inputType = Some("submit"),
             name = Some("filter"),
-            classes = "govuk-label--s govuk-!-font-size-14",
+            classes = "govuk-label--s",
         ))
     }
 
     <h2 class="govuk-heading-m">There are @{pagination.count} submissions in total. Showing @{pagination.from} - @{pagination.to} submissions.</h2>
-    <table class="govuk-table stats-table govuk-body-s govuk-!-font-size-14">
+    <table class="govuk-table stats-table govuk-body-s">
         <thead class="govuk-table__head">
             <tr class="govuk-table__row">
                 <th class="govuk-table__header" scope="col" title="Consolidator Job Id">Consolidator Job Id</th>
