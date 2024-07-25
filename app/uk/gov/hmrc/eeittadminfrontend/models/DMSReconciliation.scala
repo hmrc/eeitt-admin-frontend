@@ -26,18 +26,22 @@ case class DmsReport(data: List[DmsReportData], count: Int)
 case class DmsReportData(submissionRef: SubmissionRef, envelopeId: EnvelopeId)
 
 object DmsReport {
-  def apply(file: File): DmsReport = {
-    val source = Source.fromFile(file)
-    val lines = source.getLines().toList
-    source.close()
+  def apply(file: File): DmsReport =
+    try {
+      val source = Source.fromFile(file)
+      val lines = source.getLines().toList
+      source.close()
 
-    val data = lines.map { line =>
-      line.split(",") match {
-        case Array(submissionRef, envelopeId) =>
-          DmsReportData(SubmissionRef(submissionRef), EnvelopeId(envelopeId))
-        case _ => throw new IllegalArgumentException(s"Invalid line: $line")
+      val data = lines.map { line =>
+        line.split(",") match {
+          case Array(submissionRef, envelopeId) =>
+            DmsReportData(SubmissionRef(submissionRef), EnvelopeId(envelopeId))
+          case _ => throw new IllegalArgumentException(s"Invalid line: $line")
+        }
       }
+      DmsReport(data, data.length)
+    } catch {
+      case _: Exception =>
+        DmsReport(List.empty, 0)
     }
-    DmsReport(data, data.length)
-  }
 }

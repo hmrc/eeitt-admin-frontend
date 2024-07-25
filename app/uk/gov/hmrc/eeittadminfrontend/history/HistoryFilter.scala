@@ -20,11 +20,15 @@ import java.time.{ LocalDate, LocalDateTime }
 import julienrf.json.derived
 import play.api.libs.json.{ Format, Json, OFormat }
 
+import java.time.format.DateTimeFormatter
+
 sealed trait DateFilter extends Product with Serializable
 
 object DateFilter {
   final case class DateOnly(localDate: LocalDate) extends DateFilter
-  final case class DateTime(localDateTime: LocalDateTime) extends DateFilter
+  final case class DateTime(localDateTime: LocalDateTime) extends DateFilter {
+    override def toString: String = localDateTime.format(DateTimeFormatter.ofPattern("h:mma dd MMM yyyy"))
+  }
 
   implicit val format: OFormat[DateFilter] = derived.oformat()
 }

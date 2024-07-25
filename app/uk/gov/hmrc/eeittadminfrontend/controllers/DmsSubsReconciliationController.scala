@@ -51,36 +51,43 @@ class DmsSubsReconciliationController @Inject() (
 
   def uploadDmsSubmissionsCsv(): Action[MultipartFormData[TemporaryFile]] =
     authorizedWrite.async(parse.multipartFormData) { implicit request =>
-      val file = TemporaryFile.temporaryFileToFile(request.body.file("file").get.ref)
+      if (request.body.file("file").isDefined) {
+        val file = TemporaryFile.temporaryFileToFile(request.body.file("file").get.ref)
 
-      val sdesFilter = SdesFilter(
-        0,
-        200,
-        Some(false),
-        None,
-        None,
-        Some(SdesDestination.Dms),
-        Some(DateFilter.DateTime(LocalDateTime.now(ZoneId.of("UTC")).minusDays(7))),
-        None
-      )
+        val sdesFilter = SdesFilter(
+          0,
+          200,
+          Some(false),
+          None,
+          None,
+          Some(SdesDestination.Dms),
+          Some(DateFilter.DateTime(LocalDateTime.now(ZoneId.of("UTC")).minusDays(7))),
+          None
+        )
 
-      gformConnector.getSdesSubmissions(sdesFilter).map {
-        case sdesReport @ SdesSubmissionPageData(_, count) =>
-          val reconcileData = reconciliationService.sdesToBeReconciled(sdesReport, DmsReport(file))
-          file.delete()
+        gformConnector.getSdesSubmissions(sdesFilter).map {
+          case sdesReport @ SdesSubmissionPageData(_, count) =>
+            val reconcileData = reconciliationService.sdesToBeReconciled(sdesReport, DmsReport(file))
+            file.delete()
 
-          val notificationMessage =
-            s"File uploaded successfully!!! ${reconcileData.length} SDES submissions of $count marked as unprocessed have been received by DMS and will be marked as FileProcessedManualConfirmed"
-          Ok(
-            dmsSubsUploadCsv(
-              notificationMessage,
-              Some(SdesSubmissionPageData(reconcileData, reconcileData.length.toLong))
+            val notificationMessage =
+              s"${reconcileData.length} submissions of $count not processed have been received by DMS and will be marked as FileProcessedManualConfirmed, from ${sdesFilter.from.get}"
+            Ok(
+              dmsSubsUploadCsv(
+                notificationMessage,
+                Some(SdesSubmissionPageData(reconcileData, reconcileData.length.toLong))
+              )
             )
-          )
-        case _ =>
-          file.delete()
+          case _ =>
+            file.delete()
+            Redirect(routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv())
+              .flashing("error" -> "Error while getting SDES submissions data.")
+        }
+      } else {
+        Future.successful(
           Redirect(routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv())
-            .flashing("error" -> "Error while getting SDES submissions data.")
+            .flashing("error" -> "File upload error.")
+        )
       }
     }
 
