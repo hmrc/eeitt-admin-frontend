@@ -1,0 +1,81 @@
+@*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.views.html._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+    main_template: main_template,
+    formWithCSRF: FormWithCSRF,
+    govukButton: GovukButton,
+    govukFileUpload: GovukFileUpload,
+    govukNotificationBanner: GovukNotificationBanner
+)
+
+@()(implicit messages: Messages, request: Request[_])
+
+@main_template(title = "Reconcile DMS Subs", tab = "reconcile-subs"){
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.uploadDmsSubmissionsCsv(), args = 'enctype -> "multipart/form-data") {
+        <h2 class="govuk-heading-m">Upload a DMS Reports csv</h2>
+        @govukFileUpload(FileUpload(
+            name = "file",
+            id = "file",
+            label = Label(
+                classes = "govuk-label--s",
+                content = Text("DMS Reports csv (Report from DMS telling us which submissions have been received by them)")
+            )
+        ))
+
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Upload")
+        ))
+    }
+
+    @request.flash.get("success").fold(Html("")) { notification =>
+        @govukNotificationBanner(
+            NotificationBanner(
+                title = Text("Success"),
+                content = HtmlContent(notification),
+                bannerType = Some("success"),
+                role = Some("alert")
+            )
+        )
+    }
+
+
+    @request.flash.get("filePath").fold(Html("")) { filePath =>
+        @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.reconcileDmsSubmissions(filePath), args = 'enctype -> "multipart/form-data") {
+            @govukButton(Button(
+                preventDoubleClick = Some(true),
+                content = Text("Reconcile")
+            ))
+        }
+    }
+
+
+    @request.flash.get("error").fold(Html("")) { notification =>
+        @govukNotificationBanner(
+            NotificationBanner(
+                title = Text("Failed"),
+                content = HtmlContent(notification),
+                bannerType = Some("error"),
+                role = Some("alert")
+            )
+        )
+    }
+}
