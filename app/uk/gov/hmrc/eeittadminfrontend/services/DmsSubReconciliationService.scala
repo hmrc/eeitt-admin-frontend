@@ -16,38 +16,40 @@
 
 package uk.gov.hmrc.eeittadminfrontend.services
 
-import uk.gov.hmrc.eeittadminfrontend.connectors.SubmissionConsolidatorConnector
+import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.DmsReport
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, SdesReportData, SdesReportsPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, SdesSubmissionData, SdesSubmissionPageData }
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
-class DmsSubReconciliationService @Inject() (subConConnector: SubmissionConsolidatorConnector) {
+class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
 
-  def sdesToBeReconciled(sdesReport: SdesReportsPageData, dmsReport: DmsReport): List[SdesReportData] =
+  def sdesToBeReconciled(sdesReport: SdesSubmissionPageData, dmsReport: DmsReport): List[SdesSubmissionData] =
     filterSubsNotProcessedInDmsReport(subsNotProcessed(sdesReport), dmsReport)
 
-  private def subsNotProcessed(sdesReport: SdesReportsPageData): SdesReportsPageData = sdesReport match {
-    case SdesReportsPageData(subs, _) =>
+  private def subsNotProcessed(sdesReport: SdesSubmissionPageData): SdesSubmissionPageData = sdesReport match {
+    case SdesSubmissionPageData(subs, _) =>
       val subsToReconcile = subs.filter(sub =>
         sub.status != NotificationStatus.FileProcessed && sub.status != NotificationStatus.FileProcessedManualConfirmed
       )
-      SdesReportsPageData(subsToReconcile, subsToReconcile.length.toLong)
+      SdesSubmissionPageData(subsToReconcile, subsToReconcile.length.toLong)
   }
 
   private def filterSubsNotProcessedInDmsReport(
-    subsNotProcessed: SdesReportsPageData,
+    subsNotProcessed: SdesSubmissionPageData,
     dmsReport: DmsReport
-  ): List[SdesReportData] =
+  ): List[SdesSubmissionData] =
     subsNotProcessed.sdesSubmissions.filter { sub =>
       dmsReport.data.exists(_.envelopeId == sub.envelopeId)
     }
 
-  def sdesReconcile(reconcileData: List[SdesReportData])(implicit ec: ExecutionContext): Future[SdesReportsPageData] =
+  def sdesReconcile(
+    reconcileData: List[SdesSubmissionData]
+  )(implicit ec: ExecutionContext): Future[SdesSubmissionPageData] =
     Future
       .sequence(reconcileData.map { sub =>
-        subConConnector
+        gformConnector
           .updateAsManualConfirmed(sub.correlationId)
           .map { res =>
             if (res.status >= 200 && res.status < 300) Some(sub)
@@ -56,6 +58,6 @@ class DmsSubReconciliationService @Inject() (subConConnector: SubmissionConsolid
           .collect { case Some(sub) => sub }
       })
       .map { reconciledSubs =>
-        SdesReportsPageData(reconciledSubs, reconciledSubs.length.toLong)
+        SdesSubmissionPageData(reconciledSubs, reconciledSubs.length.toLong)
       }
 }

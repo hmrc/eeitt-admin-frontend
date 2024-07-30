@@ -87,7 +87,7 @@ GET         /sdes-reports/request-search/:page                          uk.gov.h
 
 GET         /dms-submissions/csv                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.dmsSubmissionsUploadCsv()
 POST        /dms-submissions/csv                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.uploadDmsSubmissionsCsv()
-GET         /dms-submissions/reconcile/:filePath                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.reconcileDmsSubmissions(filePath: String)
+GET         /dms-submissions/reconcile                                  uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.reconcileDmsSubmissions()
 
 GET         /dms-work-item/:page                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.searchWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
 GET         /dms-work-item/request-search/:page                         uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.requestSearch(page: Int)

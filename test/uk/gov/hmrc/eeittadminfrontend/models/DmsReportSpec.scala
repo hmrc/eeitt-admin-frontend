@@ -1,11 +1,27 @@
+/*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.eeittadminfrontend.models
 
 import org.scalatest.matchers.must.Matchers.{ contain, convertToAnyMustWrapper }
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpecLike
+import uk.gov.hmrc.eeittadminfrontend.helpers.FileUtil
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SubmissionRef
-import uk.gov.hmrc.eeittadminfrontend.utils.FileUtil
 
 class DmsReportSpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
 
@@ -52,9 +68,11 @@ class DmsReportSpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
 
       forAll(scenarios) { (content: String, csvIssue: String) =>
         s"$csvIssue" in {
+          val csvFile = FileUtil.createFile("dmsReport.csv", content)
           assertThrows[IllegalArgumentException] {
-            DmsReport(FileUtil.createFile("dmsReport.csv", content))
+            DmsReport(csvFile)
           }
+          csvFile.delete()
         }
       }
     }

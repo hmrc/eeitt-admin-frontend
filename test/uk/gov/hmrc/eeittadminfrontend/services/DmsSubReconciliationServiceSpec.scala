@@ -22,10 +22,10 @@ import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.eeittadminfrontend.connectors.SubmissionConsolidatorConnector
-import uk.gov.hmrc.eeittadminfrontend.models.{ DmsReport, DmsReportData }
+import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes._
+import uk.gov.hmrc.eeittadminfrontend.models.{ DmsReport, DmsReportData, FormTemplateId }
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,22 +33,24 @@ import scala.concurrent.Future
 
 class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with OptionValues with MockitoSugar {
 
-  val subConConnector: SubmissionConsolidatorConnector = mock[SubmissionConsolidatorConnector]
-  val dmsSubReconciliationService = new DmsSubReconciliationService(subConConnector)
+  val gformConnector: GformConnector = mock[GformConnector]
+  val dmsSubReconciliationService = new DmsSubReconciliationService(gformConnector)
 
   "sdesToBeReconciled" should {
     "return sdes subs to be manually processed" when {
-      val sub1 = SdesReportData(
-        None,
-        None,
-        None,
+      val sub1 = SdesSubmissionData(
         CorrelationId("correlationId"),
         EnvelopeId("envelopeId"),
+        FormTemplateId("formTemplateId"),
         SubmissionRef("submissionRef"),
+        1,
+        1,
+        1L,
         None,
         NotificationStatus.FileReady,
         "failed",
-        None
+        None,
+        SdesDestination.Dms
       )
       val sub2 = sub1.copy(
         correlationId = CorrelationId("correlationId2"),
@@ -76,7 +78,7 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
         status = NotificationStatus.FileProcessedManualConfirmed //this sub is in both but is already processed
       )
 
-      val sdesReportsPageData: SdesReportsPageData = SdesReportsPageData(List(sub1, sub2, sub3, sub4, sub5), 5)
+      val sdesReportsPageData: SdesSubmissionPageData = SdesSubmissionPageData(List(sub1, sub2, sub3, sub4, sub5), 5)
 
       val dmsReportData: List[DmsReportData] = List(
         DmsReportData(SubmissionRef("submissionRef"), EnvelopeId("envelopeId")),
@@ -100,17 +102,19 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
 
   "sdesReconcile" should {
     "return the reconciled subs" when {
-      val sub1 = SdesReportData(
-        None,
-        None,
-        None,
+      val sub1 = SdesSubmissionData(
         CorrelationId("correlationId"),
         EnvelopeId("envelopeId"),
+        FormTemplateId("formTemplateId"),
         SubmissionRef("submissionRef"),
+        1,
+        1,
+        1L,
         None,
         NotificationStatus.FileReady,
         "failed",
-        None
+        None,
+        SdesDestination.Dms
       )
       val sub2 = sub1.copy(
         correlationId = CorrelationId("correlationId2"),
@@ -120,14 +124,14 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
       )
 
       "the subs have been marked as manually processed" in {
-        when(subConConnector.updateAsManualConfirmed(sub1.correlationId))
+        when(gformConnector.updateAsManualConfirmed(sub1.correlationId))
           .thenReturn(Future.successful(HttpResponse(200, "")))
-        when(subConConnector.updateAsManualConfirmed(sub2.correlationId))
+        when(gformConnector.updateAsManualConfirmed(sub2.correlationId))
           .thenReturn(Future.successful(HttpResponse(200, "")))
 
         val result = dmsSubReconciliationService.sdesReconcile(List(sub1, sub2)).futureValue
 
-        result shouldBe SdesReportsPageData(List(sub1, sub2), 2)
+        result shouldBe SdesSubmissionPageData(List(sub1, sub2), 2)
       }
     }
   }

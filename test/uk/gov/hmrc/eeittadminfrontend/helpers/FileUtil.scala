@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.utils
+package uk.gov.hmrc.eeittadminfrontend.helpers
 
 import java.io.File
 
