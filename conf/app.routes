@@ -85,6 +85,10 @@ GET         /sdes-reports/request-mark/:correlationId                   uk.gov.h
 GET         /sdes-reports/confirm-mark/:correlationId                   uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.confirmMark(correlationId: CorrelationId)
 GET         /sdes-reports/request-search/:page                          uk.gov.hmrc.eeittadminfrontend.controllers.SdesReportsController.requestSearch(page: Int)
 
+GET         /dms-submissions/csv                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.dmsSubmissionsUploadCsv()
+POST        /dms-submissions/csv                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.uploadDmsSubmissionsCsv()
+GET         /dms-submissions/reconcile                                  uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.reconcileDmsSubmissions()
+
 GET         /dms-work-item/:page                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.searchWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
 GET         /dms-work-item/request-search/:page                         uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.requestSearch(page: Int)
 GET         /dms-work-item/enqueue/:id                                  uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.enqueue(page: Int, id: String, submissionRef: SubmissionRef)

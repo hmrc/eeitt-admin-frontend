@@ -150,6 +150,11 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesDestinationsMigrationController.sdesDestinationsMigration(None, None).path),
                 content = Text("SDES Submissions migration"),
                 active = if (tab == "sdes-submissions-migration") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv().path),
+                content = Text("Reconcile DMS Subs"),
+                active = if (tab == "reconcile-subs") true else false
             ))
         )
     )
