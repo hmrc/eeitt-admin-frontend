@@ -21,16 +21,15 @@ import uk.gov.hmrc.eeittadminfrontend.models.sdes.SubmissionRef
 
 import java.io.File
 import scala.io.Source
+import scala.util.Using
 
 case class DmsReport(data: List[DmsReportData], count: Int)
 case class DmsReportData(submissionRef: SubmissionRef, envelopeId: EnvelopeId)
 
 object DmsReport {
   def apply(file: File): DmsReport =
-    try {
-      val source = Source.fromFile(file)
+    Using(Source.fromFile(file)) { source =>
       val lines = source.getLines().toList
-      source.close()
 
       val data = lines.map { line =>
         line.split(",") match {
@@ -40,8 +39,5 @@ object DmsReport {
         }
       }
       DmsReport(data, data.length)
-    } catch {
-      case _: Exception =>
-        DmsReport(List.empty, 0)
-    }
+    }.getOrElse(DmsReport(List.empty, 0))
 }
