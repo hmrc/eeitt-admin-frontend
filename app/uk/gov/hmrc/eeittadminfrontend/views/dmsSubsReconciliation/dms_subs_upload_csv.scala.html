@@ -60,8 +60,6 @@
         )
 
         @if(reconcileData.isDefined) {
-
-
             @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.reconcileDmsSubmissions(), args = 'class -> "js-form") {
                 @govukInput(
                     Input(
@@ -72,15 +70,17 @@
                     )
                 )
 
-                @govukButton(
-                    Button(
-                        preventDoubleClick = Some(true),
-                        content = Text("Reconcile"),
-                        classes = "govuk-label--s",
-                        inputType = Some("submit"),
-                        name = Some("filter")
+                @if(reconcileData.get.count > 0) {
+                    @govukButton(
+                        Button(
+                            preventDoubleClick = Some(true),
+                            content = Text("Reconcile"),
+                            classes = "govuk-label--s",
+                            inputType = Some("submit"),
+                            name = Some("filter")
+                        )
                     )
-                )
+                }
             }
         }
     }

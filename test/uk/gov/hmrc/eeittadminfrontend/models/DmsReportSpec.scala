@@ -51,7 +51,7 @@ class DmsReportSpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
       dmsReport.data.length mustBe 6
     }
 
-    "throw an IllegalArgumentException" when {
+    "return an empty DMSReport" when {
       val scenarios = Table(
         ("content", "csvIssue"),
         (
@@ -69,9 +69,9 @@ class DmsReportSpec extends AnyWordSpecLike with TableDrivenPropertyChecks {
       forAll(scenarios) { (content: String, csvIssue: String) =>
         s"$csvIssue" in {
           val csvFile = FileUtil.createFile("dmsReport.csv", content)
-          assertThrows[IllegalArgumentException] {
-            DmsReport(csvFile)
-          }
+
+          DmsReport(csvFile) mustBe DmsReport(List.empty, 0)
+
           csvFile.delete()
         }
       }
