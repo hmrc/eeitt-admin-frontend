@@ -95,32 +95,21 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
       val dmsReport: DmsReport = DmsReport(dmsReportData, 4)
 
       "DMS says that the subs have been received" in {
-        dmsSubReconciliationService.sdesToBeReconciled(sdesReportsPageData, dmsReport) shouldBe List(sub1, sub2)
+        dmsSubReconciliationService.sdesToBeReconciled(sdesReportsPageData, dmsReport) shouldBe List(
+          SdesReconciliationData(CorrelationId("correlationId")),
+          SdesReconciliationData(CorrelationId("correlationId2"))
+        )
       }
     }
   }
 
   "sdesReconcile" should {
     "return the reconciled subs" when {
-      val sub1 = SdesSubmissionData(
-        CorrelationId("correlationId"),
-        EnvelopeId("envelopeId"),
-        FormTemplateId("formTemplateId"),
-        SubmissionRef("submissionRef"),
-        1,
-        1,
-        1L,
-        None,
-        NotificationStatus.FileReady,
-        "failed",
-        None,
-        SdesDestination.Dms
+      val sub1 = SdesReconciliationData(
+        CorrelationId("correlationId")
       )
       val sub2 = sub1.copy(
-        correlationId = CorrelationId("correlationId2"),
-        submissionRef = SubmissionRef("submissionRef2"),
-        envelopeId = EnvelopeId("envelopeId2"),
-        status = NotificationStatus.FileProcessingFailure
+        correlationId = CorrelationId("correlationId2")
       )
 
       "the subs have been marked as manually processed" in {
@@ -131,7 +120,7 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
 
         val result = dmsSubReconciliationService.sdesReconcile(List(sub1, sub2)).futureValue
 
-        result shouldBe SdesSubmissionPageData(List(sub1, sub2), 2)
+        result shouldBe SdesReconciliation(List(sub1, sub2), 2)
       }
     }
   }

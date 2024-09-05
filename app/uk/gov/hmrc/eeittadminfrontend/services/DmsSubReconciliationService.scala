@@ -18,14 +18,14 @@ package uk.gov.hmrc.eeittadminfrontend.services
 
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.DmsReport
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, SdesSubmissionData, SdesSubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, SdesReconciliation, SdesReconciliationData, SdesSubmissionPageData }
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
 
-  def sdesToBeReconciled(sdesReport: SdesSubmissionPageData, dmsReport: DmsReport): List[SdesSubmissionData] =
+  def sdesToBeReconciled(sdesReport: SdesSubmissionPageData, dmsReport: DmsReport): List[SdesReconciliationData] =
     filterSubsNotProcessedInDmsReport(subsNotProcessed(sdesReport), dmsReport)
 
   private def subsNotProcessed(sdesReport: SdesSubmissionPageData): SdesSubmissionPageData = sdesReport match {
@@ -39,14 +39,16 @@ class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
   private def filterSubsNotProcessedInDmsReport(
     subsNotProcessed: SdesSubmissionPageData,
     dmsReport: DmsReport
-  ): List[SdesSubmissionData] =
-    subsNotProcessed.sdesSubmissions.filter { sub =>
-      dmsReport.data.exists(_.envelopeId == sub.envelopeId)
-    }
+  ): List[SdesReconciliationData] =
+    subsNotProcessed.sdesSubmissions
+      .filter { sub =>
+        dmsReport.data.exists(_.envelopeId == sub.envelopeId)
+      }
+      .map(sub => SdesReconciliationData(sub.correlationId))
 
   def sdesReconcile(
-    reconcileData: List[SdesSubmissionData]
-  )(implicit ec: ExecutionContext): Future[SdesSubmissionPageData] =
+    reconcileData: List[SdesReconciliationData]
+  )(implicit ec: ExecutionContext): Future[SdesReconciliation] =
     Future
       .sequence(reconcileData.map { sub =>
         gformConnector
@@ -58,6 +60,6 @@ class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
           .collect { case Some(sub) => sub }
       })
       .map { reconciledSubs =>
-        SdesSubmissionPageData(reconciledSubs, reconciledSubs.length.toLong)
+        SdesReconciliation(reconciledSubs, reconciledSubs.length.toLong)
       }
 }
