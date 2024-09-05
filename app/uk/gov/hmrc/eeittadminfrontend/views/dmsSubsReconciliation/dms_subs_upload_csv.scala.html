@@ -16,7 +16,7 @@
 
 @import uk.gov.hmrc.eeittadminfrontend.views.html._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesReconciliation
 @import play.api.libs.json.Json
 
 @this(
@@ -28,7 +28,7 @@
     govukNotificationBanner: GovukNotificationBanner
 )
 
-@(notificationMessage: String = "", reconcileData: Option[SdesSubmissionPageData] = None)(implicit messages: Messages, request: Request[_])
+@(notificationMessage: String = "", reconcileData: Option[SdesReconciliation] = None)(implicit messages: Messages, request: Request[_])
 
 @main_template(title = "Reconcile DMS Subs", tab = "reconcile-subs") {
 

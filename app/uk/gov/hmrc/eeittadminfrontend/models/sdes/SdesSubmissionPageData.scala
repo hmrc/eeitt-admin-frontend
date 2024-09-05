@@ -52,6 +52,21 @@ object SdesSubmissionData {
   implicit val format: OFormat[SdesSubmissionData] = Json.format[SdesSubmissionData]
 }
 
+case class SdesReconciliation(
+  sdesSubmissions: List[SdesReconciliationData],
+  count: Long
+)
+
+object SdesReconciliation {
+  implicit val format: OFormat[SdesReconciliation] = Json.format[SdesReconciliation]
+}
+
+case class SdesReconciliationData(correlationId: CorrelationId)
+
+object SdesReconciliationData {
+  implicit val format: OFormat[SdesReconciliationData] = Json.format[SdesReconciliationData]
+}
+
 case class SubmissionRef(value: String) extends AnyVal
 
 object SubmissionRef {
