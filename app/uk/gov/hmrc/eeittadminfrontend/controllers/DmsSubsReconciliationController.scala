@@ -25,7 +25,7 @@ import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, Multipar
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.history.DateFilter
 import uk.gov.hmrc.eeittadminfrontend.models.DmsReport
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ SdesDestination, SdesFilter, SdesSubmissionPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ SdesDestination, SdesFilter, SdesReconciliation, SdesSubmissionPageData }
 import uk.gov.hmrc.eeittadminfrontend.services.DmsSubReconciliationService
 import uk.gov.hmrc.eeittadminfrontend.views.html.dmsSubsReconciliation
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
@@ -75,7 +75,7 @@ class DmsSubsReconciliationController @Inject() (
             Ok(
               dmsSubsUploadCsv(
                 notificationMessage,
-                Some(SdesSubmissionPageData(reconcileData, reconcileData.length.toLong))
+                Some(SdesReconciliation(reconcileData, reconcileData.length.toLong))
               )
             )
           case _ =>
@@ -99,7 +99,7 @@ class DmsSubsReconciliationController @Inject() (
         optionalData =>
           optionalData
             .map { data: String =>
-              val reconcileData = Json.fromJson[SdesSubmissionPageData](Json.parse(data)).get
+              val reconcileData = Json.fromJson[SdesReconciliation](Json.parse(data)).get
               reconciliationService.sdesReconcile(reconcileData.sdesSubmissions).map { _ =>
                 Ok(dmsSubsReconciliationReport(reconcileData))
               }
