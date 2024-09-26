@@ -203,6 +203,38 @@ class DeploymentController @Inject() (
                                  }
             updatedGithubContent =
               githubContent.copy(content = ContentValue.JsonContent(updatedGithubJson))
+            _ <- for {
+                   handlebarsIds <- EitherT.fromEither[Future](getHandlebarsPayloadIds(mongoJson))
+                   _ <- handlebarsIds.traverse { handlebarId =>
+                          val handlebarTemplateId = FormTemplateId(s"${formTemplateId.value}-$handlebarId")
+                          val versionedHandlebarTemplateId =
+                            FormTemplateId(s"${formTemplateId.value}-v$mongoVersion-$handlebarId")
+                          for {
+                            rawHandlebarsTemplate <- EitherT(gformService.getRawHandlebarsTemplate(handlebarTemplateId))
+                            _ <- if (rawHandlebarsTemplate.content.textContent.nonEmpty)
+                                   gformService.saveHandlebarsTemplate(
+                                     versionedHandlebarTemplateId,
+                                     rawHandlebarsTemplate.content.textContent
+                                   )
+                                 else EitherT.rightT[Future, String](())
+                          } yield ()
+                        }
+                 } yield ()
+            _ <- for {
+                   handlebarsSchemaIds <- EitherT.fromEither[Future](getHandlebarsSchemaIds(mongoJson))
+                   _ <- handlebarsSchemaIds.traverse { handlebarSchemaId =>
+                          val versionedHandlebarSchemaId = FormTemplateId(s"${formTemplateId.value}-v$mongoVersion")
+                          for {
+                            handlebarsSchema <- EitherT(gformService.getHandlebarsSchema(formTemplateId))
+                            _ <- if (!handlebarsSchema.content.jsonContent.isNull)
+                                   gformService.saveHandlebarsSchema(
+                                     versionedHandlebarSchemaId,
+                                     CircePlayHelpers.circeToPlayUnsafe(handlebarsSchema.content.jsonContent)
+                                   )
+                                 else EitherT.rightT[Future, String](())
+                          } yield ()
+                        }
+                 } yield ()
             _      <- gformService.saveTemplate(FormTemplateId(versionedTemplateId), updatedMongoJson)
             result <- deployGithubContent(Username.fromRetrieval(request.retrieval), filename, updatedGithubContent)
           } yield result
@@ -269,6 +301,52 @@ class DeploymentController @Inject() (
       .downField("version")
       .as[Int]
       .leftMap(_.getMessage)
+
+  private def getHandlebarsPayloadIds(json: CJson): Either[String, List[String]] =
+    json.hcursor.downField("destinations").focus.flatMap { focus =>
+      focus.asArray.map { arr =>
+        arr.flatMap { obj =>
+          val cursor = obj.hcursor
+          for {
+            id <- cursor.downField("id").as[String].toOption
+            handlebarPayload <- cursor
+                                  .downField("handlebarPayload")
+                                  .as[Boolean]
+                                  .toOption
+                                  .orElse(Some(false))
+            destinationType  <- cursor.downField("type").as[String].toOption
+            dataOutputFormat <- cursor.downField("dataOutputFormat").as[String].toOption.orElse(Some(""))
+            if destinationType === "handlebarsHttpApi" || handlebarPayload || dataOutputFormat === "hbs"
+          } yield id
+        }
+      }
+    } match {
+      case Some(ids) if ids.nonEmpty => Right(ids.toList)
+      case Some(_)                   => Left("No valid handlebars IDs found.")
+      case None                      => Left("Unable to find any destinations for handlebar.")
+    }
+
+  private def getHandlebarsSchemaIds(json: CJson): Either[String, List[String]] =
+    json.hcursor.downField("destinations").focus.flatMap { focus =>
+      focus.asArray.map { arr =>
+        arr.flatMap { obj =>
+          val cursor = obj.hcursor
+          for {
+            id <- cursor.downField("id").as[String].toOption
+            validateHandlebarPayload <- cursor
+                                          .downField("validateHandlebarPayload")
+                                          .as[Boolean]
+                                          .toOption
+                                          .orElse(Some(false))
+            if validateHandlebarPayload
+          } yield id
+        }
+      }
+    } match {
+      case Some(ids) if ids.nonEmpty => Right(ids.toList)
+      case Some(_)                   => Left("No valid handlebar schema IDs found.")
+      case None                      => Left("Unable to find any destinations for the json schema.")
+    }
 
   def deploymentExisting(
     formTemplateId: FormTemplateId,
