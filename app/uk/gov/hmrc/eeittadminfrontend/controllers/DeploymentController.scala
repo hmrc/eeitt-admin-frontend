@@ -322,8 +322,7 @@ class DeploymentController @Inject() (
       }
     } match {
       case Some(ids) if ids.nonEmpty => Right(ids.toList)
-      case Some(_)                   => Left("No valid handlebars IDs found.")
-      case None                      => Left("Unable to find any destinations for handlebar.")
+      case _                         => Right(Nil)
     }
 
   private def getHandlebarsSchemaIds(json: CJson): Either[String, List[String]] =
@@ -344,8 +343,7 @@ class DeploymentController @Inject() (
       }
     } match {
       case Some(ids) if ids.nonEmpty => Right(ids.toList)
-      case Some(_)                   => Left("No valid handlebar schema IDs found.")
-      case None                      => Left("Unable to find any destinations for the json schema.")
+      case _                         => Right(Nil)
     }
 
   def deploymentExisting(
