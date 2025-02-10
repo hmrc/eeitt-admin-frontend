@@ -155,6 +155,11 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv().path),
                 content = Text("Reconcile DMS Subs"),
                 active = if (tab == "reconcile-subs") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.PDFRecovertController.show.path),
+                content = Text("PDF recovery"),
+                active = if (tab == "pdf-recovery") true else false
             ))
         )
     )
