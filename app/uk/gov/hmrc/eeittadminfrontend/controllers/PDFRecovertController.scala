@@ -19,7 +19,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.libs.Files.TemporaryFile
-import play.api.mvc.{ Action, MessagesControllerComponents, MultipartFormData }
+import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, MultipartFormData }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformFrontendConnector
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
@@ -51,7 +51,8 @@ class PDFRecovertController @Inject() (
     HeadCell(Text("Submission Ref")),
     HeadCell(Text("User Type")),
     HeadCell(Text("FormId")),
-    HeadCell(Text("Link"))
+    HeadCell(Text("DMS Link")),
+    HeadCell(Text("Instruction Link"))
   )
 
   private val emptyTable = Table(head = Some(tableHead))
@@ -60,22 +61,22 @@ class PDFRecovertController @Inject() (
     Future.successful(Ok(pdf_recovery(emptyTable)))
   }
 
-  def download(
+  def downloadDms(
     formTemplateId: FormTemplateId,
     envelopeId: EnvelopeId,
     submissionRef: String,
     submissionTime: String,
     affinityGroup: String
-  ) =
+  ): Action[AnyContent] =
     authorizedWrite.async { _ =>
       logger.info(
-        s"Downloading formTemplateId: ${formTemplateId.value} , envelopeId: ${envelopeId.value}, submissionRef: $submissionRef, submissionTime: $submissionTime"
+        s"Downloading DMS pdf formTemplateId: ${formTemplateId.value} , envelopeId: ${envelopeId.value}, submissionRef: $submissionRef, submissionTime: $submissionTime"
       )
       val customFormatter = DateTimeFormatter.ofPattern("yyyy-MM-ddHH:mm:ss")
       val localDateTime = LocalDateTime.parse(submissionTime, customFormatter)
       val formatterDate = DateTimeFormatter.ofPattern("yyyyMMdd")
       gformFrontendConnector
-        .downloadPdf(formTemplateId, envelopeId, submissionTime, affinityGroup)
+        .downloadDmsPdf(formTemplateId, envelopeId, submissionTime, affinityGroup)
         .map {
           case Right(source) =>
             Ok.streamed(source, None)
@@ -84,6 +85,35 @@ class PDFRecovertController @Inject() (
                 CONTENT_DISPOSITION -> s"""filename = "${envelopeId.value}_${submissionRef
                   .replace("-", "")}-${localDateTime.toLocalDate
                   .format(formatterDate)}-iform.pdf""""
+              )
+          case Left(error) => BadRequest(error)
+        }
+    }
+
+  def downloadInstruction(
+    formTemplateId: FormTemplateId,
+    envelopeId: EnvelopeId,
+    submissionRef: String,
+    submissionTime: String,
+    affinityGroup: String
+  ): Action[AnyContent] =
+    authorizedWrite.async { _ =>
+      logger.info(
+        s"Downloading instruction pdf formTemplateId: ${formTemplateId.value} , envelopeId: ${envelopeId.value}, submissionRef: $submissionRef, submissionTime: $submissionTime"
+      )
+      val customFormatter = DateTimeFormatter.ofPattern("yyyy-MM-ddHH:mm:ss")
+      val localDateTime = LocalDateTime.parse(submissionTime, customFormatter)
+      val formatterDate = DateTimeFormatter.ofPattern("yyyyMMdd")
+      gformFrontendConnector
+        .downloadInstructionPdf(formTemplateId, envelopeId, submissionTime, affinityGroup)
+        .map {
+          case Right(source) =>
+            Ok.streamed(source, None)
+              .withHeaders(
+                CONTENT_TYPE -> "application/pdf",
+                CONTENT_DISPOSITION -> s"""filename = "${envelopeId.value}_${submissionRef
+                  .replace("-", "")}-${localDateTime.toLocalDate
+                  .format(formatterDate)}-customerSummary.pdf""""
               )
           case Left(error) => BadRequest(error)
         }
@@ -112,7 +142,22 @@ class PDFRecovertController @Inject() (
                       link(
                         "Download",
                         uk.gov.hmrc.eeittadminfrontend.controllers.routes.PDFRecovertController
-                          .download(
+                          .downloadDms(
+                            FormTemplateId(formTemplateId),
+                            EnvelopeId(envelopeId),
+                            submissionRef,
+                            submissionTime.replace(" ", ""),
+                            if (affinityGroup.isEmpty) "individual" else affinityGroup
+                          )
+                      )
+                    )
+                  ),
+                  TableRow(
+                    HtmlContent(
+                      link(
+                        "Download",
+                        uk.gov.hmrc.eeittadminfrontend.controllers.routes.PDFRecovertController
+                          .downloadInstruction(
                             FormTemplateId(formTemplateId),
                             EnvelopeId(envelopeId),
                             submissionRef,

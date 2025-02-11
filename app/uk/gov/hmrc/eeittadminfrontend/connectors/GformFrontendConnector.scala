@@ -34,7 +34,7 @@ class GformFrontendConnector @Inject() (wsHttp: DefaultHttpClient, sc: ServicesC
 
   val gformFrontendUrl = s"${sc.baseUrl("gform-frontend")}/submissions"
 
-  def downloadPdf(
+  def downloadDmsPdf(
     formTemplateId: FormTemplateId,
     envelopeId: EnvelopeId,
     submissionTime: String,
@@ -43,7 +43,30 @@ class GformFrontendConnector @Inject() (wsHttp: DefaultHttpClient, sc: ServicesC
     ec: ExecutionContext
   ): Future[Either[String, Source[ByteString, _]]] = {
     val url =
-      gformFrontendUrl + s"/recover-pdf/$formTemplateId/$envelopeId/$submissionTime/${affinityGroup.toLowerCase}"
+      gformFrontendUrl + s"/recover-pdf/dms/$formTemplateId/$envelopeId/$submissionTime/${affinityGroup.toLowerCase}"
+
+    wsHttp
+      .buildRequest(url, Seq.empty[(String, String)])
+      .withMethod("GET")
+      .stream()
+      .map { response =>
+        if (response.status == 200) Right(response.bodyAsSource) else Left(response.body)
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to download an envelopeId $envelopeId: " + ex.getMessage)
+      }
+  }
+
+  def downloadInstructionPdf(
+    formTemplateId: FormTemplateId,
+    envelopeId: EnvelopeId,
+    submissionTime: String,
+    affinityGroup: String
+  )(implicit
+    ec: ExecutionContext
+  ): Future[Either[String, Source[ByteString, _]]] = {
+    val url =
+      gformFrontendUrl + s"/recover-pdf/instruction/$formTemplateId/$envelopeId/$submissionTime/${affinityGroup.toLowerCase}"
 
     wsHttp
       .buildRequest(url, Seq.empty[(String, String)])

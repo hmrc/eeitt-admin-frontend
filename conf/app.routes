@@ -135,6 +135,7 @@ GET         /sdes-destinations-migration/rollback                       uk.gov.h
 
 GET         /pdf-recovery                                               uk.gov.hmrc.eeittadminfrontend.controllers.PDFRecovertController.show
 POST        /pdf-recovery                                               uk.gov.hmrc.eeittadminfrontend.controllers.PDFRecovertController.uploadCsv
-GET         /pdf-recovery/download/:formTemplateId/:envelopeId/:submissionRef/:submissionTime/:affinityGroup          uk.gov.hmrc.eeittadminfrontend.controllers.PDFRecovertController.download(formTemplateId: FormTemplateId, envelopeId: EnvelopeId, submissionRef: String, submissionTime: String, affinityGroup: String)
+GET         /pdf-recovery/dms/download/:formTemplateId/:envelopeId/:submissionRef/:submissionTime/:affinityGroup                  uk.gov.hmrc.eeittadminfrontend.controllers.PDFRecovertController.downloadDms(formTemplateId: FormTemplateId, envelopeId: EnvelopeId, submissionRef: String, submissionTime: String, affinityGroup: String)
+GET         /pdf-recovery/instruction/download/:formTemplateId/:envelopeId/:submissionRef/:submissionTime/:affinityGroup          uk.gov.hmrc.eeittadminfrontend.controllers.PDFRecovertController.downloadInstruction(formTemplateId: FormTemplateId, envelopeId: EnvelopeId, submissionRef: String, submissionTime: String, affinityGroup: String)
 
 GET        /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
