@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesSubmissionPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.NotificationStatus
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
-@import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesConfirmationType
 
 @this(
         main_template: main_template,
@@ -89,7 +89,8 @@
                 <th class="govuk-table__header" scope="col" title="Failure Reason">Failure Reason</th>
                 <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
                 <th class="govuk-table__header" scope="col" title="Destination">Destination</th>
-                <th class="govuk-table__header" scope="col" title="Notify to SDES">Notify</th>
+                <th class="govuk-table__header" scope="col" title="Notify">Notify</th>
+                <th class="govuk-table__header" scope="col" title="Resend">Resend</th>
                 <th class="govuk-table__header" scope="col" title="Mark as processed">Mark as processed</th>
             </tr>
         </thead>
@@ -125,8 +126,14 @@
                     </span>
                 </td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                        @if(NotificationStatus.notifiableStatuses(sdesSubmission.status)) {
+                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestConfirmation(sdesSubmission.correlationId, SdesConfirmationType.Resend)" class="govuk-link">Resend</a>
+                        }
+                    </span>
+                </td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">
                         @if(NotificationStatus.updatableStatuses.contains(sdesSubmission.status)) {
-                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestMark(sdesSubmission.correlationId)" class="govuk-link">Mark as processed</a>
+                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.requestConfirmation(sdesSubmission.correlationId, SdesConfirmationType.Mark)" class="govuk-link">Mark as processed</a>
                         }
                     </span>
                 </td>

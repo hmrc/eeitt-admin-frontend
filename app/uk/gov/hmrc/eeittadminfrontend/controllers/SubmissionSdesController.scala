@@ -30,7 +30,7 @@ import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.history.DateFilter
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesDestination, SdesFilter, SdesSubmissionPageData, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationStatus, SdesConfig, SdesConfirmationType, SdesDestination, SdesFilter, SdesSubmissionPageData, SubmissionRef }
 import uk.gov.hmrc.eeittadminfrontend.validators.DateValidator.validateDateFilter
 import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateComponent
 import uk.gov.hmrc.govukfrontend.views.Aliases.{ Button, Input, Label, Select, SelectItem, TableRow, Text }
@@ -327,7 +327,7 @@ class SubmissionSdesController @Inject() (
       }
     }
 
-  def requestMark(correlationId: CorrelationId) =
+  def requestConfirmation(correlationId: CorrelationId, confirmationType: SdesConfirmationType) =
     authorizedWrite.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("markParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
@@ -353,7 +353,15 @@ class SubmissionSdesController @Inject() (
           )
         }
       gformConnector.getSdesSubmission(correlationId).map { sdesSubmissionData =>
-        Ok(submission_sdes_confirmation(sdesSubmissionData, sdesConfig.olderThan, pageError, fieldErrors))
+        Ok(
+          submission_sdes_confirmation(
+            sdesSubmissionData,
+            confirmationType,
+            sdesConfig.olderThan,
+            pageError,
+            fieldErrors
+          )
+        )
       }
     }
 
@@ -363,35 +371,59 @@ class SubmissionSdesController @Inject() (
     )
   )
 
-  def confirmMark(correlationId: CorrelationId) = authorizedWrite.async { implicit request =>
-    formMark
-      .bindFromRequest()
-      .fold(
-        _ =>
-          Redirect(
-            routes.SubmissionSdesController.requestMark(correlationId)
-          ).flashing("markParamMissing" -> "true").pure[Future],
-        {
-          case "Yes" =>
-            gformConnector
-              .updateAsManualConfirmed(correlationId)
-              .map(httpResponse =>
-                Redirect(
-                  routes.SubmissionSdesController
-                    .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
-                )
-                  .flashing(
-                    "success" -> s"Sdes submission successfully updated."
-                  )
-              )
-          case "No" =>
+  def confirm(correlationId: CorrelationId, confirmationType: SdesConfirmationType) = authorizedWrite.async {
+    implicit request =>
+      formMark
+        .bindFromRequest()
+        .fold(
+          _ =>
             Redirect(
-              routes.SubmissionSdesController
-                .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
-            )
-              .pure[Future]
-        }
-      )
+              routes.SubmissionSdesController.requestConfirmation(correlationId, confirmationType)
+            ).flashing("markParamMissing" -> "true").pure[Future],
+          {
+            case "Yes" =>
+              if (confirmationType === SdesConfirmationType.Mark) {
+                gformConnector
+                  .updateAsManualConfirmed(correlationId)
+                  .map(httpResponse =>
+                    Redirect(
+                      routes.SubmissionSdesController
+                        .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
+                    )
+                      .flashing(
+                        "success" -> s"Sdes submission successfully updated."
+                      )
+                  )
+              } else {
+                gformConnector.resend(correlationId).map { response =>
+                  val status = response.status
+                  if (status >= 200 && status < 300) {
+                    Redirect(
+                      routes.SubmissionSdesController
+                        .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
+                    )
+                      .flashing(
+                        "success" -> s"Envelope successfully resent. Correlation id: ${correlationId.value}"
+                      )
+                  } else {
+                    Redirect(
+                      routes.SubmissionSdesController
+                        .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
+                    )
+                      .flashing(
+                        "failed" -> s"Unexpected SDES response with correlation id: ${correlationId.value} : ${response.body}"
+                      )
+                  }
+                }
+              }
+            case "No" =>
+              Redirect(
+                routes.SubmissionSdesController
+                  .sdesSubmissions(0, None, None, None, None, None, None, None, None, None, None)
+              )
+                .pure[Future]
+          }
+        )
   }
 
   private val form: Form[

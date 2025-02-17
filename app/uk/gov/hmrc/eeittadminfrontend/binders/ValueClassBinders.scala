@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.binders
 
+import cats.implicits._
 import org.http4s.Uri
 import play.api.libs.json.{ JsError, JsString, JsSuccess, Reads }
 import play.api.mvc.{ PathBindable, QueryStringBindable }
@@ -24,7 +25,7 @@ import uk.gov.hmrc.eeittadminfrontend.deployment.{ Filename, GithubPath }
 import uk.gov.hmrc.eeittadminfrontend.history.HistoryId
 import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId, FormTemplateRawId, ShutterMessageId }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesDestination }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesConfirmationType, SdesDestination }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
 
 object ValueClassBinders {
@@ -36,6 +37,17 @@ object ValueClassBinders {
   implicit val formIdBinder: PathBindable[FormId] = valueClassBinder(_.value)
   implicit val bannerIdBinder: PathBindable[BannerId] = valueClassBinder(_.value)
   implicit val shutterMessageIdBinder: PathBindable[ShutterMessageId] = valueClassBinder(_.value)
+  implicit val sdesConfirmationTypePathBinder: PathBindable[SdesConfirmationType] =
+    new PathBindable[SdesConfirmationType] {
+      override def bind(key: String, value: String): Either[String, SdesConfirmationType] =
+        value match {
+          case SdesConfirmationType(s) => s.asRight
+          case _ =>
+            s"'$value' is not a valid SdesConfirmationType. Valid values are: ${SdesConfirmationType.all}".asLeft
+        }
+
+      override def unbind(key: String, value: SdesConfirmationType): String = value.toString
+    }
 
   implicit val githubPathQueryBinder: QueryStringBindable[GithubPath] = new QueryStringBindable[GithubPath] {
     override def unbind(key: String, githubPath: GithubPath): String = {
@@ -64,6 +76,9 @@ object ValueClassBinders {
 
   implicit val notificationStatusBinder: QueryStringBindable[NotificationStatus] = valueClassQueryBinder(
     NotificationStatus.fromName
+  )
+  implicit val sdesConfirmationTypeBinder: QueryStringBindable[SdesConfirmationType] = valueClassQueryBinder(
+    SdesConfirmationType.fromName
   )
   implicit val sdesDestinationBinder: QueryStringBindable[SdesDestination] = valueClassQueryBinder(
     SdesDestination.fromName

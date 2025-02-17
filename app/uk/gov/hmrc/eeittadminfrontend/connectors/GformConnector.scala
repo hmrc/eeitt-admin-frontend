@@ -176,6 +176,10 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     wsHttp
       .doPost[String](gformUrl + s"/sdes/notify/${correlationId.value}", "")
 
+  def resend(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .doPost[String](gformUrl + s"/sdes/resend/${correlationId.value}", "")
+
   def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp.doPut[String](gformUrl + s"/sdes/${correlationId.value}", "")
 
