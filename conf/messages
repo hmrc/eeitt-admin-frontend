@@ -6,6 +6,7 @@ generic.Yes=Yes
 generic.No=No
 generic.error.selectOption=Please select an option
 generic.error.selectOption.heading=There is a problem
+generic.resend.confirm = Are you sure you want to resend?
 generic.mark.confirm = Are you sure you want to mark as processed?
 generic.delete.confirm = Are you sure you want to remove?
 

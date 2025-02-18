@@ -84,13 +84,11 @@ sealed trait NotificationStatus extends Product with Serializable
 object NotificationStatus {
 
   case object FileReady extends NotificationStatus
-
   case object FileReceived extends NotificationStatus
-
   case object FileProcessingFailure extends NotificationStatus
-
   case object FileProcessed extends NotificationStatus
   case object FileProcessedManualConfirmed extends NotificationStatus
+  case object Replaced extends NotificationStatus
 
   val values: Set[NotificationStatus] =
     Set(
@@ -98,7 +96,8 @@ object NotificationStatus {
       FileReceived,
       FileProcessingFailure,
       FileProcessed,
-      FileProcessedManualConfirmed
+      FileProcessedManualConfirmed,
+      Replaced
     )
 
   val updatableStatuses: Set[NotificationStatus] =
@@ -124,6 +123,7 @@ object NotificationStatus {
       case FileProcessingFailure        => JsString("FileProcessingFailure")
       case FileProcessed                => JsString("FileProcessed")
       case FileProcessedManualConfirmed => JsString("FileProcessedManualConfirmed")
+      case Replaced                     => JsString("Replaced")
     }
 
     override def reads(json: JsValue): JsResult[NotificationStatus] =
@@ -133,8 +133,11 @@ object NotificationStatus {
         case JsString("FileProcessingFailure")        => JsSuccess(FileProcessingFailure)
         case JsString("FileProcessed")                => JsSuccess(FileProcessed)
         case JsString("FileProcessedManualConfirmed") => JsSuccess(FileProcessedManualConfirmed)
+        case JsString("Replaced")                     => JsSuccess(Replaced)
         case JsString(err) =>
-          JsError(s"only for valid FileReady, FileReceived, FileProcessingFailure or FileProcessed.$err is not allowed")
+          JsError(
+            s"only for valid FileReady, FileReceived, FileProcessingFailure, FileProcessed or Replaced.$err is not allowed"
+          )
         case _ => JsError("Failure")
       }
   }
@@ -145,6 +148,7 @@ object NotificationStatus {
     case FileProcessingFailure        => "FileProcessingFailure"
     case FileProcessed                => "FileProcessed"
     case FileProcessedManualConfirmed => "FileProcessedManualConfirmed"
+    case Replaced                     => "Replaced"
   }
 
   def fromString(notificationStatus: String): NotificationStatus = notificationStatus match {
@@ -153,6 +157,7 @@ object NotificationStatus {
     case "FileProcessingFailure"        => FileProcessingFailure
     case "FileProcessed"                => FileProcessed
     case "FileProcessedManualConfirmed" => FileProcessedManualConfirmed
+    case "Replaced"                     => Replaced
   }
 }
 
