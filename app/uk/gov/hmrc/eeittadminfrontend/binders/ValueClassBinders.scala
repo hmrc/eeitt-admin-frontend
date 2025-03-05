@@ -27,6 +27,7 @@ import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, FormId, FormTemplateId,
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesConfirmationType, SdesDestination }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.fromName
 
 object ValueClassBinders {
   implicit val historyIdBinder: PathBindable[HistoryId] = valueClassBinder(_.value)
@@ -37,6 +38,7 @@ object ValueClassBinders {
   implicit val formIdBinder: PathBindable[FormId] = valueClassBinder(_.value)
   implicit val bannerIdBinder: PathBindable[BannerId] = valueClassBinder(_.value)
   implicit val shutterMessageIdBinder: PathBindable[ShutterMessageId] = valueClassBinder(_.value)
+  implicit val sdesDestinationPathBinder: PathBindable[SdesDestination] = valueClassBinder(fromName)
   implicit val sdesConfirmationTypePathBinder: PathBindable[SdesConfirmationType] =
     new PathBindable[SdesConfirmationType] {
       override def bind(key: String, value: String): Either[String, SdesConfirmationType] =

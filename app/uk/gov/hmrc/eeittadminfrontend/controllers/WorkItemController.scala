@@ -18,13 +18,14 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.data.Forms.{ optional, text }
+import play.api.data.Forms.{ nonEmptyText, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SdesDestination, SubmissionRef }
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
@@ -35,12 +36,12 @@ import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
-class DmsWorkItemController @Inject() (
+class WorkItemController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  dms_workitem: uk.gov.hmrc.eeittadminfrontend.views.html.dms_workitem,
-  dms_workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.dms_workitem_confirmation
+  workitem: uk.gov.hmrc.eeittadminfrontend.views.html.workitem,
+  workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_confirmation
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -48,30 +49,31 @@ class DmsWorkItemController @Inject() (
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def searchWorkItem(
+    destination: SdesDestination,
     page: Int,
     formTemplateId: Option[FormTemplateId],
     status: Option[ProcessingStatus]
   ) =
     authorizedRead.async { implicit request =>
-      gformConnector.searchDmsWorkItem(page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
+      gformConnector.searchWorkItem(destination, page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
         val pagination = Pagination(sdesWorkItemPageData.count, page, sdesWorkItemPageData.count.toInt, pageSize)
-        Ok(dms_workitem(pagination, sdesWorkItemPageData, formTemplateId, status))
+        Ok(workitem(destination, pagination, sdesWorkItemPageData, formTemplateId, status))
       }
     }
 
-  def enqueue(page: Int, id: String, submissionRef: SubmissionRef) =
+  def enqueue(destination: SdesDestination, page: Int, id: String, submissionRef: SubmissionRef) =
     authorizedWrite.async { implicit request =>
       val username = request.retrieval
       logger.info(s"${username.value} sends a reprocess request for $id, submission id: ${submissionRef.value}")
-      gformConnector.enqueueDmsWorkItem(id).map { response =>
+      gformConnector.enqueueWorkItem(destination, id).map { response =>
         val status = response.status
         if (status >= 200 && status < 300) {
-          Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None))
+          Redirect(routes.WorkItemController.searchWorkItem(destination, 0, None, None))
             .flashing(
               "success" -> s"Submission successfully reprocessed. Submission id: ${submissionRef.value}"
             )
         } else {
-          Redirect(routes.DmsWorkItemController.searchWorkItem(page, None, None))
+          Redirect(routes.WorkItemController.searchWorkItem(destination, page, None, None))
             .flashing(
               "failed" -> s"Unexpected response with id: $id, submission id: ${submissionRef.value} : ${response.body}"
             )
@@ -79,7 +81,7 @@ class DmsWorkItemController @Inject() (
       }
     }
 
-  def requestRemoval(id: String) =
+  def requestRemoval(destination: SdesDestination, id: String) =
     authorizedDelete.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
@@ -104,8 +106,8 @@ class DmsWorkItemController @Inject() (
             )
           )
         }
-      gformConnector.getDmsWorkItem(id).map { workItemData =>
-        Ok(dms_workitem_confirmation(workItemData, pageError, fieldErrors))
+      gformConnector.getWorkItem(destination, id).map { workItemData =>
+        Ok(workitem_confirmation(workItemData, pageError, fieldErrors))
       }
     }
 
@@ -115,34 +117,35 @@ class DmsWorkItemController @Inject() (
     )
   )
 
-  def confirmRemoval(id: String) = authorizedDelete.async { implicit request =>
+  def confirmRemoval(destination: SdesDestination, id: String) = authorizedDelete.async { implicit request =>
     formRemoval
       .bindFromRequest()
       .fold(
         _ =>
           Redirect(
-            routes.DmsWorkItemController.requestRemoval(id)
+            routes.WorkItemController.requestRemoval(destination, id)
           ).flashing("removeParamMissing" -> "true").pure[Future],
         {
           case "Yes" =>
             gformConnector
-              .deleteDmsWorkItem(id)
+              .deleteWorkItem(destination, id)
               .map(_ =>
-                Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None))
+                Redirect(routes.WorkItemController.searchWorkItem(destination, 0, None, None))
                   .flashing(
                     "success" -> s"Dms work-item successfully deleted."
                   )
               )
           case "No" =>
-            Redirect(routes.DmsWorkItemController.searchWorkItem(0, None, None)).pure[Future]
+            Redirect(routes.WorkItemController.searchWorkItem(destination, 0, None, None)).pure[Future]
         }
       )
   }
 
-  private val form: Form[(Option[String], Option[String])] = play.api.data.Form(
+  private val form: Form[(String, Option[String], Option[String])] = play.api.data.Form(
     Forms.tuple(
-      "formTemplateId"   -> optional(text),
-      "processingStatus" -> optional(text)
+      "sdesDestinationId" -> nonEmptyText,
+      "formTemplateId"    -> optional(text),
+      "processingStatus"  -> optional(text)
     )
   )
 
@@ -152,12 +155,13 @@ class DmsWorkItemController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.DmsWorkItemController.searchWorkItem(page, None, None)
+            routes.WorkItemController.searchWorkItem(Dms, page, None, None)
           ).pure[Future],
         {
-          case (maybeFormTemplateId, maybeStatus) =>
+          case (destination, maybeFormTemplateId, maybeStatus) =>
             Redirect(
-              routes.DmsWorkItemController.searchWorkItem(
+              routes.WorkItemController.searchWorkItem(
+                SdesDestination.fromString(destination),
                 0,
                 maybeFormTemplateId.map(FormTemplateId(_)),
                 maybeStatus.flatMap(ProcessingStatus.fromName)
@@ -165,7 +169,7 @@ class DmsWorkItemController @Inject() (
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.DmsWorkItemController.searchWorkItem(page, None, None)
+              routes.WorkItemController.searchWorkItem(Dms, page, None, None)
             ).pure[Future]
         }
       )

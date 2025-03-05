@@ -28,7 +28,7 @@
 @formWithCSRF = @{new FormWithCSRF()}
 @govukButton = @{new GovukButton()}
 
-@main_template(title = s"DMS Work Item", tab = "dms-work-item", backLink = None) {
+@main_template(title = s"SDES Work Item", tab = "sdes-work-item", backLink = None) {
  @pageLevelError.render
 
  <table class="govuk-table stats-table govuk-body-s">
@@ -75,7 +75,7 @@
  </table>
 
 
-  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.confirmRemoval(workItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-work-item") {
+  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.confirmRemoval(workItemData.destination, workItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-sdes-work-item") {
    @{new GovukRadios(new GovukFieldset(), new GovukHint(), new GovukLabel(), new GovukFormGroup(), new GovukHintAndErrorMessage(new GovukHint(), new GovukErrorMessage()))(Radios(
      fieldset = Some(Fieldset(
       legend = Some(Legend(
