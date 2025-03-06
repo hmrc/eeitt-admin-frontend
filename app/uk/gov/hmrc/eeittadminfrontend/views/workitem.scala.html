@@ -135,7 +135,6 @@
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
                 <th class="govuk-table__header" scope="col" title="Destination">Destination</th>
                 <th class="govuk-table__header" scope="col" title="Count of the files in the envelope">File count</th>
-                <th class="govuk-table__header" scope="col" title="Size of envelope">Size(MB)</th>
                 <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Count">Failure Count</th>
                 <th class="govuk-table__header" scope="col" title="Local date time of received time">Received At</th>
@@ -161,9 +160,6 @@
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.numberOfFiles}
-                </td>
-                <td class="govuk-table__cell">
-                    @{convertToMB(workItem.size)}
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.status.name}
