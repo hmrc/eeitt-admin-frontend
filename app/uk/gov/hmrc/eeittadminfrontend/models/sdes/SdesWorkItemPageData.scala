@@ -35,7 +35,6 @@ case class SdesWorkItemData(
   formTemplateId: FormTemplateId,
   submissionRef: SubmissionRef,
   numberOfFiles: Int,
-  size: Long,
   status: ProcessingStatus,
   failureCount: Int,
   receivedAt: Instant,

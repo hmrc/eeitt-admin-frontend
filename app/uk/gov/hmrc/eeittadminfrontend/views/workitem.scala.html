@@ -20,7 +20,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesWorkItemPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus
-@import scala.math.BigDecimal.RoundingMode.DOWN
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 
 @this(
   main_template: main_template,
@@ -31,13 +32,14 @@
   govukSelect: GovukSelect
 )
 
-@(pagination: Pagination, workItemPageData: SdesWorkItemPageData, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])(implicit messages: Messages, request: Request[_])
+@(destination: SdesDestination, pagination: Pagination, sdesWorkItemPageData: SdesWorkItemPageData, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])(implicit messages: Messages, request: Request[_])
 
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.DataStore
 @navigationLink(page: Int, label: String) = {
-    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.searchWorkItem(page, formTemplateId, status)" class="govuk-link">@label</a>
+    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(destination, page, formTemplateId, status)" class="govuk-link">@label</a>
 }
 
-@main_template(title = s"DataStore Work Item", tab = "data-store-work-item"){
+@main_template(title = s"SDES Work Item", tab = "sdes-work-item"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
         @govukNotificationBanner(
@@ -60,7 +62,28 @@
         )
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestSearch(pagination.page), args = 'class -> "js-form") {
+
+        @govukSelect(
+            Select(
+                id = "sdesDestinationId",
+                name = "sdesDestinationId",
+                items = SdesDestination.workItemValues
+                .map(d =>
+                    SelectItem(
+                        value = Some(d.toString),
+                        text = d.toString,
+                        selected = d === destination
+                    )
+                )
+                .toSeq,
+                label = Label(
+                    classes = "govuk-label--s",
+                    content = Text("Destination")
+                )
+            )
+        )
+
         @govukInput(Input(
             id = "formTemplateId",
             name = "formTemplateId",
@@ -76,17 +99,16 @@
                 id = "processingStatus",
                 name = "processingStatus",
                 items = Seq(
-                            SelectItem(
-                                value = None,
-                                text = ""
-                            )
-                        ) ++ ProcessingStatus.values.map(ps =>
-                            SelectItem(
-                                value = Some(ps.name),
-                                text = ps.name,
-                                selected = status.fold(false)(status => ps.name === status.name)
-                            )
-                        ).toSeq,
+                    SelectItem(
+                        value = None,
+                        text = ""
+                    ))
+                    ++ ProcessingStatus.values.map( ps =>
+                    SelectItem(
+                        value = Some(ps.name),
+                        text = ps.name,
+                        selected = status.fold(false)(status => ps.name === status.name)
+                    )).toSeq,
                 label = Label(
                     classes = "govuk-label--s",
                     content = Text("Status")
@@ -112,7 +134,7 @@
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
                 <th class="govuk-table__header" scope="col" title="Destination">Destination</th>
-                <th class="govuk-table__header" scope="col" title="Size of envelope">Size(MB)</th>
+                <th class="govuk-table__header" scope="col" title="Count of the files in the envelope">File count</th>
                 <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
                 <th class="govuk-table__header" scope="col" title="Failure Count">Failure Count</th>
                 <th class="govuk-table__header" scope="col" title="Local date time of received time">Received At</th>
@@ -122,7 +144,7 @@
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
-        @for(workItem <- workItemPageData.sdesWorkItem) {
+        @for(workItem <- sdesWorkItemPageData.sdesWorkItem) {
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell">
                     @{workItem.formTemplateId.value}
@@ -137,7 +159,7 @@
                     @{workItem.destination}
                 </td>
                 <td class="govuk-table__cell">
-                    @{convertToMB(workItem.size)}
+                    @{workItem.numberOfFiles}
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.status.name}
@@ -153,12 +175,12 @@
                 </td>
                 <td class="govuk-table__cell">
                     @if(ProcessingStatus.reProcessable.contains(workItem.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.enqueue(pagination.page, workItem.id, workItem.submissionRef)" class="govuk-link">Enqueue</a>
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.enqueue(destination, pagination.page, workItem.id, workItem.submissionRef)" class="govuk-link">Enqueue</a>
                     }
                 </td>
                 <td class="govuk-table__cell">
                     @if(ProcessingStatus.removable.contains(workItem.status)) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.requestRemoval(workItem.id)" class="govuk-link">Delete</a>
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestRemoval(destination, workItem.id)" class="govuk-link">Delete</a>
                     }
                 </td>
             </tr>

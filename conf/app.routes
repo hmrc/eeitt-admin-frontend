@@ -89,18 +89,11 @@ GET         /dms-submissions/csv                                        uk.gov.h
 POST        /dms-submissions/csv                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.uploadDmsSubmissionsCsv()
 POST        /dms-submissions/reconcile                                  uk.gov.hmrc.eeittadminfrontend.controllers.DmsSubsReconciliationController.reconcileDmsSubmissions()
 
-GET         /dms-work-item/:page                                        uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.searchWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
-GET         /dms-work-item/request-search/:page                         uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.requestSearch(page: Int)
-GET         /dms-work-item/enqueue/:id                                  uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.enqueue(page: Int, id: String, submissionRef: SubmissionRef)
-GET         /dms-work-item/request-removal/:id                          uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.requestRemoval(id: String)
-GET         /dms-work-item/confirm-removal/:id                          uk.gov.hmrc.eeittadminfrontend.controllers.DmsWorkItemController.confirmRemoval(id: String)
-
-GET         /data-store-work-item/:page                                 uk.gov.hmrc.eeittadminfrontend.controllers.DataStoreWorkItemController.searchWorkItem(page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
-GET         /data-store-work-item/request-search/:page                  uk.gov.hmrc.eeittadminfrontend.controllers.DataStoreWorkItemController.requestSearch(page: Int)
-GET         /data-store-work-item/enqueue/:id                           uk.gov.hmrc.eeittadminfrontend.controllers.DataStoreWorkItemController.enqueue(page: Int, id: String, submissionRef: SubmissionRef)
-GET         /data-store-work-item/request-removal/:id                   uk.gov.hmrc.eeittadminfrontend.controllers.DataStoreWorkItemController.requestRemoval(id: String)
-GET         /data-store-work-item/confirm-removal/:id                   uk.gov.hmrc.eeittadminfrontend.controllers.DataStoreWorkItemController.confirmRemoval(id: String)
-
+GET         /work-item/search/:destination/:page                        uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.searchWorkItem(destination: SdesDestination, page: Int, formTemplateId: Option[FormTemplateId], status: Option[ProcessingStatus])
+GET         /work-item/request-search/:page                             uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestSearch(page: Int)
+GET         /work-item/enqueue/:destination/:id                         uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.enqueue(destination: SdesDestination, page: Int, id: String, submissionRef: SubmissionRef)
+GET         /work-item/request-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestRemoval(destination: SdesDestination, id: String)
+GET         /work-item/confirm-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.confirmRemoval(destination: SdesDestination, id: String)
 
 GET         /notification-banner                                        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
 GET         /notification-banner/delete/:bannerId                       uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner(bannerId: BannerId)

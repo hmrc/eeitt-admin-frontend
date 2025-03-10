@@ -168,8 +168,10 @@ object SdesDestination {
   case object HmrcIlluminate extends SdesDestination
   case object DataStoreLegacy extends SdesDestination // Alias for HmrcIlluminate (deprecated)
   case object DataStore extends SdesDestination
+  case object InfoArchive extends SdesDestination
 
-  val values: Set[SdesDestination] = Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore)
+  val values: Set[SdesDestination] = Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive)
+  val workItemValues: Set[SdesDestination] = Set(Dms, DataStore, InfoArchive)
 
   implicit val equal: Eq[SdesDestination] = Eq.fromUniversalEquals
   implicit val format: Format[SdesDestination] = new Format[SdesDestination] {
@@ -178,6 +180,7 @@ object SdesDestination {
       case HmrcIlluminate  => JsString("HmrcIlluminate")
       case DataStoreLegacy => JsString("DataStoreLegacy")
       case DataStore       => JsString("DataStore")
+      case InfoArchive     => JsString("InfoArchive")
     }
 
     override def reads(json: JsValue): JsResult[SdesDestination] =
@@ -186,8 +189,9 @@ object SdesDestination {
         case JsString("HmrcIlluminate")  => JsSuccess(HmrcIlluminate)
         case JsString("DataStoreLegacy") => JsSuccess(DataStoreLegacy)
         case JsString("DataStore")       => JsSuccess(DataStore)
+        case JsString("InfoArchive")     => JsSuccess(InfoArchive)
         case JsString(err) =>
-          JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy or DataStore. $err is not allowed")
+          JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy, DataStore or InfoArchive. $err is not allowed")
         case _ => JsError("Failure")
       }
   }
@@ -197,6 +201,7 @@ object SdesDestination {
     case HmrcIlluminate  => "HmrcIlluminate"
     case DataStoreLegacy => "DataStoreLegacy"
     case DataStore       => "DataStore"
+    case InfoArchive     => "InfoArchive"
   }
 
   def fromString(destination: String): SdesDestination = destination match {
@@ -204,5 +209,6 @@ object SdesDestination {
     case "HmrcIlluminate"  => HmrcIlluminate
     case "DataStoreLegacy" => DataStoreLegacy
     case "DataStore"       => DataStore
+    case "InfoArchive"     => InfoArchive
   }
 }

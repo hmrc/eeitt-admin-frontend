@@ -24,7 +24,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
@@ -183,7 +183,8 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp.doPut[String](gformUrl + s"/sdes/${correlationId.value}", "")
 
-  def searchDmsWorkItem(
+  def searchWorkItem(
+    destination: SdesDestination,
     page: Int,
     pageSize: Int,
     formTemplateId: Option[FormTemplateId],
@@ -193,43 +194,27 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     ec: ExecutionContext
   ): Future[SdesWorkItemPageData] = {
     val queryByFormTemplate = formTemplateId.map(id => s"formTemplateId=$id")
-    val queryByStatus = status.map(s => s"status=$s")
-    val queryString = List(queryByFormTemplate, queryByStatus).flatten.mkString("&")
-    wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/dms-work-item/search/$page/$pageSize?$queryString")
+    val queryByStatus = status.map(s => s"status=${s.name}")
+    val queryString =
+      List(Some(s"destination=${destination.toString}"), queryByFormTemplate, queryByStatus).flatten.mkString("&")
+    wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/destination-work-item/search/$page/$pageSize?$queryString")
   }
 
-  def getDmsWorkItem(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SdesWorkItemData] =
-    wsHttp.GET[SdesWorkItemData](gformUrl + s"/dms-work-item/$id")
-
-  def enqueueDmsWorkItem(id: String)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doPost[String](gformUrl + s"/dms-work-item/enqueue/$id", "")
-
-  def deleteDmsWorkItem(id: String)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doDelete(gformUrl + s"/dms-work-item/$id")
-
-  def searchDataStoreWorkItem(
-    page: Int,
-    pageSize: Int,
-    formTemplateId: Option[FormTemplateId],
-    status: Option[ProcessingStatus]
-  )(implicit
+  def getWorkItem(destination: SdesDestination, id: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[SdesWorkItemPageData] = {
-    val queryByFormTemplate = formTemplateId.map(id => s"formTemplateId=$id")
-    val queryByStatus = status.map(s => s"status=$s")
-    val queryString = List(queryByFormTemplate, queryByStatus).flatten.mkString("&")
-    wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/data-store-work-item/search/$page/$pageSize?$queryString")
-  }
+  ): Future[SdesWorkItemData] =
+    wsHttp.GET[SdesWorkItemData](gformUrl + s"/destination-work-item/$id?destination=${destination.toString}")
 
-  def getDataStoreWorkItem(id: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SdesWorkItemData] =
-    wsHttp.GET[SdesWorkItemData](gformUrl + s"/data-store-work-item/$id")
+  def enqueueWorkItem(destination: SdesDestination, id: String)(implicit
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp.doPost[String](gformUrl + s"/destination-work-item/enqueue/$id?destination=${destination.toString}", "")
 
-  def enqueueDataStoreWorkItem(id: String)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doPost[String](gformUrl + s"/data-store-work-item/enqueue/$id", "")
-
-  def deleteDataStoreWorkItem(id: String)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doDelete(gformUrl + s"/data-store-work-item/$id")
+  def deleteWorkItem(destination: SdesDestination, id: String)(implicit
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp.doDelete(gformUrl + s"/destination-work-item/$id?destination=${destination.toString}")
 
   def findNotificationBanner()(implicit
     ec: ExecutionContext

@@ -24,6 +24,7 @@
 @import uk.gov.hmrc.hmrcfrontend.views.html.components.HmrcBanner
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.eeittadminfrontend.views.html.FullMainContent
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 
 @this(
   fullMainContent: FullMainContent,
@@ -127,14 +128,9 @@
                     active = if(tab == "sdes-reports") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsWorkItemController.searchWorkItem(0, None, None).path),
-                content = Text("DMS Work Item"),
-                active = if (tab == "dms-work-item") true else false
-            ),
-            HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataStoreWorkItemController.searchWorkItem(0, None, None).path),
-                content = Text("DataStore Work Item"),
-                active = if (tab == "data-store-work-item") true else false
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(Dms, 0, None, None).path),
+                content = Text("SDES Work Item"),
+                active = if (tab == "sdes-work-item") true else false
             ),
             HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path),
