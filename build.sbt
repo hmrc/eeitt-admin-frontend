@@ -64,6 +64,7 @@ lazy val microservice = Project(appName, file("."))
       "uk.gov.hmrc.eeittadminfrontend.models.sdes._",
       "uk.gov.hmrc.eeittadminfrontend.models.BannerId",
       "uk.gov.hmrc.eeittadminfrontend.models.ShutterMessageId",
-      "uk.gov.hmrc.play.bootstrap.binders.RedirectUrl"
+      "uk.gov.hmrc.play.bootstrap.binders.RedirectUrl",
+      "uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId"
     )
   )

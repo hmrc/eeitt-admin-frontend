@@ -34,7 +34,7 @@ class ShutterFormTemplateController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def delete(formTemplateId: FormTemplateId) =
-    authorizedDelete.async { request =>
+    authorizedDelete.async { implicit request =>
       gformConnector.deleteShutterFormTemplate(formTemplateId).map { maybeShutter =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter

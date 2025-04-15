@@ -53,7 +53,7 @@ class ShutterController @Inject() (
     }
 
   def deleteShutter(shutterMessageId: ShutterMessageId) =
-    authorizedWrite.async { request =>
+    authorizedWrite.async { implicit request =>
       gformConnector.deleteShutter(shutterMessageId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter

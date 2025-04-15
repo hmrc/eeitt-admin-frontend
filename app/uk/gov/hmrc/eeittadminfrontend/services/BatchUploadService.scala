@@ -31,6 +31,7 @@ import org.apache.pekko.stream.scaladsl._
 import cats.effect.{ IO, Resource }
 import org.apache.pekko.stream.Materializer
 import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath
+import uk.gov.hmrc.http.HeaderCarrier
 
 class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   ec: ExecutionContext,
@@ -40,7 +41,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   val processedTemplates: mutable.ArrayDeque[UploadedForm] = mutable.ArrayDeque()
   var done = true
 
-  def uploadZip(file: File): Future[List[UploadedForm]] = {
+  def uploadZip(file: File)(implicit hc: HeaderCarrier): Future[List[UploadedForm]] = {
     processedTemplates.clear()
     done = false
 
@@ -100,7 +101,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
   private def loadHandlebarsSchemasFromZip(file: File): List[(FormTemplateId, Array[Byte])] =
     loadFromZip(GithubPath.HandlebarsSchemaPath.zipPath, file, ".json")
 
-  private def processTemplate(templateId: FormTemplateId, template: Array[Byte]) = {
+  private def processTemplate(templateId: FormTemplateId, template: Array[Byte])(implicit hc: HeaderCarrier) = {
     val jsonTemplate = Json.parse(template)
     gformConnector
       .saveTemplate(templateId, jsonTemplate)
@@ -115,7 +116,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
       }
   }
 
-  private def processHandlebarsTemplate(templateId: FormTemplateId, template: Array[Byte]) =
+  private def processHandlebarsTemplate(templateId: FormTemplateId, template: Array[Byte])(implicit hc: HeaderCarrier) =
     gformConnector
       .saveHandlebarsTemplate(templateId, new String(template, "UTF-8"))
       .map { result =>
@@ -128,7 +129,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
         UploadedForm(templateId, UploadedFormType.Handlebars, s"Unable to upload: ${e.getMessage}")
       }
 
-  private def processHandlebarsSchema(templateId: FormTemplateId, template: Array[Byte]) = {
+  private def processHandlebarsSchema(templateId: FormTemplateId, template: Array[Byte])(implicit hc: HeaderCarrier) = {
     val jsonTemplate = Json.parse(template)
     gformConnector
       .saveHandlebarsSchema(templateId, jsonTemplate)

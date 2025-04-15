@@ -19,13 +19,15 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 import org.apache.pekko.http.scaladsl.model.{ StatusCode, StatusCodes }
 import javax.inject.Inject
 import org.slf4j.LoggerFactory
+import play.api.libs.json.Json
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, EmailRenderResponse, NotFound, ParametersNotFound, Successful, Unexpected }
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsHttpResponse }
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http._
 
 import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class HMRCEmailRendererConnector @Inject() (wSHttp: HttpClient, sc: ServicesConfig)(implicit ec: ExecutionContext)
+class HMRCEmailRendererConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig)(implicit ec: ExecutionContext)
     extends HttpReadsHttpResponse {
 
   val baseUrl = sc.baseUrl("hmrc-email-renderer")
@@ -48,10 +50,11 @@ class HMRCEmailRendererConnector @Inject() (wSHttp: HttpClient, sc: ServicesConf
     emailRenderRequest: EmailRenderRequest
   )(implicit headerCarrier: HeaderCarrier): Future[EmailRenderResponse] = {
     logger.info(s"Render email template ${emailRenderRequest.templateId}")
-    wSHttp
-      .POST[EmailRenderRequest, EmailRenderResponse](
-        baseUrl + "/templates/" + emailRenderRequest.templateId,
-        emailRenderRequest
+    wsHttp
+      .post(
+        url"$baseUrl/templates/${emailRenderRequest.templateId}"
       )
+      .withBody(Json.toJson(emailRenderRequest))
+      .execute[EmailRenderResponse]
   }
 }

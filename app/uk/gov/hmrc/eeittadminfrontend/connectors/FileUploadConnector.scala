@@ -25,6 +25,7 @@ import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -32,9 +33,6 @@ import scala.concurrent.{ ExecutionContext, Future }
 class FileUploadConnector @Inject() (wsHttp: DefaultHttpClient, sc: ServicesConfig) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  implicit val legacyRawReads: HttpReads[HttpResponse] =
-    HttpReadsInstances.throwOnFailure(HttpReadsInstances.readEitherOf(HttpReadsInstances.readRaw))
 
   val fileUploadUrl = sc.baseUrl("file-upload")
 

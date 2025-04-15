@@ -28,9 +28,11 @@ import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, ProcessingStatus, SdesConfirmationType, SdesDestination }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus.Implicits.format
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.fromName
+import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
 
 object ValueClassBinders {
   implicit val historyIdBinder: PathBindable[HistoryId] = valueClassBinder(_.value)
+  implicit val translationAuditIdBinder: PathBindable[TranslationAuditId] = valueClassBinder(_.id)
   implicit val formTemplateRawIdBinder: PathBindable[FormTemplateRawId] = valueClassBinder(_.value)
   implicit val formTemplateIdBinder: PathBindable[FormTemplateId] = valueClassBinder(_.value)
   implicit val envelopeIdBinder: PathBindable[EnvelopeId] = valueClassBinder(_.value)
