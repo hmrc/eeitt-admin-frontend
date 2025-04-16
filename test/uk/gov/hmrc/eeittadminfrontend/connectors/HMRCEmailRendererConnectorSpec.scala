@@ -26,14 +26,14 @@ import play.api.Configuration
 import uk.gov.hmrc.eeittadminfrontend.common.WiremockSupport
 import uk.gov.hmrc.eeittadminfrontend.models.email.{ EmailRenderRequest, NotFound, ParametersNotFound, Successful, Unexpected }
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.test.HttpClientSupport
+import uk.gov.hmrc.http.test.HttpClientV2Support
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class HMRCEmailRendererConnectorSpec
     extends AnyFlatSpecLike with Matchers with ScalaFutures with WiremockSupport with BeforeAndAfterAll
-    with HttpClientSupport {
+    with HttpClientV2Support {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds), Span(500, Millis))
 
@@ -52,7 +52,7 @@ class HMRCEmailRendererConnectorSpec
           "microservice.services.hmrc-email-renderer.port" -> wiremockPort.toString
         )
       )
-    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(mkHttpClient(), servicesConfig)
+    val hmrcEmailRendererConnector = new HMRCEmailRendererConnector(mkHttpClientV2(), servicesConfig)
   }
 
   "renderTemplate" should "return a Successful response, when downstream service returns 200" in new TestFixture {

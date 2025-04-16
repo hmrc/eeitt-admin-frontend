@@ -26,7 +26,7 @@ import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes._
 import uk.gov.hmrc.eeittadminfrontend.models.{ DmsReport, DmsReportData, FormTemplateId }
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -105,6 +105,9 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
 
   "sdesReconcile" should {
     "return the reconciled subs" when {
+
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
       val sub1 = SdesReconciliationData(
         CorrelationId("correlationId")
       )

@@ -63,7 +63,7 @@ class EnvelopeController @Inject() (
     }
 
   def findEnvelope() =
-    WithUserLogin { (envelopeId, userData) => hc =>
+    WithUserLogin { (envelopeId, userData) => implicit hc =>
       logger.info(s"$userData Queried for gform envelopeId $envelopeId")
       displayEnvelope(envelopeId)
       gformConnector.getEnvelopeById(envelopeId).map {
@@ -73,11 +73,11 @@ class EnvelopeController @Inject() (
     }
 
   def showEnvelope(envelopeId: EnvelopeId) =
-    authorizedRead.async { request =>
+    authorizedRead.async { implicit request =>
       displayEnvelope(envelopeId)
     }
 
-  private def displayEnvelope(envelopeId: EnvelopeId) =
+  private def displayEnvelope(envelopeId: EnvelopeId)(implicit hc: HeaderCarrier) =
     gformConnector.getEnvelopeById(envelopeId).map {
       case Right(payload) => Ok(Json.prettyPrint(payload))
       case Left(error)    => BadRequest(error)

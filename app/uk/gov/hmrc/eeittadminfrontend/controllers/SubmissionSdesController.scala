@@ -499,7 +499,7 @@ class SubmissionSdesController @Inject() (
   }
 
   def showHistory(correlationId: CorrelationId) =
-    authorizedRead.async { _ =>
+    authorizedRead.async { implicit request =>
       gformConnector.getSdesHistoryById(correlationId).map {
         case Right(payload) => Ok(Json.prettyPrint(Json.toJson(payload)))
         case Left(error)    => BadRequest(error)

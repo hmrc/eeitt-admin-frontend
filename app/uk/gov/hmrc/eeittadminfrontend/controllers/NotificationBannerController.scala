@@ -52,7 +52,7 @@ class NotificationBannerController @Inject() (
     }
 
   def deleteNotificationBanner(bannerId: BannerId) =
-    authorizedDelete.async { request =>
+    authorizedDelete.async { implicit request =>
       gformConnector.deleteNotificationBanner(bannerId).map { _ =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner

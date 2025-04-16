@@ -34,7 +34,7 @@ class NotificationBannerFormTemplateController @Inject() (
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   def delete(formTemplateId: FormTemplateId) =
-    authorizedDelete.async { request =>
+    authorizedDelete.async { implicit request =>
       gformConnector.deleteNotificationBannerFormTemplate(formTemplateId).map { maybeNotificationBanner =>
         Redirect(
           uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner

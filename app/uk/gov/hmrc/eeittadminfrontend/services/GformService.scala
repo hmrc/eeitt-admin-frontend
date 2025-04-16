@@ -50,6 +50,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
     }
 
   def getFormTemplate(formTemplateId: FormTemplateId)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
     logger.debug(s"Loading $formTemplateId from MongoDB")
@@ -66,6 +67,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
     formTemplateId: FormTemplateId,
     json: Json
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, String, Unit] = EitherT(
     gformConnector.saveTemplate(
@@ -83,6 +85,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
     formTemplateId: FormTemplateId,
     payload: String
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, String, Unit] = EitherT(
     gformConnector.saveHandlebarsTemplate(
@@ -95,6 +98,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
     formTemplateId: FormTemplateId,
     payload: JsValue
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, String, Unit] = EitherT(
     gformConnector.saveHandlebarsSchema(
@@ -106,6 +110,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   def getRawHandlebarsTemplate(
     formTemplateId: FormTemplateId
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
     logger.debug(s"Loading raw handlebars template ${formTemplateId.value} from MongoDB")
@@ -117,6 +122,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   def getHandlebarsTemplate(
     formTemplateId: FormTemplateId
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
     logger.debug(s"Loading handlebars template ${formTemplateId.value} handlebars from MongoDB")
@@ -192,6 +198,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   def getHandlebarsSchema(
     formTemplateId: FormTemplateId
   )(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, MongoContent]] = {
     logger.debug(s"Loading ${formTemplateId.value} handlebars schema from MongoDB")

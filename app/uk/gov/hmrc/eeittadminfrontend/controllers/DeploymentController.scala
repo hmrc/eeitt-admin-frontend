@@ -74,7 +74,7 @@ class DeploymentController @Inject() (
     def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
   }
 
-  def download(formTemplateId: FormTemplateId) = authorizedRead.async { request =>
+  def download(formTemplateId: FormTemplateId) = authorizedRead.async { implicit request =>
     EitherT(gformService.getFormTemplate(formTemplateId)).fold(
       error => Ok(s"Problem when fetching form template: $formTemplateId. Reason: $error"),
       mongoContent => Ok(PrettyPrintJson.asString(mongoContent.content.jsonContent))
@@ -88,7 +88,7 @@ class DeploymentController @Inject() (
     )
   }
 
-  def downloadHandlebarsSchema(formTemplateId: FormTemplateId) = authorizedRead.async { request =>
+  def downloadHandlebarsSchema(formTemplateId: FormTemplateId) = authorizedRead.async { implicit request =>
     EitherT(gformService.getHandlebarsSchema(formTemplateId)).fold(
       error => Ok(s"Problem when fetching handlebars schema: ${formTemplateId.value}. Reason: $error"),
       mongoContent => Ok(PrettyPrintJson.asString(mongoContent.content.jsonContent))

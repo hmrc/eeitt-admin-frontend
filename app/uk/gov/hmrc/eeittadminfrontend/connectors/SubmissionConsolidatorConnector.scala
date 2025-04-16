@@ -20,25 +20,28 @@ import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, NotificationS
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpResponse }
-import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
+class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
+
   val submissionConsolidatorUrl = s"${sc.baseUrl("submission-consolidator")}/submission-consolidator"
 
   val DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
   def consolidate(consolidatorJobId: String, startDate: LocalDate, endDate: LocalDate)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     wsHttp
-      .doPost[String](
-        s"$submissionConsolidatorUrl/consolidate/$consolidatorJobId/${startDate.format(DATE_FORMAT)}/${endDate.format(DATE_FORMAT)}",
-        ""
+      .post(
+        url"$submissionConsolidatorUrl/consolidate/$consolidatorJobId/${startDate.format(DATE_FORMAT)}/${endDate.format(DATE_FORMAT)}"
       )
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 204) // Results.NoContent
           Right(())
@@ -61,25 +64,37 @@ class SubmissionConsolidatorConnector @Inject() (wsHttp: HttpClient, sc: Service
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[SdesReportsPageData] = {
-    val queryStringByProcessed = maybeProcessed.fold("")(p => s"processed=$p")
-    val queryStringByStatus =
-      status.fold(queryStringByProcessed)(status => s"status=$status&$queryStringByProcessed")
-    val queryString =
-      showBeforeAt.fold(queryStringByStatus)(showBeforeAt => s"showBeforeAt=$showBeforeAt&$queryStringByStatus")
-    wsHttp.GET[SdesReportsPageData](s"$submissionConsolidatorUrl/sdes/search/$page/$pageSize?$queryString")
+
+    val queryParams: Seq[(String, String)] = Seq(
+      "processed"    -> maybeProcessed.map(_.toString),
+      "status"       -> status.map(_.toString),
+      "showBeforeAt" -> showBeforeAt.map(_.toString)
+    ).collect { case (k, Some(v)) =>
+      k -> v
+    }
+
+    val url = url"$submissionConsolidatorUrl/sdes/search/$page/$pageSize?$queryParams"
+    wsHttp
+      .get(url)
+      .execute[SdesReportsPageData]
   }
 
   def getSdesSubmission(correlationId: CorrelationId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[SdesReportData] =
-    wsHttp.GET[SdesReportData](s"$submissionConsolidatorUrl/sdes/${correlationId.value}")
-
-  def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doPut[String](s"$submissionConsolidatorUrl/sdes/${correlationId.value}", "")
-
-  def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
-      .doPost[String](s"$submissionConsolidatorUrl/sdes/notify/${correlationId.value}", "")
+      .get(url"$submissionConsolidatorUrl/sdes/${correlationId.value}")
+      .execute[SdesReportData]
+
+  def updateAsManualConfirmed(
+    correlationId: CorrelationId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp.put(url"$submissionConsolidatorUrl/sdes/${correlationId.value}").execute[HttpResponse]
+
+  def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .post(url"$submissionConsolidatorUrl/sdes/notify/${correlationId.value}")
+      .execute[HttpResponse]
 
 }

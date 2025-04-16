@@ -91,7 +91,7 @@ class SdesDestinationsMigrationController @Inject() (
   }
 
   def runMigration() =
-    authorizedWrite.async { request =>
+    authorizedWrite.async { implicit request =>
       gformConnector
         .runSdesMigration()
         .map { sdesReportPageData =>
@@ -106,7 +106,7 @@ class SdesDestinationsMigrationController @Inject() (
     }
 
   def rollbackMigration() =
-    authorizedDelete.async { request =>
+    authorizedDelete.async { implicit request =>
       gformConnector
         .rollbackSdesMigration()
         .map { sdesReportPageData =>

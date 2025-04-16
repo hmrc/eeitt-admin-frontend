@@ -8,14 +8,14 @@ object AppDependencies {
   val jacksonDatabindVersion = "2.16.1"
   val http4sVersion = "0.21.22"
   val circeVersion = "0.13.0"
-  val bootstrapVersion = "8.2.0"
+  val bootstrapVersion = "9.11.0"
 
   val compile = Seq(
     ws,
     "uk.gov.hmrc"              %% "bootstrap-frontend-play-30"   % bootstrapVersion,
     "uk.gov.hmrc"              %% "play-partials-play-30"        % "9.1.0",
     "uk.gov.hmrc"              %% "play-frontend-hmrc-play-30"   % "9.10.0",
-    "uk.gov.hmrc"              %% "internal-auth-client-play-30" % "2.0.0",
+    "uk.gov.hmrc"              %% "internal-auth-client-play-30" % "4.0.0",
     "uk.gov.hmrc.mongo"        %% "hmrc-mongo-play-30"           % "1.9.0",
     "com.github.pureconfig"    %% "pureconfig"                   % "0.17.6",
     "org.typelevel"            %% "cats-core"                    % "2.10.0",

@@ -25,27 +25,30 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpClient, HttpReads, HttpReadsInstances, HttpResponse }
+import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
+import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
+class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  implicit val legacyRawReads: HttpReads[HttpResponse] =
-    HttpReadsInstances.throwOnFailure(HttpReadsInstances.readEitherOf(HttpReadsInstances.readRaw))
 
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
     formTemplateId: FormTemplateId
-  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = gformUrl + s"/formtemplates/$formTemplateId/sensitive"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = url"$gformUrl/formtemplates/$formTemplateId/sensitive"
     wsHttp
-      .doGet(url)
+      .get(url)
+      .execute[HttpResponse]
       .map { response =>
         logger.info(s"Get $formTemplateId from gform ${response.status}")
         if (response.status == 200) Right(response.json)
@@ -66,20 +69,28 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ) =
-    wsHttp.GET[SubmissionPageData](gformUrl + s"/submissionDetails/all/${formTemplateId.value}/$page/$pageSize")
+    wsHttp
+      .get(url"$gformUrl/submissionDetails/all/${formTemplateId.value}/$page/$pageSize")
+      .execute[SubmissionPageData]
 
   def getAllGformsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    wsHttp.GET[JsArray](gformUrl + "/formtemplates")
+    wsHttp
+      .get(url"$gformUrl/formtemplates")
+      .execute[JsArray]
 
   def getAllSchema(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    wsHttp.GET[JsValue](gformUrl + "/schemas")
+    wsHttp
+      .get(url"/schemas")
+      .execute[JsValue]
 
   def saveTemplate(
     formTemplateId: FormTemplateId,
     gformTemplate: JsValue
-  )(implicit ec: ExecutionContext): Future[Either[String, Unit]] =
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
     wsHttp
-      .doPost[JsValue](gformUrl + "/formtemplates", gformTemplate, List.empty[(String, String)])
+      .post(url"$gformUrl/formtemplates")
+      .withBody(gformTemplate)
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 204) // Results.NoContent
           Right(())
@@ -96,13 +107,17 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResults] =
     wsHttp
-      .DELETE[DeleteResults](gformUrl + s"/formtemplates/$formTemplateId/sensitive")
+      .delete(url"$gformUrl/formtemplates/$formTemplateId/sensitive")
+      .execute[DeleteResults]
 
   def saveDBLookupIds(collectionName: String, dbLookupIds: Seq[DbLookupId])(implicit
+    headerCarrier: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
     wsHttp
-      .doPut(gformUrl + s"/dblookup/$collectionName", dbLookupIds, Seq.empty)
+      .put(url"$gformUrl/dblookup/$collectionName")
+      .withBody(Json.toJson(dbLookupIds))
+      .execute[HttpResponse]
       .map { response =>
         response.status match {
           case StatusCodes.Created.intValue =>
@@ -119,69 +134,94 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     formTemplateRawId: FormTemplateRawId,
     filters: List[String],
     includeJson: Boolean
-  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[PIIDetailsResponse] =
-    wsHttp.GET[PIIDetailsResponse](
-      gformUrl + s"/formtemplates/get-titles-with-pii/${formTemplateRawId.value}?includeJson=$includeJson${if (filters.isEmpty) ""
-      else "&filters=" + filters.mkString(",")}"
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[PIIDetailsResponse] = {
+
+    val queryParams = Seq(
+      "filters"     -> filters.mkString(","),
+      "includeJson" -> includeJson
     )
 
+    val url = url"$gformUrl/formtemplates/get-titles-with-pii/${formTemplateRawId.value}?$queryParams"
+
+    wsHttp
+      .get(url)
+      .execute[PIIDetailsResponse]
+  }
+
   def getAllSavedVersions(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[AllSavedVersions] =
-    wsHttp.GET[AllSavedVersions](gformUrl + s"/formStatistics/all-saved-versions")
+    wsHttp
+      .get(url"$gformUrl/formStatistics/all-saved-versions")
+      .execute[AllSavedVersions]
 
   def getFormCount(
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Seq[VersionStats]] =
-    wsHttp.GET[Seq[VersionStats]](gformUrl + s"/formStatistics/${formTemplateId.value}")
+    wsHttp
+      .get(url"$gformUrl/formStatistics/${formTemplateId.value}")
+      .execute[Seq[VersionStats]]
 
   def getFormDetailCount(
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Seq[SavedFormDetail]] =
-    wsHttp.GET[Seq[SavedFormDetail]](gformUrl + s"/formStatistics/${formTemplateId.value}/details")
+    wsHttp
+      .get(url"$gformUrl/formStatistics/${formTemplateId.value}/details")
+      .execute[Seq[SavedFormDetail]]
 
   def getSignedFormsDetails(implicit
     headerCarrier: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[SignedFormDetails]] =
-    wsHttp.GET[Seq[SignedFormDetails]](gformUrl + s"/formStatistics/signed-forms")
+    wsHttp
+      .get(url"$gformUrl/formStatistics/signed-forms")
+      .execute[Seq[SignedFormDetails]]
 
   def deleteForm(
     formId: FormId
-  )(implicit ec: ExecutionContext): Future[HttpResponse] =
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
-      .doPost[String](gformUrl + s"/forms/${formId.value}/delete", "", List.empty[(String, String)])
+      .post(url"$gformUrl/forms/${formId.value}/delete")
+      .execute[HttpResponse]
 
   def unstuckForm(
     formId: FormId
-  )(implicit ec: ExecutionContext): Future[HttpResponse] =
+  )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
-      .doPost[String](gformUrl + s"/forms/${formId.value}/unstuck", "", List.empty[(String, String)])
+      .post(url"$gformUrl/forms/${formId.value}/unstuck")
+      .execute[HttpResponse]
 
   def getSdesSubmissions(sdesFilter: SdesFilter)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[SdesSubmissionPageData] =
     wsHttp
-      .POST[SdesFilter, SdesSubmissionPageData](
-        gformUrl + s"/sdes/search",
-        sdesFilter
-      )
+      .post(url"$gformUrl/sdes/search")
+      .withBody(Json.toJson(sdesFilter))
+      .execute[SdesSubmissionPageData]
 
   def getSdesSubmission(correlationId: CorrelationId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ) =
-    wsHttp.GET[SdesSubmissionData](gformUrl + s"/sdes/${correlationId.value}")
-
-  def notifySDES(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
-      .doPost[String](gformUrl + s"/sdes/notify/${correlationId.value}", "")
+      .get(url"$gformUrl/sdes/${correlationId.value}")
+      .execute[SdesSubmissionData]
 
-  def resend(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
+  def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
-      .doPost[String](gformUrl + s"/sdes/resend/${correlationId.value}", "")
+      .post(url"$gformUrl/sdes/notify/${correlationId.value}")
+      .execute[HttpResponse]
 
-  def updateAsManualConfirmed(correlationId: CorrelationId)(implicit ec: ExecutionContext): Future[HttpResponse] =
-    wsHttp.doPut[String](gformUrl + s"/sdes/${correlationId.value}", "")
+  def resend(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .post(url"$gformUrl/sdes/resend/${correlationId.value}")
+      .execute[HttpResponse]
+
+  def updateAsManualConfirmed(
+    correlationId: CorrelationId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    wsHttp
+      .put(url"$gformUrl/sdes/${correlationId.value}")
+      .execute[HttpResponse]
 
   def searchWorkItem(
     destination: SdesDestination,
@@ -193,107 +233,158 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[SdesWorkItemPageData] = {
-    val queryByFormTemplate = formTemplateId.map(id => s"formTemplateId=$id")
-    val queryByStatus = status.map(s => s"status=${s.name}")
-    val queryString =
-      List(Some(s"destination=${destination.toString}"), queryByFormTemplate, queryByStatus).flatten.mkString("&")
-    wsHttp.GET[SdesWorkItemPageData](gformUrl + s"/destination-work-item/search/$page/$pageSize?$queryString")
+    val queryParams = Seq(
+      "formTemplateId" -> formTemplateId.map(_.value),
+      "status"         -> status.map(_.name),
+      "destination"    -> Some(destination.toString)
+    ).collect { case (name, Some(value)) =>
+      name -> value
+    }
+    wsHttp
+      .get(url"$gformUrl/destination-work-item/search/$page/$pageSize?$queryParams")
+      .execute[SdesWorkItemPageData]
   }
 
   def getWorkItem(destination: SdesDestination, id: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[SdesWorkItemData] =
-    wsHttp.GET[SdesWorkItemData](gformUrl + s"/destination-work-item/$id?destination=${destination.toString}")
+    wsHttp
+      .get(url"$gformUrl/destination-work-item/$id?destination=${destination.toString}")
+      .execute[SdesWorkItemData]
 
   def enqueueWorkItem(destination: SdesDestination, id: String)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] =
-    wsHttp.doPost[String](gformUrl + s"/destination-work-item/enqueue/$id?destination=${destination.toString}", "")
+    wsHttp
+      .post(url"$gformUrl/destination-work-item/enqueue/$id?destination=${destination.toString}")
+      .execute[HttpResponse]
 
   def deleteWorkItem(destination: SdesDestination, id: String)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] =
-    wsHttp.doDelete(gformUrl + s"/destination-work-item/$id?destination=${destination.toString}")
+    wsHttp
+      .delete(url"$gformUrl/destination-work-item/$id?destination=${destination.toString}")
+      .execute[HttpResponse]
 
   def findNotificationBanner()(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[List[GformNotificationBannerView]] =
-    wsHttp.doGet(gformUrl + s"/notification-banner").map { response =>
-      if (response.status == 200) response.json.as[List[GformNotificationBannerView]]
-      else List.empty[GformNotificationBannerView]
-    }
+    wsHttp
+      .get(url"$gformUrl/notification-banner")
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) response.json.as[List[GformNotificationBannerView]]
+        else List.empty[GformNotificationBannerView]
+      }
 
   def deleteNotificationBanner(bannerId: BannerId)(implicit
-    ec: ExecutionContext
-  ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/notification-banner/${bannerId.value}").map(_ => ())
-
-  def saveNotificationBanner(notificationBanner: GformNotificationBanner)(implicit
-    ec: ExecutionContext
-  ): Future[Unit] =
-    wsHttp.doPost[GformNotificationBanner](gformUrl + s"/notification-banner", notificationBanner).map(_ => ())
-
-  def saveNotificationBannerFormTemplates(notificationBannerFormTemplate: GformNotificationBannerFormTemplate)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
     wsHttp
-      .doPost[GformNotificationBannerFormTemplate](
-        gformUrl + s"/notification-banner-form-template",
-        notificationBannerFormTemplate
-      )
+      .delete(url"$gformUrl/notification-banner/${bannerId.value}")
+      .execute[HttpResponse]
+      .map(_ => ())
+
+  def saveNotificationBanner(notificationBanner: GformNotificationBanner)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .post(url"$gformUrl/notification-banner")
+      .withBody(Json.toJson(notificationBanner))
+      .execute[HttpResponse]
+      .map(_ => ())
+
+  def saveNotificationBannerFormTemplates(notificationBannerFormTemplate: GformNotificationBannerFormTemplate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .post(url"$gformUrl/notification-banner-form-template")
+      .withBody(Json.toJson(notificationBannerFormTemplate))
+      .execute[GformNotificationBannerFormTemplate]
       .map(_ => ())
 
   def deleteNotificationBannerFormTemplate(formTemplateId: FormTemplateId)(implicit
-    ec: ExecutionContext
-  ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/notification-banner-form-template/${formTemplateId.value}").map(_ => ())
-
-  def findShutter()(implicit
-    ec: ExecutionContext
-  ): Future[List[ShutterView]] =
-    wsHttp.doGet(gformUrl + s"/shutter").map { response =>
-      if (response.status == 200) response.json.as[List[ShutterView]]
-      else List.empty[ShutterView]
-    }
-
-  def deleteShutter(shutterMessageId: ShutterMessageId)(implicit
-    ec: ExecutionContext
-  ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/shutter/${shutterMessageId.value}").map(_ => ())
-
-  def saveShutter(shutter: Shutter)(implicit
-    ec: ExecutionContext
-  ): Future[Unit] =
-    wsHttp.doPost[Shutter](gformUrl + s"/shutter", shutter).map(_ => ())
-
-  def saveShutterFormTemplates(shutterFormTemplate: ShutterFormTemplate)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
     wsHttp
-      .doPost[ShutterFormTemplate](
-        gformUrl + s"/shutter-form-template",
-        shutterFormTemplate
-      )
+      .delete(url"$gformUrl/notification-banner-form-template/${formTemplateId.value}")
+      .execute[HttpResponse]
+      .map(_ => ())
+
+  def findShutter()(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[List[ShutterView]] =
+    wsHttp
+      .get(url"$gformUrl/shutter")
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) response.json.as[List[ShutterView]]
+        else List.empty[ShutterView]
+      }
+
+  def deleteShutter(shutterMessageId: ShutterMessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .delete(url"$gformUrl/shutter/${shutterMessageId.value}")
+      .execute[HttpResponse]
+      .map(_ => ())
+
+  def saveShutter(shutter: Shutter)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .post(url"$gformUrl/shutter")
+      .withBody(Json.toJson(shutter))
+      .execute[HttpResponse]
+      .map(_ => ())
+
+  def saveShutterFormTemplates(shutterFormTemplate: ShutterFormTemplate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    wsHttp
+      .post(url"$gformUrl/shutter-form-template")
+      .withBody(Json.toJson(shutterFormTemplate))
+      .execute[HttpResponse]
       .map(_ => ())
 
   def deleteShutterFormTemplate(formTemplateId: FormTemplateId)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
-    wsHttp.doDelete(gformUrl + s"/shutter-form-template/${formTemplateId.value}").map(_ => ())
+    wsHttp
+      .delete(url"$gformUrl/shutter-form-template/${formTemplateId.value}")
+      .execute[HttpResponse]
+      .map(_ => ())
 
   def getFormTemplatesRedirects(page: Int, pageSize: Int)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ) =
-    wsHttp.GET[FormRedirectPageData](gformUrl + s"/formtemplates-redirects/$page/$pageSize")
+  ): Future[FormRedirectPageData] =
+    wsHttp
+      .get(url"$gformUrl/formtemplates-redirects/$page/$pageSize")
+      .execute[FormRedirectPageData]
 
   def getHandlebarsTemplate(
     formTemplateId: FormTemplateId
-  )(implicit ec: ExecutionContext): Future[Either[String, String]] = {
-    val url = gformUrl + s"/handlebarstemplates/${formTemplateId.value}"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] = {
+    val url = url"$gformUrl/handlebarstemplates/${formTemplateId.value}"
     wsHttp
-      .doGet(url, headers = Seq("Content-Type" -> "text/plain;charset=UTF-8"))
+      .get(url)
+      .setHeader(("Content-Type" -> "text/plain;charset=UTF-8"))
+      .execute[HttpResponse]
       .map { response =>
         logger.info(s"Get ${formTemplateId.value} handlebars from gform ${response.status}")
         if (response.status == 200) Right(response.body)
@@ -312,10 +403,12 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
 
   def getRawHandlebarsTemplate(
     formTemplateId: FormTemplateId
-  )(implicit ec: ExecutionContext): Future[Either[String, String]] = {
-    val url = gformUrl + s"/handlebarstemplates/${formTemplateId.value}/raw"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] = {
+    val url = url"$gformUrl/handlebarstemplates/${formTemplateId.value}/raw"
     wsHttp
-      .doGet(url, headers = Seq("Content-Type" -> "text/plain;charset=UTF-8"))
+      .get(url)
+      .setHeader(("Content-Type" -> "text/plain;charset=UTF-8"))
+      .execute[HttpResponse]
       .map { response =>
         logger.info(s"Get ${formTemplateId.value} handlebars from gform ${response.status}")
         if (response.status == 200) Right(response.body)
@@ -335,17 +428,21 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   def deleteHandlebarsTemplate(
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResult] =
-    wsHttp.DELETE[DeleteResult](gformUrl + s"/handlebarstemplates/${formTemplateId.value}")
+    wsHttp
+      .delete(url"$gformUrl/handlebarstemplates/${formTemplateId.value}")
+      .execute[DeleteResult]
 
   def saveHandlebarsTemplate(formTemplateId: FormTemplateId, payload: String)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     wsHttp
-      .doPostString(
-        gformUrl + s"/handlebarstemplates/${formTemplateId.value}",
-        payload,
-        headers = Seq("Content-Type" -> "text/plain;charset=UTF-8")
+      .post(
+        url"$gformUrl/handlebarstemplates/${formTemplateId.value}"
       )
+      .withBody(payload)
+      .setHeader(("Content-Type" -> "text/plain;charset=UTF-8"))
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 204)
           Right(())
@@ -360,22 +457,29 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
       }
 
   def getAllHandlebarsTemplates(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    wsHttp.GET[JsArray](gformUrl + "/handlebarstemplates")
+    wsHttp
+      .get(url"$gformUrl/handlebarstemplates")
+      .execute[JsArray]
 
   def getHandlebarsTemplateIds(
     formTemplateId: FormTemplateId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    wsHttp.GET[JsArray](gformUrl + s"/formtemplates-with-handlebars/$formTemplateId")
+    wsHttp
+      .get(url"$gformUrl/formtemplates-with-handlebars/$formTemplateId")
+      .execute[JsArray]
 
   def getAllHandlebarsSchemas(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    wsHttp.GET[JsArray](gformUrl + "/handlebars-schemas")
+    wsHttp
+      .get(url"$gformUrl/handlebars-schemas")
+      .execute[JsArray]
 
   def getHandlebarsSchema(
     formTemplateId: FormTemplateId
-  )(implicit ec: ExecutionContext): Future[Either[String, HandlebarsSchema]] = {
-    val url = gformUrl + s"/handlebars-schemas/${formTemplateId.value}"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, HandlebarsSchema]] = {
+    val url = url"$gformUrl/handlebars-schemas/${formTemplateId.value}"
     wsHttp
-      .doGet(url)
+      .get(url)
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 200) Right(response.json.as[HandlebarsSchema])
         else Left(s"Handlebars schema ${formTemplateId.value} not found")
@@ -386,10 +490,13 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   }
 
   def saveHandlebarsSchema(formTemplateId: FormTemplateId, schema: JsValue)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     wsHttp
-      .doPost[JsValue](gformUrl + s"/handlebars-schemas/${formTemplateId.value}", schema, List.empty[(String, String)])
+      .post(url"$gformUrl/handlebars-schemas/${formTemplateId.value}")
+      .withBody(schema)
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 204)
           Right(())
@@ -405,14 +512,17 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   def deleteHandlebarsSchema(
     formTemplateId: FormTemplateId
   )(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[DeleteResult] =
-    wsHttp.DELETE[DeleteResult](gformUrl + s"/handlebars-schemas/${formTemplateId.value}")
+    wsHttp
+      .delete(url"$gformUrl/handlebars-schemas/${formTemplateId.value}")
+      .execute[DeleteResult]
 
   def getEnvelopeById(
     envelopeId: EnvelopeId
-  )(implicit ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = gformUrl + s"/envelopes/${envelopeId.value}"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = url"$gformUrl/envelopes/${envelopeId.value}"
     wsHttp
-      .doGet(url)
+      .get(url)
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 200) Right(response.json) else Left(s"Envelope ${envelopeId.value} not found")
       }
@@ -422,56 +532,69 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
   }
 
   def historyAllTemplateIds(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[FormTemplateRawId]] =
-    wsHttp.GET[List[String]](gformUrl + "/history-all-ids").map(_.map(FormTemplateRawId(_)))
+    wsHttp
+      .get(url"$gformUrl/history-all-ids")
+      .execute[List[String]]
+      .map(_.map(FormTemplateRawId(_)))
 
   def historyOverviewForTemplateId(
     formTemplateRawId: FormTemplateRawId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[HistoryOverview]] =
-    wsHttp.GET[List[HistoryOverview]](gformUrl + "/history/overview/" + formTemplateRawId.value)
+    wsHttp
+      .get(url"$gformUrl/history/overview/${formTemplateRawId.value}")
+      .execute[List[HistoryOverview]]
 
   def historyTemplate(historyId: HistoryId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[FormTemplateRaw] =
-    wsHttp.GET[JsValue](gformUrl + "/history/template/" + historyId.value).map { json =>
-      FormTemplateRaw(CircePlayHelpers.playToCirceUnsafe(json))
-    }
+    wsHttp
+      .get(url"$gformUrl/history/template/${historyId.value}")
+      .execute[JsValue]
+      .map { json =>
+        FormTemplateRaw(CircePlayHelpers.playToCirceUnsafe(json))
+      }
 
   def previousHistoryId(
     formTemplateRawId: FormTemplateRawId,
     historyId: HistoryId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HistoryId]] =
     wsHttp
-      .GET[Option[HistoryId]](
-        gformUrl + s"/history/previous/" + formTemplateRawId.value + "/" + historyId.value
+      .get(
+        url"$gformUrl/history/previous/${formTemplateRawId.value}/${historyId.value}"
       )
+      .execute[Option[HistoryId]]
 
   def nextHistoryId(
     formTemplateRawId: FormTemplateRawId,
     historyId: HistoryId
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[HistoryId]] =
     wsHttp
-      .GET[Option[HistoryId]](
-        gformUrl + s"/history/next/" + formTemplateRawId.value + "/" + historyId.value
+      .get(
+        url"$gformUrl/history/next/${formTemplateRawId.value}/${historyId.value}"
       )
+      .execute[Option[HistoryId]]
 
   def historyWithFilter(
     historyFilter: HistoryFilter
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[HistoryOverviewFull]] =
     wsHttp
-      .POST[HistoryFilter, List[HistoryOverviewFull]](
-        gformUrl + s"/history/filter",
-        historyFilter
+      .post(
+        url"$gformUrl/history/filter"
       )
+      .withBody(Json.toJson(historyFilter))
+      .execute[List[HistoryOverviewFull]]
 
   def sdesDestinationsStats()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SdesSubmissionsStats]] =
     wsHttp
-      .GET[Seq[SdesSubmissionsStats]](
-        gformUrl + s"/sdes/submissions/all-destinations"
+      .get(
+        url"$gformUrl/sdes/submissions/all-destinations"
       )
+      .execute[Seq[SdesSubmissionsStats]]
 
-  def runSdesMigration()(implicit ec: ExecutionContext): Future[Either[String, String]] =
+  def runSdesMigration()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] =
     wsHttp
-      .doEmptyPost(
-        gformUrl + s"/sdes/submissions/migration/DataStore/DataStoreLegacy"
+      .post(
+        url"$gformUrl/sdes/submissions/migration/DataStore/DataStoreLegacy"
       )
+      .execute[HttpResponse]
       .map { response =>
         response.status match {
           case 200 => Right(response.body)
@@ -483,11 +606,12 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
         }
       }
 
-  def rollbackSdesMigration()(implicit ec: ExecutionContext): Future[Either[String, String]] =
+  def rollbackSdesMigration()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] =
     wsHttp
-      .doEmptyPost(
-        gformUrl + s"/sdes/submissions/migration/DataStoreLegacy/DataStore"
+      .post(
+        url"$gformUrl/sdes/submissions/migration/DataStoreLegacy/DataStore"
       )
+      .execute[HttpResponse]
       .map { response =>
         response.status match {
           case 200 => Right(response.body)
@@ -501,10 +625,11 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
 
   def getSdesHistoryById(
     correlationId: CorrelationId
-  )(implicit ec: ExecutionContext): Future[Either[String, SdesHistoryView]] = {
-    val url = gformUrl + s"/sdes/history/${correlationId.value}"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, SdesHistoryView]] = {
+    val url = url"$gformUrl/sdes/history/${correlationId.value}"
     wsHttp
-      .doGet(url)
+      .get(url)
+      .execute[HttpResponse]
       .map { response =>
         if (response.status == 200) Right(response.json.as[SdesHistoryView])
         else Left(s"Correlation ${correlationId.value} not found in event history")
@@ -513,4 +638,20 @@ class GformConnector @Inject() (wsHttp: HttpClient, sc: ServicesConfig) {
         Left(s"Unknown problem when trying to retrieve correlationId $correlationId: " + ex.getMessage)
       }
   }
+
+  def translationAuditOverview()(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[List[TranslationAuditOverview]] =
+    wsHttp
+      .get(url"$gformUrl/translation-audit/overview-all/")
+      .execute[List[TranslationAuditOverview]]
+
+  def translationAuditDownload(translationAuditId: TranslationAuditId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp
+      .get(url"$gformUrl/translation-audit/full/${translationAuditId.id}")
+      .stream[HttpResponse]
 }

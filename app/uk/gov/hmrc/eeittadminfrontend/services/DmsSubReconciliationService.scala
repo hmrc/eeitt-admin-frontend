@@ -22,6 +22,7 @@ import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ NotificationStatus, SdesReco
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
+import uk.gov.hmrc.http.HeaderCarrier
 
 class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
 
@@ -48,7 +49,7 @@ class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
 
   def sdesReconcile(
     reconcileData: List[SdesReconciliationData]
-  )(implicit ec: ExecutionContext): Future[SdesReconciliation] =
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SdesReconciliation] =
     Future
       .sequence(reconcileData.map { sub =>
         gformConnector
