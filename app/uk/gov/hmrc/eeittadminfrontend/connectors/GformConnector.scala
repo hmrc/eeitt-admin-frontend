@@ -30,7 +30,6 @@ import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpReads.Implicits.{ readFromJson, readOptionOfNotFound }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
