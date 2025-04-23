@@ -58,7 +58,7 @@ class DmsSubReconciliationService @Inject() (gformConnector: GformConnector) {
             if (res.status >= 200 && res.status < 300) Some(sub)
             else None
           }
-          .collect { case Some(sub) => sub }
+          .collect { case Some(reconciledSub) => reconciledSub }
       })
       .map { reconciledSubs =>
         SdesReconciliation(reconciledSubs, reconciledSubs.length.toLong)
