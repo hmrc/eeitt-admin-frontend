@@ -1,0 +1,72 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+    main_template: main_template,
+    formWithCSRF: FormWithCSRF,
+    govukButton: GovukButton,
+    govukInput: GovukInput
+)
+
+@(envelopeId: EnvelopeId)(implicit request : Request[_], messages: Messages)
+
+@main_template(title = "Envelope", tab = "envelope") {
+
+    <h2 class="govuk-heading-m">Envelope ID: @envelopeId.value</h2>
+
+    <div class="govuk-body govuk-!-margin-bottom-8">
+        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
+    </div>
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-6") {
+        <h2 class="govuk-heading-m">View form data</h2>
+        <input type="hidden" name="envelopeId" id="envelopeId-1" value="@{envelopeId.value}"/>
+        @govukInput(Input(
+            id = "value",
+            name = "accessReason",
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Reason / INC number:")
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Access form data")
+        ))
+    }
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST") {
+        <h2 class="govuk-heading-m">View authenticated user retrievals</h2>
+        <input type="hidden" name="envelopeId" id="envelopeId-2" value="@{envelopeId.value}"/>
+        @govukInput(Input(
+            id = "value",
+            name = "accessReason",
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Reason / INC number:")
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Access authenticated user retrievals")
+        ))
+    }
+}
