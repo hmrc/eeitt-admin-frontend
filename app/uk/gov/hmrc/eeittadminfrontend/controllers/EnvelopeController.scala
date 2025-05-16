@@ -108,7 +108,7 @@ class EnvelopeController @Inject() (
           accessEnvelope =>
             showJsonResult(
               gformConnector.getRetrievalsForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
-              s"User '$username', reason '${accessEnvelope.accessReason}', viewed authenticated user retrievals for gform envelopeId '${accessEnvelope.envelopeId}'"
+              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed authenticated user retrievals for gform envelopeId '${accessEnvelope.envelopeId}'"
             )
         )
     }
@@ -127,7 +127,7 @@ class EnvelopeController @Inject() (
           accessEnvelope =>
             showJsonResult(
               gformConnector.getFormDataForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
-              s"User '$username', reason '${accessEnvelope.accessReason}', viewed form data for gform envelopeId '${accessEnvelope.envelopeId}'"
+              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed form data for gform envelopeId '${accessEnvelope.envelopeId}'"
             )
         )
     }

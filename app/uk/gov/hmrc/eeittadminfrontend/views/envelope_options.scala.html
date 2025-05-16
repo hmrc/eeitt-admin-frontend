@@ -34,14 +34,15 @@
         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
     </div>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-6") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'autocomplete -> "off", 'class -> "govuk-!-margin-bottom-6") {
         <h2 class="govuk-heading-m">View form data</h2>
-        <input type="hidden" name="envelopeId" id="envelopeId-1" value="@{envelopeId.value}"/>
+        <input type="hidden" name="envelopeId" id="envelopeId1" value="@{envelopeId.value}"/>
         @govukInput(Input(
-            id = "value",
+            id = "accessReason1",
             name = "accessReason",
+            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
             label = Label(
-                isPageHeading = true,
+                isPageHeading = false,
                 classes = "govuk-label--s",
                 content = Text("Reason / INC number:")
             )
@@ -52,14 +53,15 @@
         ))
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST") {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST", 'autocomplete -> "off") {
         <h2 class="govuk-heading-m">View authenticated user retrievals</h2>
-        <input type="hidden" name="envelopeId" id="envelopeId-2" value="@{envelopeId.value}"/>
+        <input type="hidden" name="envelopeId" id="envelopeId2" value="@{envelopeId.value}"/>
         @govukInput(Input(
-            id = "value",
+            id = "accessReason2",
             name = "accessReason",
+            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
             label = Label(
-                isPageHeading = true,
+                isPageHeading = false,
                 classes = "govuk-label--s",
                 content = Text("Reason / INC number:")
             )
