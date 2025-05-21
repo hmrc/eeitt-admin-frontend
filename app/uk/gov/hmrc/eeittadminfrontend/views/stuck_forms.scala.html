@@ -64,7 +64,7 @@
                   @{signedFormDetail.formTemplateId}
                 </td>
                 <td class="govuk-table__cell">
-                  @{signedFormDetail.envelopeId.value}
+                  <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelopeOptions(signedFormDetail.envelopeId)" class="govuk-link">@{signedFormDetail.envelopeId.value}</a>
                 </td>
                 <td class="govuk-table__cell">
                   @{formatLocalDate(signedFormDetail.lastUpdated.atZone(ZoneId.of("Europe/London")).toLocalDateTime())}

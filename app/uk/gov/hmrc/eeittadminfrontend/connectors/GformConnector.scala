@@ -530,6 +530,38 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       }
   }
 
+  def getRetrievalsForEnvelopeId(
+    envelopeId: EnvelopeId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = url"$gformUrl/retrieval/${envelopeId.value}"
+    wsHttp
+      .get(url)
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) Right(response.json)
+        else Left(s"Authenticated user retrievals for envelope '${envelopeId.value}' not found")
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve retrievals for envelopeId $envelopeId: " + ex.getMessage)
+      }
+  }
+
+  def getFormDataForEnvelopeId(
+    envelopeId: EnvelopeId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = url"$gformUrl/forms/envelope/${envelopeId.value}"
+    wsHttp
+      .get(url)
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) Right(response.json)
+        else Left(s"Form data for envelope '${envelopeId.value}' not found")
+      }
+      .recover { case ex =>
+        Left(s"Unknown problem when trying to retrieve form data for envelopeId $envelopeId: " + ex.getMessage)
+      }
+  }
+
   def historyAllTemplateIds(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[List[FormTemplateRawId]] =
     wsHttp
       .get(url"$gformUrl/history-all-ids")

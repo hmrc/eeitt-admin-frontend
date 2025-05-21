@@ -48,7 +48,10 @@ GET        /deployment/:filename                                   uk.gov.hmrc.e
 POST       /deployment/cutNewVersion/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.cutNewVersion(formTemplateId: FormTemplateId, filename: Filename)
 
 GET         /envelope                        uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelope
-GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showEnvelope(envelopeId: EnvelopeId)
+GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelopeOptions(envelopeId: EnvelopeId)
+GET         /envelope/:envelopeId/view       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showEnvelope(envelopeId: EnvelopeId)
+POST        /envelope/retrievals             uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showRetrievals
+POST        /envelope/formdata               uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showFormData
 POST        /envelope/find                   uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.findEnvelope
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
