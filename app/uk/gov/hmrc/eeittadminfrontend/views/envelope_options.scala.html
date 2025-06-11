@@ -26,6 +26,25 @@
 
 @(envelopeId: EnvelopeId)(implicit request : Request[_], messages: Messages)
 
+<script type="text/javascript">
+    function addClickHandler(formButton, formInput) {
+        formButton.addEventListener("click", function(event) {
+            var reason = document.getElementById('accessReason').value.trim();
+            if (!reason) {
+                alert("You must enter a valid incident code or reason to access this data");
+                event.preventDefault();
+            } else {
+                formInput.value = reason;
+            }
+        });
+    }
+
+    window.addEventListener("load", function(event) {
+        addClickHandler(document.getElementById('formDataAccessButton'), document.getElementById('formDataAccess'));
+        addClickHandler(document.getElementById('userRetrievalAccessButton'), document.getElementById('userRetrievalAccess'));
+    });
+</script>
+
 @main_template(title = "Envelope", tab = "envelope") {
 
     <h2 class="govuk-heading-m">Envelope ID: @envelopeId.value</h2>
@@ -34,41 +53,37 @@
         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
     </div>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'autocomplete -> "off", 'class -> "govuk-!-margin-bottom-6") {
-        <h2 class="govuk-heading-m">View form data</h2>
+    <h2 class="govuk-heading-m">Access sensitive customer data</h2>
+    @govukInput(Input(
+        id = "accessReason",
+        name = "accessReason",
+        hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
+        autocomplete = Some("accessReason"),
+        label = Label(
+            isPageHeading = false,
+            classes = "govuk-label--s",
+            content = Text("Reason / INC number:")
+        )
+    ))
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-1") {
         <input type="hidden" name="envelopeId" id="envelopeId1" value="@{envelopeId.value}"/>
-        @govukInput(Input(
-            id = "accessReason1",
-            name = "accessReason",
-            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
-            label = Label(
-                isPageHeading = false,
-                classes = "govuk-label--s",
-                content = Text("Reason / INC number:")
-            )
-        ))
+        <input type="hidden" name="accessReason" id="formDataAccess"/>
         @govukButton(Button(
+            id = Some("formDataAccessButton"),
             preventDoubleClick = Some(true),
-            content = Text("Access form data")
+            content = Text("View form data")
         ))
     }
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST", 'autocomplete -> "off") {
-        <h2 class="govuk-heading-m">View authenticated user retrievals</h2>
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST") {
         <input type="hidden" name="envelopeId" id="envelopeId2" value="@{envelopeId.value}"/>
-        @govukInput(Input(
-            id = "accessReason2",
-            name = "accessReason",
-            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
-            label = Label(
-                isPageHeading = false,
-                classes = "govuk-label--s",
-                content = Text("Reason / INC number:")
-            )
-        ))
+        <input type="hidden" name="accessReason" id="userRetrievalAccess"/>
         @govukButton(Button(
+            id = Some("userRetrievalAccessButton"),
             preventDoubleClick = Some(true),
-            content = Text("Access authenticated user retrievals")
+            content = Text("View authenticated user retrievals")
         ))
     }
+
 }
