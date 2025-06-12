@@ -24,7 +24,10 @@
     govukInput: GovukInput
 )
 
-@(envelopeId: EnvelopeId)(implicit request : Request[_], messages: Messages)
+@(
+    envelopeId: EnvelopeId,
+    maybeReason: Option[String]
+)(implicit request : Request[_], messages: Messages)
 
 <script type="text/javascript">
     function addClickHandler(formButton, formInput) {
@@ -38,12 +41,30 @@
             }
         });
     }
-
-    window.addEventListener("load", function(event) {
-        addClickHandler(document.getElementById('formDataAccessButton'), document.getElementById('formDataAccess'));
-        addClickHandler(document.getElementById('userRetrievalAccessButton'), document.getElementById('userRetrievalAccess'));
-    });
 </script>
+
+@actionButton(
+    formAction: Call,
+    buttonId: String,
+    buttonText: String,
+    hiddenEnvelopeId: String,
+    hiddenReasonsId: String
+) = {
+    @formWithCSRF(action = formAction, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-1") {
+        <input type="hidden" name="envelopeId" id="@{hiddenEnvelopeId}" value="@{envelopeId.value}"/>
+        <input type="hidden" name="accessReason" id="@{hiddenReasonsId}"/>
+        @govukButton(Button(
+            id = Some(buttonId),
+            preventDoubleClick = Some(true),
+            content = Text(buttonText)
+        ))
+    }
+    <script type="text/javascript">
+        window.addEventListener("load", function(event) {
+            addClickHandler(document.getElementById('@{buttonId}'), document.getElementById('@{hiddenReasonsId}'));
+        });
+    </script>
+}
 
 @main_template(title = "Envelope", tab = "envelope") {
 
@@ -58,7 +79,7 @@
         id = "accessReason",
         name = "accessReason",
         hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
-        autocomplete = Some("accessReason"),
+        value = maybeReason,
         label = Label(
             isPageHeading = false,
             classes = "govuk-label--s",
@@ -66,24 +87,31 @@
         )
     ))
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-1") {
-        <input type="hidden" name="envelopeId" id="envelopeId1" value="@{envelopeId.value}"/>
-        <input type="hidden" name="accessReason" id="formDataAccess"/>
-        @govukButton(Button(
-            id = Some("formDataAccessButton"),
-            preventDoubleClick = Some(true),
-            content = Text("View form data")
-        ))
-    }
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData,
+        "formDataAccessButton",
+        "View form data",
+        "envelopeId1",
+        "formDataAccess")
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST") {
-        <input type="hidden" name="envelopeId" id="envelopeId2" value="@{envelopeId.value}"/>
-        <input type="hidden" name="accessReason" id="userRetrievalAccess"/>
-        @govukButton(Button(
-            id = Some("userRetrievalAccessButton"),
-            preventDoubleClick = Some(true),
-            content = Text("View authenticated user retrievals")
-        ))
-    }
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals,
+        "userRetrievalAccessButton",
+        "View authenticated user retrievals",
+        "envelopeId2",
+        "userRetrievalAccess")
 
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope,
+        "downloadEnvelopeButton",
+        "Download DMS envelope",
+        "envelopeId3",
+        "downloadEnvelope")
+
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore,
+        "downloadDataStoreButton",
+        "Download DataStore JSON",
+        "envelopeId4",
+        "downloadDataStore")
 }

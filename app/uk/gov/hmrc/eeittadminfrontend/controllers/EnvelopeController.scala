@@ -44,6 +44,8 @@ class EnvelopeController @Inject() (
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  private type AuthRequest = AuthenticatedRequest[AnyContent, Retrieval.Username]
+
   private val envelopeIdForm: Form[EnvelopeIdForm] = Form(
     mapping("envelopeId" -> mapping("value" -> text)(EnvelopeId.apply)(EnvelopeId.unapply))(EnvelopeIdForm.apply)(
       EnvelopeIdForm.unapply
@@ -81,9 +83,9 @@ class EnvelopeController @Inject() (
       }
     }
 
-  def envelopeOptions(envelopeId: EnvelopeId) =
+  def envelopeOptions(envelopeId: EnvelopeId, reason: Option[String]) =
     authorizedRead.async { implicit request =>
-      Future.successful(Ok(envelope_options(envelopeId)))
+      Future.successful(Ok(envelope_options(envelopeId, reason)))
     }
 
   def showEnvelope(envelopeId: EnvelopeId): Action[AnyContent] =
@@ -95,45 +97,79 @@ class EnvelopeController @Inject() (
     }
 
   def showRetrievals(): Action[AnyContent] =
-    authorizedRead.async { implicit request =>
-      accessEnvelopeForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors =>
-            Future.successful {
-              formWithErrors.data.get("envelopeId").fold(BadRequest(envelope_html(envelopeIdForm))) { envelopeId =>
-                BadRequest(envelope_options(EnvelopeId(envelopeId)))
-              }
-            },
-          accessEnvelope =>
-            showJsonResult(
-              gformConnector.getRetrievalsForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
-              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed authenticated user retrievals for gform envelopeId '${accessEnvelope.envelopeId}'"
-            )
-        )
+    handleCommonAuthAndBind { accessEnvelope => implicit request =>
+      showJsonResult(
+        gformConnector.getRetrievalsForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
+        s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed authenticated user retrievals for gform envelopeId '${accessEnvelope.envelopeId}'"
+      )
     }
 
   def showFormData(): Action[AnyContent] =
-    authorizedRead.async { implicit request =>
-      accessEnvelopeForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors =>
-            Future.successful {
-              formWithErrors.data.get("envelopeId").fold(BadRequest(envelope_html(envelopeIdForm))) { envelopeId =>
-                BadRequest(envelope_options(EnvelopeId(envelopeId)))
-              }
-            },
-          accessEnvelope =>
-            showJsonResult(
-              gformConnector.getFormDataForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
-              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed form data for gform envelopeId '${accessEnvelope.envelopeId}'"
+    handleCommonAuthAndBind { accessEnvelope => implicit request =>
+      showJsonResult(
+        gformConnector.getFormDataForEnvelopeId(EnvelopeId(accessEnvelope.envelopeId)),
+        s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', viewed form data for gform envelopeId '${accessEnvelope.envelopeId}'"
+      )
+    }
+
+  def downloadEnvelope(): Action[AnyContent] =
+    handleCommonAuthAndBind { accessEnvelope => implicit request =>
+      gformConnector
+        .downloadEnvelope(EnvelopeId(accessEnvelope.envelopeId))
+        .map { response =>
+          if (response.status == 200) {
+            logger.info(
+              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', downloaded DMS envelope gform envelopeId '${accessEnvelope.envelopeId}'"
             )
-        )
+            Ok.streamed(response.bodyAsSource, None)
+              .withHeaders(
+                CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}.zip""""
+              )
+          } else {
+            BadRequest(envelope_options(EnvelopeId(accessEnvelope.envelopeId), Some(accessEnvelope.accessReason)))
+          }
+        }
+    }
+
+  def downloadDataStore(): Action[AnyContent] =
+    handleCommonAuthAndBind { accessEnvelope => implicit request =>
+      gformConnector
+        .downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
+        .map { response =>
+          if (response.status == 200) {
+            logger.info(
+              s"Sensitive data access: User '$username', reason '${accessEnvelope.accessReason}', downloaded DataStore JSON for gform envelopeId '${accessEnvelope.envelopeId}'"
+            )
+            Ok.streamed(response.bodyAsSource, None)
+              .withHeaders(
+                CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}.json""""
+              )
+          } else {
+            badRequest(accessEnvelope)
+          }
+        }
     }
 
   private def username(implicit request: AuthenticatedRequest[AnyContent, Retrieval.Username]): String =
     request.retrieval.value
+
+  private def badRequest(accessEnvelope: AccessEnvelopeForm)(implicit request: AuthRequest): Result =
+    BadRequest(envelope_options(EnvelopeId(accessEnvelope.envelopeId), Some(accessEnvelope.accessReason)))
+
+  private def handleCommonAuthAndBind(f: AccessEnvelopeForm => AuthRequest => Future[Result]): Action[AnyContent] =
+    authorizedRead.async { implicit request =>
+      accessEnvelopeForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors =>
+            Future.successful {
+              formWithErrors.data.get("envelopeId").fold(BadRequest(envelope_html(envelopeIdForm))) { envelopeId =>
+                BadRequest(envelope_options(EnvelopeId(envelopeId), formWithErrors.data.get("accessReason")))
+              }
+            },
+          accessEnvelope => f(accessEnvelope)(request)
+        )
+    }
 
   private def showJsonResult(f: Future[Either[String, JsValue]], message: String): Future[Result] =
     f.map {
