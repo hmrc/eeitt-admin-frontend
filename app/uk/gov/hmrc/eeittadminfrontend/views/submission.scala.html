@@ -52,7 +52,7 @@
                @{submission.submissionRef}
             </td>
             <td class="govuk-table__cell">
-              <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.showEnvelope(EnvelopeId(submission.envelopeId))" class="govuk-link">@{submission.envelopeId}</a>
+              <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelopeOptions(EnvelopeId(submission.envelopeId))" class="govuk-link">@{submission.envelopeId}</a>
             </td>
             <td class="govuk-table__cell">
                @{submission.attachment_count}

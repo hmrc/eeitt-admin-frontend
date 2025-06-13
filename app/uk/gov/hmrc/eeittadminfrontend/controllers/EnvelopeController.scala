@@ -17,10 +17,15 @@
 package uk.gov.hmrc.eeittadminfrontend
 package controllers
 
+import cats.implicits.{ catsSyntaxApplicativeId, toTraverseOps }
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.FileIO
 import org.slf4j.{ Logger, LoggerFactory }
+import play.api.Configuration
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, nonEmptyText, text }
 import play.api.i18n.I18nSupport
+import play.api.libs.Files.DefaultTemporaryFileCreator
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
@@ -28,18 +33,23 @@ import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeId
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
+import java.io.File
+import java.nio.file.Path
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 case class AccessEnvelopeForm(accessReason: String, envelopeId: String)
+case class AccessEnvelopesForm(accessReason: String, envelopeIds: String)
 
 class EnvelopeController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
   envelope_html: views.html.envelope,
-  envelope_options: views.html.envelope_options
-)(implicit ec: ExecutionContext)
+  envelope_options: views.html.envelope_options,
+  defaultTemporaryFileCreator: DefaultTemporaryFileCreator,
+  conf: Configuration
+)(implicit ec: ExecutionContext, materializer: Materializer)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -178,4 +188,102 @@ class EnvelopeController @Inject() (
         Ok(Json.prettyPrint(payload))
       case Left(error) => BadRequest(error)
     }
+
+  private val accessEnvelopesForm: Form[AccessEnvelopesForm] = Form(
+    mapping(
+      "accessReason" -> nonEmptyText,
+      "envelopeIds"  -> nonEmptyText
+    )(AccessEnvelopesForm.apply)(AccessEnvelopesForm.unapply)
+  )
+
+  def downloadMultipleEnvelopes() =
+    authorizedRead.async { implicit request =>
+      accessEnvelopesForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors =>
+            Future.successful {
+              println(s"CM: formWithErrors: $formWithErrors")
+              formWithErrors.data.get("envelopeId").fold(BadRequest(envelope_html(envelopeIdForm))) { envelopeId =>
+                BadRequest(envelope_options(EnvelopeId(envelopeId), formWithErrors.data.get("accessReason")))
+              }
+            },
+          accessEnvelopes => {
+            val envelopeIds = accessEnvelopes.envelopeIds.split(",").map(value => EnvelopeId(value.trim())).toList
+            val dmsFilesToZip = envelopeIds
+              .traverse { envelopeId =>
+                gformConnector
+                  .downloadEnvelope(envelopeId)
+                  .flatMap { response =>
+                    if (response.status == 200) {
+                      val dmsFile = defaultTemporaryFileCreator.create(s"${envelopeId.value}", ".zip")
+                      response.bodyAsSource
+                        .runWith(FileIO.toPath(dmsFile.path))
+                        .map(_ => Some(s"${envelopeId.value}.zip" -> dmsFile.path))
+                    } else {
+                      Option.empty[(String, Path)].pure[Future]
+                    }
+                  }
+              }
+              .map(_.collect { case opt if opt.isDefined => opt.get })
+
+            val dataStoreFilesToZip = envelopeIds
+              .traverse { envelopeId =>
+                gformConnector
+                  .downloadDataStore(envelopeId)
+                  .flatMap { response =>
+                    if (response.status == 200) {
+                      val dataStoreFile = defaultTemporaryFileCreator.create(s"${envelopeId.value}", ".json")
+                      response.bodyAsSource
+                        .runWith(FileIO.toPath(dataStoreFile.path))
+                        .map(_ => Some(s"${envelopeId.value}.json" -> dataStoreFile.path))
+                    } else {
+                      Option.empty[(String, Path)].pure[Future]
+                    }
+                  }
+              }
+              .map(_.collect { case opt if opt.isDefined => opt.get })
+
+            for {
+              dmsFiles       <- dmsFilesToZip
+              dataStoreFiles <- dataStoreFilesToZip
+            } yield {
+              val paths = dmsFiles ++ dataStoreFiles
+
+              if (paths.nonEmpty) {
+                val zipFile = defaultTemporaryFileCreator.create(s"envelopes", ".zip")
+                zip(zipFile, paths)
+
+                Ok.streamed(FileIO.fromPath(zipFile), None)
+                  .withHeaders(
+                    CONTENT_TYPE        -> "application/zip",
+                    CONTENT_DISPOSITION -> s"""attachment; filename = "envelopes.zip""""
+                  )
+              } else {
+                BadRequest("No results")
+              }
+            }
+          }
+        )
+    }
+
+  private def zip(out: File, files: List[(String, Path)]) = {
+    import java.io.{ BufferedInputStream, FileInputStream, FileOutputStream }
+    import java.util.zip.{ ZipEntry, ZipOutputStream }
+
+    val zip = new ZipOutputStream(new FileOutputStream(out))
+
+    files.foreach { case (name, path) =>
+      zip.putNextEntry(new ZipEntry(name))
+      val in = new BufferedInputStream(new FileInputStream(path.toAbsolutePath.toString))
+      var b = in.read()
+      while (b > -1) {
+        zip.write(b)
+        b = in.read()
+      }
+      in.close()
+      zip.closeEntry()
+    }
+    zip.close()
+  }
 }

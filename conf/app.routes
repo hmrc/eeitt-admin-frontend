@@ -55,6 +55,7 @@ POST        /envelope/formdata               uk.gov.hmrc.eeittadminfrontend.cont
 POST        /envelope/find                   uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.findEnvelope
 POST        /envelope/downloadEnvelope       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadEnvelope
 POST        /envelope/downloadDataStore      uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadDataStore
+POST        /envelope/downloadAll            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadMultipleEnvelopes
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope

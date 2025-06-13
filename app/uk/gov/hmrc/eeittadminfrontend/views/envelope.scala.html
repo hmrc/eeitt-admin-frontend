@@ -21,27 +21,66 @@
   main_template: main_template,
   formWithCSRF: FormWithCSRF,
   govukButton: GovukButton,
-  govukInput: GovukInput
+  govukInput: GovukInput,
+  govukTextarea: GovukTextarea
 )
 
 @(form: Form[EnvelopeIdForm])(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "Envelope", tab = "envelope") {
 
-@formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.findEnvelope) {
-    <h2 class="govuk-heading-m">Find an envelope</h2>
-    @govukInput(Input(
-        id = "value",
-        name = "envelopeId.value",
-        label = Label(
-            isPageHeading = true,
-            classes = "govuk-label--s",
-            content = Text("Envelope ID:")
-        )
-    ))
-    @govukButton(Button(
-        preventDoubleClick = Some(true),
-        content = Text("Search")
-    ))
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.findEnvelope, args = 'class -> "govuk-!-margin-bottom-6") {
+        <h2 class="govuk-heading-m">Find an envelope</h2>
+        @govukInput(Input(
+            id = "value",
+            name = "envelopeId.value",
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Envelope ID:")
+            )
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Search")
+        ))
+    }
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadMultipleEnvelopes, args = 'method -> "POST") {
+        <h2 class="govuk-heading-m">Download all files for multiple envelopes</h2>
+        @govukInput(Input(
+            id = "accessReason",
+            name = "accessReason",
+            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
+            autocomplete = Some("off"),
+            label = Label(
+                isPageHeading = false,
+                classes = "govuk-label--s",
+                content = Text("Reason / INC number:")
+            )
+        ))
+        @govukTextarea(Textarea(
+            id = "envelopeIds",
+            name = "envelopeIds",
+            hint = Some(Hint(content = Text("Please enter a comma delimited list of envelope IDs. eg: 79b819f3-82ca-419b-b0f7-83015449fb89, 5b40d0aa-573e-4feb-af47-0fd6356a0da5"))),
+            label = Label(
+                isPageHeading = true,
+                classes = "govuk-label--s",
+                content = Text("Envelope IDs:")
+            )
+        ))
+        @govukButton(Button(
+            id = Some("downloadButton"),
+            preventDoubleClick = Some(true),
+            content = Text("Download")
+        ))
+    }
 }
-}
+<script type="text/javascript">
+    document.getElementById('downloadButton').addEventListener("click", function(event) {
+        var reason = document.getElementById('accessReason').value.trim();
+        if (!reason) {
+            alert("You must enter a valid incident code or reason to access this data");
+            event.preventDefault();
+        }
+    });
+</script>
