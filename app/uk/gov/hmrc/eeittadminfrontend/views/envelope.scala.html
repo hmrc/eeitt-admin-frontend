@@ -25,7 +25,7 @@
   govukTextarea: GovukTextarea
 )
 
-@(form: Form[EnvelopeIdForm])(implicit request : Request[_], messages: Messages)
+@(form: Form[EnvelopeIdForm], maybeReason: Option[String], envIds: Option[String], maybeErrorCode: Option[String])(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "Envelope", tab = "envelope") {
 
@@ -52,6 +52,7 @@
             name = "accessReason",
             hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
             autocomplete = Some("off"),
+            value = maybeReason,
             label = Label(
                 isPageHeading = false,
                 classes = "govuk-label--s",
@@ -61,7 +62,12 @@
         @govukTextarea(Textarea(
             id = "envelopeIds",
             name = "envelopeIds",
-            hint = Some(Hint(content = Text("Please enter a comma delimited list of envelope IDs. eg: 79b819f3-82ca-419b-b0f7-83015449fb89, 5b40d0aa-573e-4feb-af47-0fd6356a0da5"))),
+            hint = Some(Hint(content = Text("Please enter a comma delimited list of no more than 50 envelope IDs. eg: 79b819f3-82ca-419b-b0f7-83015449fb89, 5b40d0aa-573e-4feb-af47-0fd6356a0da5"))),
+            value = envIds,
+            errorMessage = maybeErrorCode.collect {
+                case "TOO_MANY" => ErrorMessage(content = Text("You cannot submit more than 50 envelope IDs at a time"))
+                case "NO_RESULT" => ErrorMessage(content = Text("No envelope files found for provided list of envelope IDs"))
+            },
             label = Label(
                 isPageHeading = true,
                 classes = "govuk-label--s",
@@ -76,11 +82,26 @@
     }
 }
 <script type="text/javascript">
+    function removeClass(theClass) {
+        const divs = document.getElementsByClassName(theClass)
+        for (let i = 0; i < divs.length; i++) {
+          divs[i].classList.remove(theClass);
+        }
+    }
+    function removeElementWithClass(theClass) {
+        const divs = document.getElementsByClassName(theClass)
+        for (let i = 0; i < divs.length; i++) {
+          divs[i].parentNode.removeChild(divs[i]);
+        }
+    }
     document.getElementById('downloadButton').addEventListener("click", function(event) {
         var reason = document.getElementById('accessReason').value.trim();
         if (!reason) {
             alert("You must enter a valid incident code or reason to access this data");
             event.preventDefault();
         }
+        removeClass('govuk-form-group--error');
+        removeClass('govuk-textarea--error');
+        removeElementWithClass('govuk-error-message');
     });
 </script>
