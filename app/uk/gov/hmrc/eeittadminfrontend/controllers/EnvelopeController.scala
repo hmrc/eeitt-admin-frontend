@@ -33,8 +33,9 @@ import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
-import java.io.File
-import java.nio.file.Path
+import java.io.FileOutputStream
+import java.nio.file.{ Files, Path }
+import java.util.zip.{ ZipEntry, ZipOutputStream }
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -240,9 +241,7 @@ class EnvelopeController @Inject() (
                     )
                   )
 
-                  val tempZipFile = defaultTemporaryFileCreator.create()
-                  zip(tempZipFile, combinedFiles)
-                  Ok.streamed(FileIO.fromPath(tempZipFile), None)
+                  Ok.streamed(FileIO.fromPath(compressToFile(combinedFiles)), None)
                     .withHeaders(
                       CONTENT_DISPOSITION -> s"""attachment; filename = "envelopes.zip""""
                     )
@@ -284,27 +283,22 @@ class EnvelopeController @Inject() (
       }
       .map(_.filter(_.isDefined).map(_.get))
 
-  private def zip(out: File, files: List[(String, Path)]): Unit = {
-    import java.io.{ BufferedInputStream, FileInputStream, FileOutputStream }
-    import java.util.zip.{ ZipEntry, ZipOutputStream }
+  private def compressToFile(files: List[(String, Path)]): Path = {
+    val zipFile = defaultTemporaryFileCreator.create()
+    val zos = new ZipOutputStream(new FileOutputStream(zipFile))
 
-    val zip = new ZipOutputStream(new FileOutputStream(out))
+    try for ((name, path) <- files) {
+      zos.putNextEntry(new ZipEntry(name))
+      zos.write(Files.readAllBytes(path))
+      zos.closeEntry()
+    } finally zos.close()
 
-    try files.foreach { case (name, path) =>
-      zip.putNextEntry(new ZipEntry(name))
-      val in = new BufferedInputStream(new FileInputStream(path.toAbsolutePath.toString))
-      var b = in.read()
-      while (b > -1) {
-        zip.write(b)
-        b = in.read()
-      }
-      in.close()
-      zip.closeEntry()
-    } finally zip.close()
+    zipFile
   }
 
   private def logSensitiveDataAccess(details: CustomerDataAccessLog): Unit = {
-    def common = s"Sensitive data access: User '${details.userName}', reason '${details.reason}', ${details.sensitiveData}"
+    def common =
+      s"Sensitive data access: User '${details.userName}', reason '${details.reason}', ${details.sensitiveData}"
     val message =
       if (details.envelopeIds.size == 1) s"$common for envelopeId '${details.envelopeIds.head}'"
       else s"$common for list of envelopeIds '${details.envelopeIds.mkString(",")}'"
