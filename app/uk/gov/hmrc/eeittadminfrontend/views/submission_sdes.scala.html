@@ -98,12 +98,9 @@
         @for(sdesSubmission <- sdesSubmissionPageData.sdesSubmissions) {
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">
-                    @if(sdesSubmission.destination === SdesDestination.Dms) {
-                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(sdesSubmission.envelopeId)" class="govuk-link">@{
-                            sdesSubmission.envelopeId.value
-                        }</a>
-                    } else {@{sdesSubmission.envelopeId.value}}
-                    </span>
+                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelopeOptions(sdesSubmission.envelopeId)" class="govuk-link">
+                        @{sdesSubmission.envelopeId.value}
+                    </a></span>
                 </td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.status.toString}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submissionRef.value}</span></td>

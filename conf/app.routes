@@ -47,12 +47,15 @@ POST       /deployment/:filename                                   uk.gov.hmrc.e
 GET        /deployment/:filename                                   uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deployFilenameGet(filename: Filename)
 POST       /deployment/cutNewVersion/:formTemplateId               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.cutNewVersion(formTemplateId: FormTemplateId, filename: Filename)
 
-GET         /envelope                        uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelope
-GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelopeOptions(envelopeId: EnvelopeId)
+GET         /envelope                        uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelope(reason: Option[String] ?= None, envIds: Option[String] ?= None, errorCode: Option[String] ?= None)
+GET         /envelope/:envelopeId            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.envelopeOptions(envelopeId: EnvelopeId, reason: Option[String] ?= None)
 GET         /envelope/:envelopeId/view       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showEnvelope(envelopeId: EnvelopeId)
 POST        /envelope/retrievals             uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showRetrievals
 POST        /envelope/formdata               uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showFormData
 POST        /envelope/find                   uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.findEnvelope
+POST        /envelope/downloadEnvelope       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadEnvelope
+POST        /envelope/downloadDataStore      uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadDataStore
+POST        /envelope/downloadAll            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadMultipleEnvelopes
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
 POST        /file-upload/find                uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.findEnvelope

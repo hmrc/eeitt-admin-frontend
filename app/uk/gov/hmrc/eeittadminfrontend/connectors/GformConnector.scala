@@ -685,4 +685,20 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/translation-audit/full/${translationAuditId.id}")
       .stream[HttpResponse]
+
+  def downloadEnvelope(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp
+      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}")
+      .stream[HttpResponse]
+
+  def downloadDataStore(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp
+      .get(url"$gformUrl/object-store/data-store/envelopes/${envelopeId.value}")
+      .stream[HttpResponse]
 }

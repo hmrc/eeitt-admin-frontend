@@ -83,8 +83,8 @@
                 active = if(tab == "file-upload") true else false
             ),
             HeaderNavigation(
-                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelope.path),
-                content = Text("Envelope"),
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelope(None, None, None).path),
+                content = Text("Envelopes"),
                 active = if(tab == "envelope") true else false
             ),
             HeaderNavigation(

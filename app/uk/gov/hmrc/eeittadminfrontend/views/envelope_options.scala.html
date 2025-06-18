@@ -24,7 +24,45 @@
     govukInput: GovukInput
 )
 
-@(envelopeId: EnvelopeId)(implicit request : Request[_], messages: Messages)
+@(
+    envelopeId: EnvelopeId,
+    maybeReason: Option[String]
+)(implicit request : Request[_], messages: Messages)
+
+<script type="text/javascript">
+    function addClickHandler(formButton, formInput) {
+        formButton.addEventListener("click", function(event) {
+            var reason = document.getElementById('accessReason').value.trim();
+            if (!reason) {
+                alert("You must enter a valid incident code or reason to access this data");
+                event.preventDefault();
+            } else {
+                formInput.value = reason;
+            }
+        });
+    }
+</script>
+
+@actionButton(
+    formAction: Call,
+    buttonId: String,
+    buttonText: String,
+    hiddenEnvelopeId: String,
+    hiddenReasonsId: String
+) = {
+    @formWithCSRF(action = formAction, args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-1") {
+        <input type="hidden" name="envelopeId" id="@{hiddenEnvelopeId}" value="@{envelopeId.value}"/>
+        <input type="hidden" name="accessReason" id="@{hiddenReasonsId}"/>
+        @govukButton(Button(
+            id = Some(buttonId),
+            preventDoubleClick = Some(true),
+            content = Text(buttonText)
+        ))
+    }
+    <script type="text/javascript">
+        addClickHandler(document.getElementById('@{buttonId}'), document.getElementById('@{hiddenReasonsId}'));
+    </script>
+}
 
 @main_template(title = "Envelope", tab = "envelope") {
 
@@ -34,41 +72,44 @@
         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
     </div>
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData, args = 'method -> "POST", 'autocomplete -> "off", 'class -> "govuk-!-margin-bottom-6") {
-        <h2 class="govuk-heading-m">View form data</h2>
-        <input type="hidden" name="envelopeId" id="envelopeId1" value="@{envelopeId.value}"/>
-        @govukInput(Input(
-            id = "accessReason1",
-            name = "accessReason",
-            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
-            label = Label(
-                isPageHeading = false,
-                classes = "govuk-label--s",
-                content = Text("Reason / INC number:")
-            )
-        ))
-        @govukButton(Button(
-            preventDoubleClick = Some(true),
-            content = Text("Access form data")
-        ))
-    }
+    <h2 class="govuk-heading-m">Access sensitive customer data</h2>
+    @govukInput(Input(
+        id = "accessReason",
+        name = "accessReason",
+        hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
+        value = maybeReason,
+        label = Label(
+            isPageHeading = false,
+            classes = "govuk-label--s",
+            content = Text("Reason / INC number:")
+        )
+    ))
 
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals, args = 'method -> "POST", 'autocomplete -> "off") {
-        <h2 class="govuk-heading-m">View authenticated user retrievals</h2>
-        <input type="hidden" name="envelopeId" id="envelopeId2" value="@{envelopeId.value}"/>
-        @govukInput(Input(
-            id = "accessReason2",
-            name = "accessReason",
-            hint = Some(Hint(content = Text("You are about to access sensitive customer data so a valid incident number (or reason) is required."))),
-            label = Label(
-                isPageHeading = false,
-                classes = "govuk-label--s",
-                content = Text("Reason / INC number:")
-            )
-        ))
-        @govukButton(Button(
-            preventDoubleClick = Some(true),
-            content = Text("Access authenticated user retrievals")
-        ))
-    }
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showFormData,
+        "formDataAccessButton",
+        "View form data",
+        "envelopeId1",
+        "formDataAccess")
+
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showRetrievals,
+        "userRetrievalAccessButton",
+        "View authenticated user retrievals",
+        "envelopeId2",
+        "userRetrievalAccess")
+
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope,
+        "downloadEnvelopeButton",
+        "Download DMS envelope",
+        "envelopeId3",
+        "downloadEnvelope")
+
+    @actionButton(
+        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore,
+        "downloadDataStoreButton",
+        "Download DataStore JSON",
+        "envelopeId4",
+        "downloadDataStore")
 }
