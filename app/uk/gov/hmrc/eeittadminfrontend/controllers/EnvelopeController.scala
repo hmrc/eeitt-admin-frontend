@@ -184,7 +184,7 @@ class EnvelopeController @Inject() (
   private def showJsonResult(
     f: Future[Either[String, JsValue]],
     toLog: Either[String, CustomerDataAccessLog]
-  ): Future[Result] =
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     f.map {
       case Right(payload) =>
         toLog match {
@@ -296,13 +296,16 @@ class EnvelopeController @Inject() (
     zipFile
   }
 
-  private def logSensitiveDataAccess(details: CustomerDataAccessLog): Unit = {
-    def common =
-      s"Sensitive data access: User '${details.userName}', reason '${details.reason}', ${details.sensitiveData}"
-    val message =
-      if (details.envelopeIds.size == 1) s"$common for envelopeId '${details.envelopeIds.head}'"
-      else s"$common for list of envelopeIds '${details.envelopeIds.mkString(",")}'"
-
-    logger.info(message)
+  private def logSensitiveDataAccess(
+    accessLog: CustomerDataAccessLog
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+    logger.warn(accessLog.getMessage)
+    gformConnector
+      .saveLog(accessLog)
+      .map {
+        case Right(_)    => ()
+        case Left(error) => logger.error(s"Unable to persist $accessLog with reason '$error'")
+      }
+    ()
   }
 }

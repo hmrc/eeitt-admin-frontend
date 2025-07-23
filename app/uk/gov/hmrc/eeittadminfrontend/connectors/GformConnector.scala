@@ -24,6 +24,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
@@ -701,4 +702,23 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/object-store/data-store/envelopes/${envelopeId.value}")
       .stream[HttpResponse]
+
+  def saveLog(
+    log: CustomerDataAccessLog
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Int]] =
+    wsHttp
+      .post(url"$gformUrl/access-logs")
+      .withBody(Json.toJson(log))
+      .execute[HttpResponse]
+      .map { response =>
+        response.status match {
+          case 204 => Right(204)
+          case 400 => Left(response.body)
+          case unknown =>
+            throw new Exception(
+              s"Wrong status code $unknown when posting data access log. Response body ${response.body}"
+            )
+        }
+      }
+
 }
