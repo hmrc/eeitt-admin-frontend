@@ -16,13 +16,37 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models.logging
 
-import play.api.libs.json.{ Format, Json }
+import julienrf.json.derived
+import play.api.libs.json.{ Format, OFormat }
 import uk.gov.hmrc.eeittadminfrontend.controllers.AccessEnvelopeForm
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits
 
-case class CustomerDataAccessLog(userName: String, sensitiveData: String, reason: String, envelopeIds: List[String])
+import java.time.Instant
+import java.util.UUID
+
+case class CustomerDataAccessLog(
+  _id: UUID,
+  userName: String,
+  sensitiveData: String,
+  reason: String,
+  envelopeIds: List[String],
+  createdAt: Instant = Instant.now
+) {
+  def getMessage: String = {
+    val common = s"Sensitive data access: User '$userName', reason '$reason', $sensitiveData"
+    if (envelopeIds.size == 1) s"$common for envelopeId '${envelopeIds.head}'"
+    else s"$common for list of envelopeIds '${envelopeIds.mkString(",")}'"
+  }
+}
 
 object CustomerDataAccessLog {
-  implicit val format: Format[CustomerDataAccessLog] = Json.format[CustomerDataAccessLog]
+  implicit val format: OFormat[CustomerDataAccessLog] = {
+    implicit val instantFormat: Format[Instant] = Implicits.jatInstantFormat
+    derived.oformat()
+  }
+
+  def apply(userName: String, sensitiveData: String, reason: String, envelopeIds: List[String]): CustomerDataAccessLog =
+    CustomerDataAccessLog(UUID.randomUUID(), userName, sensitiveData, reason, envelopeIds)
 
   def apply(userName: String, sensitiveData: String, reason: String, envelopeId: String): CustomerDataAccessLog =
     CustomerDataAccessLog(userName, sensitiveData, reason, List(envelopeId))
