@@ -28,7 +28,7 @@ object AppDependencies {
     "io.circe"                 %% "circe-parser"                 % circeVersion,
     "io.circe"                 %% "circe-optics"                 % circeVersion,
     "com.github.jwt-scala"     %% "jwt-circe"                    % "7.1.4",
-    "org.bouncycastle"          % "bcpkix-jdk15on"               % "1.70",
+    "org.bouncycastle"          % "bcpkix-jdk18on"               % "1.81",
     "io.github.java-diff-utils" % "java-diff-utils"              % "4.12",
     "commons-io"                % "commons-io"                   % "2.16.1",
     "org.jetbrains"             % "markdown"                     % "0.1.46",
