@@ -19,7 +19,8 @@ package controllers
 
 import cats.implicits.{ catsSyntaxApplicativeId, toTraverseOps }
 import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.FileIO
+import org.apache.pekko.stream.scaladsl.{ FileIO, Source }
+import org.apache.pekko.util.ByteString
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Form
 import play.api.data.Forms.{ mapping, nonEmptyText, text }
@@ -141,19 +142,24 @@ class EnvelopeController @Inject() (
 
   def downloadDataStore(): Action[AnyContent] =
     handleCommonAuthAndBind { accessEnvelope => implicit request =>
-      gformConnector
-        .downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
-        .map { response =>
-          if (response.status == 200) {
-            logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope))
-            Ok.streamed(response.bodyAsSource, None)
-              .withHeaders(
-                CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}.json""""
-              )
-          } else {
-            redirect(accessEnvelope)
-          }
-        }
+      def streamBody(bodyAsSource: Source[ByteString, _], source: String) =
+        Ok.streamed(bodyAsSource, None)
+          .withHeaders(
+            CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}-$source.json""""
+          )
+
+      for {
+        dataStoreResponse  <- gformConnector.downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
+        illuminateResponse <- gformConnector.downloadHmrcIlluminate(EnvelopeId(accessEnvelope.envelopeId))
+      } yield (dataStoreResponse.status, illuminateResponse.status) match {
+        case (200, _) =>
+          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope))
+          streamBody(dataStoreResponse.bodyAsSource, "DataStore")
+        case (_, 200) =>
+          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded HmrcIlluminate JSON file", accessEnvelope))
+          streamBody(illuminateResponse.bodyAsSource, "HmrcIlluminate")
+        case _ => redirect(accessEnvelope)
+      }
     }
 
   private def username(implicit request: AuthenticatedRequest[AnyContent, Retrieval.Username]): String =
@@ -223,13 +229,17 @@ class EnvelopeController @Inject() (
               ).pure[Future]
             } else {
               val envelopeZipFiles = retrieveAndSaveTemp(envelopeIds, ".zip", gformConnector.downloadEnvelope)
-              val dataStoreJsonFiles = retrieveAndSaveTemp(envelopeIds, ".json", gformConnector.downloadDataStore)
+              val dataStoreJsonFiles =
+                retrieveAndSaveTemp(envelopeIds, "-DataStore.json", gformConnector.downloadDataStore)
+              val hmrcIlluminateJonFiles =
+                retrieveAndSaveTemp(envelopeIds, "-HmrcIlluminate.json", gformConnector.downloadHmrcIlluminate)
 
               for {
-                dmsEnvelopes   <- envelopeZipFiles
-                dataStoreJsons <- dataStoreJsonFiles
+                dmsEnvelopes        <- envelopeZipFiles
+                dataStoreJsons      <- dataStoreJsonFiles
+                hmrcIlluminateJsons <- hmrcIlluminateJonFiles
               } yield {
-                val combinedFiles = dmsEnvelopes ++ dataStoreJsons
+                val combinedFiles = dmsEnvelopes ++ dataStoreJsons ++ hmrcIlluminateJsons
 
                 if (combinedFiles.nonEmpty) {
                   logSensitiveDataAccess(
