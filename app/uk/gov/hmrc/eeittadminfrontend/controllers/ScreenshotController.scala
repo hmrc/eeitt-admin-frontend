@@ -20,7 +20,7 @@ import com.microsoft.playwright._
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
-
+import scala.jdk.CollectionConverters._
 import javax.inject.Inject
 
 class ScreenshotController @Inject() (
@@ -28,7 +28,13 @@ class ScreenshotController @Inject() (
   messagesControllerComponents: MessagesControllerComponents
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
   def test = authorizedRead { request =>
-    val playwright: Playwright = Playwright.create()
+    val options = new Playwright.CreateOptions()
+    options.setEnv(
+      Map(
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1"
+      ).asJava
+    )
+    val playwright: Playwright = Playwright.create(options)
     val browser: Browser = playwright.chromium().launch()
     val context: BrowserContext = browser.newContext()
     val page: Page = context.newPage()
@@ -38,6 +44,13 @@ class ScreenshotController @Inject() (
     val response: Response = page.navigate(
       authUrl
     )
+    page
+      .getByLabel("Redirect URL")
+      .fill(
+        s"https://www.qa.tax.service.gov.uk/submissions/new-form/give-additional-information-for-creative-industry-tax-relief-or-credit"
+      );
+
+    page.locator("#submit-top").click()
     page.navigate(screenshotUrl)
     val screenshot = page.screenshot(
       new Page.ScreenshotOptions().setFullPage(true)
