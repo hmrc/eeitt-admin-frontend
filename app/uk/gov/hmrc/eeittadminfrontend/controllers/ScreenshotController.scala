@@ -29,9 +29,11 @@ class ScreenshotController @Inject() (
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
   def test = authorizedRead { request =>
     val options = new Playwright.CreateOptions()
-    options.setEnv(Map(
-      "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1"
-    ).asJava)
+    options.setEnv(
+      Map(
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1"
+      ).asJava
+    )
     val playwright: Playwright = Playwright.create(options)
     val browser: Browser = playwright.chromium().launch()
     val context: BrowserContext = browser.newContext()
