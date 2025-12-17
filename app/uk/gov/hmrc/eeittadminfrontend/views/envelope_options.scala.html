@@ -15,6 +15,7 @@
  *@
 
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
@@ -26,9 +27,9 @@
 
 @(
     envelopeId: EnvelopeId,
-    maybeReason: Option[String]
+    maybeReason: Option[String],
+    submissions: List[SdesSubmission]
 )(implicit request : Request[_], messages: Messages)
-
 <script type="text/javascript">
     function addClickHandler(formButton, formInput) {
         formButton.addEventListener("click", function(event) {
@@ -38,6 +39,8 @@
                 event.preventDefault();
             } else {
                 formInput.value = reason;
+                this.closest('form').submit();
+                event.preventDefault();
             }
         });
     }
@@ -64,6 +67,15 @@
     </script>
 }
 
+@downloadAction(
+    submission: SdesSubmission
+): Call = @{
+    submission.destination match {
+        case Some(SdesDestination.Dms) => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope
+        case _ => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore
+    }
+}
+
 @main_template(title = "Envelope", tab = "envelope") {
 
     <h2 class="govuk-heading-m">Envelope ID: @envelopeId.value</h2>
@@ -73,6 +85,7 @@
     </div>
 
     <h2 class="govuk-heading-m">Access sensitive customer data</h2>
+
     @govukInput(Input(
         id = "accessReason",
         name = "accessReason",
@@ -99,17 +112,40 @@
         "envelopeId2",
         "userRetrievalAccess")
 
-    @actionButton(
-        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope,
-        "downloadEnvelopeButton",
-        "Download DMS envelope",
-        "envelopeId3",
-        "downloadEnvelope")
+<table class="govuk-table stats-table govuk-body-s">
+        <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Envelope Id">Submissions</th>
+            <th class="govuk-table__header" scope="col" title="Submission prefix">Prefix</th>
+            <th class="govuk-table__header" scope="col" title="Download">Download Submission File</th>
+        </tr>
+        </thead>
+        <tbody class="govuk-table__body stats-results">
+        @for(sdesSubmission <- submissions) {
+        <tr class="govuk-table__row">
+            <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.destination.map(SdesDestination.fromName)}</span></td>
+            <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submissionPrefix.getOrElse("")}</span></td>
+            <td class="govuk-table__cell"><span style="white-space: nowrap;">
+                @formWithCSRF(action = downloadAction(sdesSubmission), args = 'method -> "POST", 'class -> "govuk-!-margin-bottom-0") {
+                    <input type="hidden" name="envelopeId" id="env@{sdesSubmission._id.value}" value="@{envelopeId.value}"/>
+                    <input type="hidden" name="accessReason" id="access@{sdesSubmission._id.value}"/>
 
-    @actionButton(
-        uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore,
-        "downloadDataStoreButton",
-        "Download DataStore JSON",
-        "envelopeId4",
-        "downloadDataStore")
+                    <a id="button@{sdesSubmission._id.value}" href="#" class="govuk-link">
+                        @{sdesSubmission.filePrefix.getOrElse("")}@{sdesSubmission.submissionPrefix.getOrElse("")}@{sdesSubmission.envelopeId.value}@{sdesSubmission.destination match {
+                            case Some(SdesDestination.Dms) => ".zip"
+                            case Some(_)                   => ".json"
+                            case None                      => ""
+                        }}
+                    </a>
+                    <script type="text/javascript">
+                        addClickHandler(document.getElementById('button@{sdesSubmission._id.value}'), document.getElementById('access@{sdesSubmission._id.value}'));
+                    </script>
+                }
+            </span>
+            </td>
+        </tr>
+
+        }
+        </tbody>
+    </table>
 }

@@ -96,7 +96,9 @@ class EnvelopeController @Inject() (
 
   def envelopeOptions(envelopeId: EnvelopeId, reason: Option[String]) =
     authorizedRead.async { implicit request =>
-      Future.successful(Ok(envelope_options(envelopeId, reason)))
+      gformConnector.getSdesSubmissionsByEnvelopeId(envelopeId).map { subs =>
+        Ok(envelope_options(envelopeId, reason, subs))
+      }
     }
 
   def showEnvelope(envelopeId: EnvelopeId): Action[AnyContent] =
@@ -177,12 +179,13 @@ class EnvelopeController @Inject() (
         .bindFromRequest()
         .fold(
           formWithErrors =>
-            Future.successful {
-              formWithErrors.data.get("envelopeId").fold(BadRequest(envelope_html(envelopeIdForm, None, None, None))) {
-                envelopeId =>
-                  BadRequest(envelope_options(EnvelopeId(envelopeId), formWithErrors.data.get("accessReason")))
-              }
-            },
+            formWithErrors.data
+              .get("envelopeId")
+              .fold(Future.successful(BadRequest(envelope_html(envelopeIdForm, None, None, None)))) { envelopeId =>
+                gformConnector.getSdesSubmissionsByEnvelopeId(EnvelopeId(envelopeId)).map { subs =>
+                  BadRequest(envelope_options(EnvelopeId(envelopeId), formWithErrors.data.get("accessReason"), subs))
+                }
+              },
           accessEnvelope => f(accessEnvelope)(request)
         )
     }
