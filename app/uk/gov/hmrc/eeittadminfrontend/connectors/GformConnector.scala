@@ -707,10 +707,17 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def downloadEnvelope(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] =
+  ): Future[HttpResponse] = downloadEnvelope(envelopeId, None)
+
+  def downloadEnvelope(envelopeId: EnvelopeId, submissionPrefix: Option[String])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] = {
+    val queryParams = submissionPrefix.fold(Seq.empty[(String, String)])(p => Seq("prefix" -> p))
     wsHttp
-      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}")
+      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}?$queryParams")
       .stream[HttpResponse]
+  }
 
   def downloadDataStore(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,

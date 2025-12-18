@@ -31,6 +31,7 @@ import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
@@ -125,16 +126,20 @@ class EnvelopeController @Inject() (
       )
     }
 
-  def downloadEnvelope(): Action[AnyContent] =
+  def downloadEnvelope(prefix: Option[String]): Action[AnyContent] =
     handleCommonAuthAndBind { accessEnvelope => implicit request =>
       gformConnector
-        .downloadEnvelope(EnvelopeId(accessEnvelope.envelopeId))
+        .downloadEnvelope(EnvelopeId(accessEnvelope.envelopeId), prefix)
         .map { response =>
           if (response.status == 200) {
-            logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DMS envelope", accessEnvelope))
+            val prefixMsg = prefix.fold("")(p => s" (for $p submission prefix)")
+            logSensitiveDataAccess(
+              CustomerDataAccessLog(username, s"downloaded DMS envelope$prefixMsg", accessEnvelope)
+            )
             Ok.streamed(response.bodyAsSource, None)
               .withHeaders(
-                CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}.zip""""
+                CONTENT_DISPOSITION -> s"""attachment; filename = "${prefix
+                  .getOrElse("")}${accessEnvelope.envelopeId}.zip""""
               )
           } else {
             redirect(accessEnvelope)
@@ -142,7 +147,7 @@ class EnvelopeController @Inject() (
         }
     }
 
-  def downloadDataStore(): Action[AnyContent] =
+  def downloadDataStore(destinationType: Option[String]): Action[AnyContent] =
     handleCommonAuthAndBind { accessEnvelope => implicit request =>
       def streamBody(bodyAsSource: Source[ByteString, _], source: String) =
         Ok.streamed(bodyAsSource, None)
@@ -150,14 +155,16 @@ class EnvelopeController @Inject() (
             CONTENT_DISPOSITION -> s"""attachment; filename = "${accessEnvelope.envelopeId}-$source.json""""
           )
 
+      val destination: Option[SdesDestination] = destinationType.map(SdesDestination.fromString)
+
       for {
         dataStoreResponse  <- gformConnector.downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
         illuminateResponse <- gformConnector.downloadHmrcIlluminate(EnvelopeId(accessEnvelope.envelopeId))
-      } yield (dataStoreResponse.status, illuminateResponse.status) match {
-        case (200, _) =>
+      } yield (destination, dataStoreResponse.status, illuminateResponse.status) match {
+        case (Some(SdesDestination.DataStore), 200, _) =>
           logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope))
           streamBody(dataStoreResponse.bodyAsSource, "DataStore")
-        case (_, 200) =>
+        case (Some(SdesDestination.HmrcIlluminate), _, 200) =>
           logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded HmrcIlluminate JSON file", accessEnvelope))
           streamBody(illuminateResponse.bodyAsSource, "HmrcIlluminate")
         case _ => redirect(accessEnvelope)
