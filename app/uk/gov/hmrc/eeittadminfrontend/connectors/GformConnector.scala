@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import cats.implicits.catsSyntaxEq
 import org.apache.pekko.http.scaladsl.model.StatusCodes
 
 import javax.inject.Inject
@@ -25,6 +26,7 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
@@ -217,8 +219,15 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .map { response =>
         if (response.status == 200) {
           Try(response.json.as[List[SdesSubmission]]) match {
-            case Success(list) => list
-            case Failure(_)    => List(response.json.as[SdesSubmission])
+            case Success(list) =>
+              list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
+            case Failure(_) =>
+              Try(response.json.as[SdesSubmission]) match {
+                case Success(sub) => List(sub)
+                case Failure(_) =>
+                  logger.warn(s"Unable to retrieve any SdesSubmissions for envelopeId ${envelopeId.value}")
+                  List.empty[SdesSubmission]
+              }
           }
         } else List.empty[SdesSubmission]
       }
