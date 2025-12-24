@@ -50,7 +50,8 @@ class DmsSubReconciliationServiceSpec extends AnyWordSpecLike with Matchers with
         NotificationStatus.FileReady,
         "failed",
         None,
-        SdesDestination.Dms
+        SdesDestination.Dms,
+        None
       )
       val sub2 = sub1.copy(
         correlationId = CorrelationId("correlationId2"),

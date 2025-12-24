@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import cats.implicits.catsSyntaxEq
 import org.apache.pekko.http.scaladsl.model.StatusCodes
 
 import javax.inject.Inject
@@ -25,7 +26,8 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -35,6 +37,7 @@ import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success, Try }
 
 class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
 
@@ -205,6 +208,29 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/sdes/${correlationId.value}")
       .execute[SdesSubmissionData]
+
+  def getSdesSubmissionsByEnvelopeId(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[List[SdesSubmission]] =
+    wsHttp
+      .get(url"$gformUrl/sdes/envelopeId/${envelopeId.value}")
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) {
+          Try(response.json.as[List[SdesSubmission]]) match {
+            case Success(list) =>
+              list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
+            case Failure(_) =>
+              Try(response.json.as[SdesSubmission]) match {
+                case Success(sub) => List(sub)
+                case Failure(_) =>
+                  logger.warn(s"Unable to retrieve any SdesSubmissions for envelopeId ${envelopeId.value}")
+                  List.empty[SdesSubmission]
+              }
+          }
+        } else List.empty[SdesSubmission]
+      }
 
   def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
@@ -690,10 +716,17 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def downloadEnvelope(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] =
+  ): Future[HttpResponse] = downloadEnvelope(envelopeId, None)
+
+  def downloadEnvelope(envelopeId: EnvelopeId, submissionPrefix: Option[String])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] = {
+    val queryParams = submissionPrefix.fold(Seq.empty[(String, String)])(p => Seq("prefix" -> p))
     wsHttp
-      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}")
+      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}?$queryParams")
       .stream[HttpResponse]
+  }
 
   def downloadDataStore(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,

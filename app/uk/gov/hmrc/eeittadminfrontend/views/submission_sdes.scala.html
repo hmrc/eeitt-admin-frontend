@@ -78,6 +78,7 @@
         <thead class="govuk-table__head">
             <tr class="govuk-table__row">
                 <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+                <th class="govuk-table__header" scope="col" title="Submission prefix">Submission Prefix</th>
                 <th class="govuk-table__header" scope="col" title="Status of submission">Status</th>
                 <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
                 <th class="govuk-table__header" scope="col" title="Date when submission was done">Submitted date</th>
@@ -102,6 +103,7 @@
                         @{sdesSubmission.envelopeId.value}
                     </a></span>
                 </td>
+                <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submissionPrefix.getOrElse("")}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.status.toString}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submissionRef.value}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.submittedAt.map(formatInstant).getOrElse("")}</span></td>

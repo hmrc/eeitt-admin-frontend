@@ -53,8 +53,8 @@ GET         /envelope/:envelopeId/view       uk.gov.hmrc.eeittadminfrontend.cont
 POST        /envelope/retrievals             uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showRetrievals
 POST        /envelope/formdata               uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.showFormData
 POST        /envelope/find                   uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.findEnvelope
-POST        /envelope/downloadEnvelope       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadEnvelope
-POST        /envelope/downloadDataStore      uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadDataStore
+POST        /envelope/downloadEnvelope       uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadEnvelope(prefix: Option[String] ?= None)
+POST        /envelope/downloadDataStore      uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadDataStore(destinationType: Option[String] ?= None)
 POST        /envelope/downloadAll            uk.gov.hmrc.eeittadminfrontend.controllers.EnvelopeController.downloadMultipleEnvelopes
 
 GET         /file-upload                     uk.gov.hmrc.eeittadminfrontend.controllers.FileUploadController.fileUpload
