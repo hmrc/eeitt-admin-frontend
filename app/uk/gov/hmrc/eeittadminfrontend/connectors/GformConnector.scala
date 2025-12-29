@@ -37,7 +37,6 @@ import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success, Try }
 
 class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
 
@@ -218,18 +217,29 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .execute[HttpResponse]
       .map { response =>
         if (response.status == 200) {
-          Try(response.json.as[List[SdesSubmission]]) match {
-            case Success(list) =>
+          response.json.validate[List[SdesSubmission]] match {
+            case JsSuccess(list, _) =>
               list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
-            case Failure(_) =>
-              Try(response.json.as[SdesSubmission]) match {
-                case Success(sub) => List(sub)
-                case Failure(_) =>
-                  logger.warn(s"Unable to retrieve any SdesSubmissions for envelopeId ${envelopeId.value}")
+            case JsError(_) =>
+              response.json.validate[SdesSubmission] match {
+                case JsSuccess(sub, _) => List(sub)
+                case JsError(_) =>
+                  logger.error(s"Unable to parse SdesSubmissions for envelopeId ${envelopeId.value}")
                   List.empty[SdesSubmission]
               }
           }
-        } else List.empty[SdesSubmission]
+        } else {
+          logger.error(
+            s"Unable to retrieve SdesSubmissions for envelopeId ${envelopeId.value}, status = ${response.status}, body = '${response.body}'"
+          )
+          List.empty[SdesSubmission]
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve SdesSubmissions for envelopeId ${envelopeId.value}, exception: " + ex.getMessage
+        logger.error(message, ex)
+        List.empty[SdesSubmission]
       }
 
   def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
