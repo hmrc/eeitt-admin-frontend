@@ -221,12 +221,8 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
             case JsSuccess(list, _) =>
               list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
             case JsError(_) =>
-              response.json.validate[SdesSubmission] match {
-                case JsSuccess(sub, _) => List(sub)
-                case JsError(_) =>
-                  logger.error(s"Unable to parse SdesSubmissions for envelopeId ${envelopeId.value}")
-                  List.empty[SdesSubmission]
-              }
+              logger.error(s"Unable to parse SdesSubmissions for envelopeId ${envelopeId.value}")
+              List.empty[SdesSubmission]
           }
         } else {
           logger.error(
