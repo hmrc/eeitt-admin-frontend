@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.connectors
 
+import cats.implicits.catsSyntaxEq
 import org.apache.pekko.http.scaladsl.model.StatusCodes
 
 import javax.inject.Inject
@@ -25,7 +26,8 @@ import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, Histor
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -205,6 +207,36 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/sdes/${correlationId.value}")
       .execute[SdesSubmissionData]
+
+  def getSdesSubmissionsByEnvelopeId(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[List[SdesSubmission]] =
+    wsHttp
+      .get(url"$gformUrl/sdes/envelopeId/${envelopeId.value}")
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) {
+          response.json.validate[List[SdesSubmission]] match {
+            case JsSuccess(list, _) =>
+              list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
+            case JsError(_) =>
+              logger.error(s"Unable to parse SdesSubmissions for envelopeId ${envelopeId.value}")
+              List.empty[SdesSubmission]
+          }
+        } else {
+          logger.error(
+            s"Unable to retrieve SdesSubmissions for envelopeId ${envelopeId.value}, status = ${response.status}, body = '${response.body}'"
+          )
+          List.empty[SdesSubmission]
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve SdesSubmissions for envelopeId ${envelopeId.value}, exception: " + ex.getMessage
+        logger.error(message, ex)
+        List.empty[SdesSubmission]
+      }
 
   def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
@@ -690,10 +722,17 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def downloadEnvelope(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] =
+  ): Future[HttpResponse] = downloadEnvelope(envelopeId, None)
+
+  def downloadEnvelope(envelopeId: EnvelopeId, submissionPrefix: Option[String])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] = {
+    val queryParams = submissionPrefix.fold(Seq.empty[(String, String)])(p => Seq("prefix" -> p))
     wsHttp
-      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}")
+      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}?$queryParams")
       .stream[HttpResponse]
+  }
 
   def downloadDataStore(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,
