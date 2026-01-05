@@ -42,7 +42,7 @@ object AppDependencies {
     "com.fasterxml.jackson.dataformat" %  "jackson-dataformat-cbor"        % jacksonVersion,
     "com.fasterxml.jackson.module"     %  "jackson-module-parameter-names" % jacksonVersion,
     "com.fasterxml.jackson.module"     %% "jackson-module-scala"           % jacksonVersion,
-    "com.microsoft.playwright"         %  "playwright"                     % "1.56.0"
+    "com.microsoft.playwright"         %  "playwright"                     % "1.57.0"
   )
 
   def test(scope: String = "test") =
