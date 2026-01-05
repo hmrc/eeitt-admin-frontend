@@ -14,7 +14,8 @@ lazy val microservice = Project(appName, file("."))
     organization := "uk.gov.hmrc",
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
+    PlaywrightBrowserDownload.playwrightBrowserDownloadSetting
   )
   .settings(
     scalacOptions ++= Seq(

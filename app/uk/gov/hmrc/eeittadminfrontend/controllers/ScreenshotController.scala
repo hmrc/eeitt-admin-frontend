@@ -31,7 +31,8 @@ class ScreenshotController @Inject() (
     val options = new Playwright.CreateOptions()
     options.setEnv(
       Map(
-        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1"
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1",
+        "PLAYWRIGHT_BROWSERS_PATH"         -> "./conf/browsers"
       ).asJava
     )
     val playwright: Playwright = Playwright.create(options)

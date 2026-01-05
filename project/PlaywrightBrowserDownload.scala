@@ -1,0 +1,28 @@
+import com.typesafe.sbt.packager.Keys.dist
+import sbt.*
+import sbt.Keys.*
+
+import scala.sys.process.Process
+
+/** Settings defined in this file are run as part of the dist stage.
+  */
+object PlaywrightBrowserDownload {
+  val playwrightBrowserDownload = TaskKey[Int]("playwright-browser-download")
+
+  private val browserDir = System.getProperty("os.name").toLowerCase match {
+    case mac if mac.contains("mac")  => sys.props("user.home") + "/Library/Caches/ms-playwright/chromium_headless_shell-1200"
+    case win if win.contains("win") => throw new RuntimeException("Windows nots available") //sys.props("user.home") + "\\AppData\\Local\\ms-playwright"
+    case linux if linux.contains("linux") => sys.props("user.home") + "/.cache/ms-playwright"
+    case osName => throw new RuntimeException(s"Unknown operating system $osName")
+  }
+
+  val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
+    playwrightBrowserDownload := {
+
+        Process("npx playwright install --with-deps chromium") #&&
+          Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
+          Process(Seq("cp","-R",browserDir ,(baseDirectory.value / "conf" / "browsers").getAbsolutePath )) !
+    },
+    dist := { dist dependsOn playwrightBrowserDownload }.value
+  )
+}
