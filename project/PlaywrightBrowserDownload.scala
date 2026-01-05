@@ -5,7 +5,7 @@ import sbt.Keys.*
 import scala.sys.process.Process
 
 /** Settings defined in this file are run as part of the dist stage.
-  */
+ */
 object PlaywrightBrowserDownload {
   val playwrightBrowserDownload = TaskKey[Int]("playwright-browser-download")
 
@@ -18,10 +18,10 @@ object PlaywrightBrowserDownload {
 
   val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
     playwrightBrowserDownload := {
-
-        Process("npx playwright install --with-deps chromium") #&&
-          Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
-          Process(Seq("cp","-R",browserDir ,(baseDirectory.value / "conf" / "browsers").getAbsolutePath )) !
+      Process("npm install --no-save playwright") #&&
+        Process("node node_modules/playwright/cli.js install chromium") #&&
+        Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
+        Process(Seq("cp","-R",browserDir ,(baseDirectory.value / "conf" / "browsers").getAbsolutePath )) !
     },
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )
