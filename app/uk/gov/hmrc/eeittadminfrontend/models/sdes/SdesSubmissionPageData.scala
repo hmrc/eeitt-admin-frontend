@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.models.sdes
 
 import cats.Eq
+import julienrf.json.derived
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.{ FormTemplateId, ValueClassFormatter }
@@ -45,11 +46,31 @@ case class SdesSubmissionData(
   status: NotificationStatus,
   failureReason: String,
   lastUpdated: Option[Instant],
-  destination: SdesDestination
+  destination: SdesDestination,
+  submissionPrefix: Option[String]
 )
 
 object SdesSubmissionData {
   implicit val format: OFormat[SdesSubmissionData] = Json.format[SdesSubmissionData]
+}
+
+final case class SdesSubmission(
+  _id: CorrelationId,
+  envelopeId: EnvelopeId,
+  formTemplateId: FormTemplateId,
+  submissionRef: SubmissionRef,
+  isProcessed: Boolean = false,
+  status: NotificationStatus,
+  failureReason: Option[String] = None,
+  destination: Option[SdesDestination],
+  isAlerted: Option[Boolean] = None,
+  lockedAt: Option[Instant] = None,
+  filePrefix: Option[String] = None,
+  submissionPrefix: Option[String] = None
+)
+
+object SdesSubmission {
+  implicit val format: OFormat[SdesSubmission] = derived.oformat()
 }
 
 case class SdesReconciliation(
