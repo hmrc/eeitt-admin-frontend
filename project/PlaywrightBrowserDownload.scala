@@ -18,7 +18,8 @@ object PlaywrightBrowserDownload {
 
   val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
     playwrightBrowserDownload := {
-        Process("npx playwright install --with-deps chromium") #&&
+        Process("npm install playwright --no-save") #&&
+          Process("npm exec playwright install --with-deps chromium") #&&
           Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
           Process(Seq("cp","-R",browserDir ,(baseDirectory.value / "conf" / "browsers").getAbsolutePath )) !
     },
