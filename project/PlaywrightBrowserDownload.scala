@@ -18,10 +18,24 @@ object PlaywrightBrowserDownload {
 
   val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
     playwrightBrowserDownload := {
-        Process("npm install playwright --no-save") #&&
+      val browsersDir = (baseDirectory.value / "conf" / "browsers")
+        val status = Process("npm install playwright --no-save") #&&
           Process("npm exec playwright install --with-deps chromium") #&&
-          Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
-          Process(Seq("cp","-R",browserDir ,(baseDirectory.value / "conf" / "browsers").getAbsolutePath )) !
+          Process("mkdir " + browsersDir.getAbsolutePath) ###
+          Process(Seq("cp","-R",browserDir ,browsersDir.getAbsolutePath )) #&&
+          Process(Seq(
+            "sh",
+            "-c",
+            "find . -type d -exec ls -lah {} \\;"
+          ), browsersDir) !
+
+      val dirs = (browsersDir ** DirectoryFilter).get
+
+      dirs.foreach { dir =>
+        Process(Seq("ls", "-lah"), dir).!
+      }
+
+      status
     },
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )
