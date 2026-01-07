@@ -22,12 +22,7 @@ object PlaywrightBrowserDownload {
       val status = Process("npm install playwright --no-save") #&&
         Process("npm exec playwright install --with-deps chromium") #&&
         Process("mkdir " + browsersDir.getAbsolutePath) ###
-        Process(Seq("cp","-R",browserDir ,browsersDir.getAbsolutePath )) #&&
-        Process(Seq(
-          "sh",
-          "-c",
-          "find . -type d -exec ls -lah {} \\;"
-        ), browsersDir) !
+        Process(Seq("cp","-R",browserDir ,browsersDir.getAbsolutePath )) !
 
       val dirs = (browsersDir ** DirectoryFilter).get
 
