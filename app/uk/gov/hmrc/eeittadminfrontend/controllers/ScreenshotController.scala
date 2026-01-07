@@ -20,6 +20,8 @@ import com.microsoft.playwright._
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
+
+import java.io.File
 import scala.jdk.CollectionConverters._
 import javax.inject.Inject
 
@@ -29,12 +31,22 @@ class ScreenshotController @Inject() (
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
   def test = authorizedRead { request =>
     val options = new Playwright.CreateOptions()
-    options.setEnv(
-      Map(
-        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1",
-        "PLAYWRIGHT_BROWSERS_PATH"         -> "./conf/browsers"
-      ).asJava
-    )
+
+    //Enables pre-downloaded browser for any HMRC environment.
+    new File(".").listFiles
+      .find { file =>
+        file.isDirectory && file.getName.startsWith("eeitt-admin-frontend-")
+      }
+      .foreach { file =>
+        val path = file.getPath + "/conf/browsers"
+        options.setEnv(
+          Map(
+            "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1",
+            "PLAYWRIGHT_BROWSERS_PATH"         -> path
+          ).asJava
+        )
+      }
+
     val playwright: Playwright = Playwright.create(options)
     val browser: Browser = playwright.chromium().launch()
     val context: BrowserContext = browser.newContext()
