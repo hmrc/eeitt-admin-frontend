@@ -22,6 +22,7 @@ object PlaywrightBrowserDownload {
       val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
       val status = Process("npm install playwright --no-save") #&&
         Process("npm exec playwright install --with-deps chromium") #&&
+        Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
         Process("mkdir " + confBrowsersDir.getAbsolutePath) ###
         Process(Seq("cp","-R",browserDir ,confBrowsersDir.getAbsolutePath )) !
 
@@ -33,10 +34,7 @@ object PlaywrightBrowserDownload {
 
       status
     },
-    executableFilesInTar := {
-      val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
-      (confBrowsersDir ** "chromium-headless-shell").get.map(_.getPath.split("conf/browsers/").last)
-    },
+    executableFilesInTar := Seq("chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell", "chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell"),
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )
 }
