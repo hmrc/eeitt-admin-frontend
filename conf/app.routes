@@ -137,4 +137,4 @@ GET         /translation-audit/:translationAuditId                      uk.gov.h
 
 GET         /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
 
-GET         /screenshot/test          uk.gov.hmrc.eeittadminfrontend.controllers.ScreenshotController.test
+GET         /screenshot/test/:browserType          uk.gov.hmrc.eeittadminfrontend.controllers.ScreenshotController.test(browserType: String)

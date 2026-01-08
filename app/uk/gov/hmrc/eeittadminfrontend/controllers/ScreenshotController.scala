@@ -29,7 +29,7 @@ class ScreenshotController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   messagesControllerComponents: MessagesControllerComponents
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
-  def test = authorizedRead { request =>
+  def test(browserType: String) = authorizedRead { request =>
     val options = new Playwright.CreateOptions()
 
     //Enables pre-downloaded browser for any HMRC environment.
@@ -48,7 +48,12 @@ class ScreenshotController @Inject() (
       }
 
     val playwright: Playwright = Playwright.create(options)
-    val browser: Browser = playwright.chromium().launch()
+    val browser: Browser = browserType match {
+      case "chrome"  => playwright.chromium().launch()
+      case "firefox" => playwright.firefox().launch()
+      case "webkit"  => playwright.webkit().launch()
+      case _         => throw new RuntimeException(s"$browserType no such browser")
+    }
     val context: BrowserContext = browser.newContext()
     val page: Page = context.newPage()
     val authUrl = "https://www.qa.tax.service.gov.uk/auth-login-stub/gg-sign-in"

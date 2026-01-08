@@ -11,7 +11,7 @@ object PlaywrightBrowserDownload {
   val playwrightBrowserDownload = TaskKey[Int]("playwright-browser-download")
 
   private val browserDir = System.getProperty("os.name").toLowerCase match {
-    case mac if mac.contains("mac")  => sys.props("user.home") + "/Library/Caches/ms-playwright/chromium_headless_shell-1200"
+    case mac if mac.contains("mac")  => sys.props("user.home") + "/Library/Caches/ms-playwright/."
     case win if win.contains("win") => throw new RuntimeException("Windows not available") //sys.props("user.home") + "\\AppData\\Local\\ms-playwright"
     case linux if linux.contains("linux") => sys.props("user.home") + "/.cache/ms-playwright/."
     case osName => throw new RuntimeException(s"Unknown operating system $osName")
@@ -20,21 +20,15 @@ object PlaywrightBrowserDownload {
   val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
     playwrightBrowserDownload := {
       val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
-      val status = Process("npm install playwright --no-save") #&&
-        Process("npm exec playwright install --with-deps chromium") #&&
+      Process("npm install playwright --no-save") #&&
+        Process("npm exec playwright install") #&&
         Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
         Process("mkdir " + confBrowsersDir.getAbsolutePath) ###
         Process(Seq("cp","-R",browserDir ,confBrowsersDir.getAbsolutePath )) !
-
-      val dirs = (confBrowsersDir ** DirectoryFilter).get
-
-      dirs.foreach { dir =>
-        Process(Seq("ls", "-lah"), dir).!
-      }
-
-      status
     },
-    executableFilesInTar := Seq("chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell", "chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell"),
+    executableFilesInTar := Seq(
+      "chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+      "chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell"),
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )
 }
