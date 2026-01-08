@@ -1,6 +1,7 @@
 import com.typesafe.sbt.packager.Keys.dist
 import sbt.*
 import sbt.Keys.*
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.executableFilesInTar
 
 import scala.sys.process.Process
 
@@ -18,19 +19,23 @@ object PlaywrightBrowserDownload {
 
   val playwrightBrowserDownloadSetting: Seq[sbt.Def.Setting[_]] = Seq(
     playwrightBrowserDownload := {
-      val browsersDir = (baseDirectory.value / "conf" / "browsers")
+      val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
       val status = Process("npm install playwright --no-save") #&&
         Process("npm exec playwright install --with-deps chromium") #&&
-        Process("mkdir " + browsersDir.getAbsolutePath) ###
-        Process(Seq("cp","-R",browserDir ,browsersDir.getAbsolutePath )) !
+        Process("mkdir " + confBrowsersDir.getAbsolutePath) ###
+        Process(Seq("cp","-R",browserDir ,confBrowsersDir.getAbsolutePath )) !
 
-      val dirs = (browsersDir ** DirectoryFilter).get
+      val dirs = (confBrowsersDir ** DirectoryFilter).get
 
       dirs.foreach { dir =>
         Process(Seq("ls", "-lah"), dir).!
       }
 
       status
+    },
+    executableFilesInTar := {
+      val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
+      (confBrowsersDir ** "chromium-headless-shell").get.map(_.getPath.split("conf/browsers/").last)
     },
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )

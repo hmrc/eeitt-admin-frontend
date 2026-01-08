@@ -38,7 +38,7 @@ class ScreenshotController @Inject() (
         file.isDirectory && file.getName.startsWith("eeitt-admin-frontend-")
       }
       .foreach { file =>
-        val path = file.getPath + "/conf/browsers"
+        val path = file.getPath + "/conf/browsers/bin"
         options.setEnv(
           Map(
             "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD" -> "1",
