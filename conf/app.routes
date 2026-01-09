@@ -136,5 +136,3 @@ GET         /translation-audit                                          uk.gov.h
 GET         /translation-audit/:translationAuditId                      uk.gov.hmrc.eeittadminfrontend.controllers.TranslationAuditController.translationAuditDownload(translationAuditId: TranslationAuditId)
 
 GET         /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
-
-GET         /screenshot/test          uk.gov.hmrc.eeittadminfrontend.controllers.ScreenshotController.test
