@@ -85,8 +85,9 @@
     submission: SdesSubmission
 ): Call = @{
     submission.destination match {
-        case Some(SdesDestination.Dms) => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope(submission.submissionPrefix)
-        case _                         => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore(submission.destination.map(SdesDestination.fromName))
+        case Some(SdesDestination.Dms)          => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope(submission.submissionPrefix)
+        case Some(SdesDestination.PegaCaseflow) => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadEnvelope(submission.submissionPrefix)
+        case _                                  => uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.downloadDataStore(submission.destination.map(SdesDestination.fromName))
     }
 }
 
@@ -154,6 +155,7 @@
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8899a4" stroke-width="2" stroke-linecap="square" stroke-linejoin="arcs"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"></path>
                         </svg>@{sdesSubmission.submissionPrefix.getOrElse("")}@{sdesSubmission.envelopeId.value}@{sdesSubmission.destination match {
                             case Some(SdesDestination.Dms)            => ".zip"
+                            case Some(SdesDestination.PegaCaseflow)   => ".zip"
                             case Some(SdesDestination.HmrcIlluminate) => "-HmrcIlluminate.json"
                             case Some(SdesDestination.DataStore)      => "-DataStore.json"
                             case _                                    => ".json"
