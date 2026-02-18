@@ -29,7 +29,7 @@ object DateValidator {
     if (day.matches("[0-9]+")) {
       val d = day.toInt
       if (d > 31) {
-        Invalid(Map(id -> s"Day cannot be greater then 31"))
+        Invalid(Map(id -> s"Day cannot be greater than 31"))
       } else {
         Valid(d)
       }
@@ -39,7 +39,7 @@ object DateValidator {
     if (month.matches("[0-9]+")) {
       val m = month.toInt
       if (m > 12) {
-        Invalid(Map(id -> s"Month cannot be greater then 12"))
+        Invalid(Map(id -> s"Month cannot be greater than 12"))
       } else {
         Valid(m)
       }
@@ -51,7 +51,7 @@ object DateValidator {
       if (y < 2000) {
         Invalid(Map(id -> s"Year must be 2000 or more"))
       } else if (y > 2099) {
-        Invalid(Map(id -> s"Year must less then 2099"))
+        Invalid(Map(id -> s"Year must less than 2099"))
       } else {
         Valid(y)
       }
@@ -61,7 +61,7 @@ object DateValidator {
     if (hour.matches("[0-9]+")) {
       val h = hour.toInt
       if (h > 23) {
-        Invalid(Map(id -> s"Hour cannot be greater then 23"))
+        Invalid(Map(id -> s"Hour cannot be greater than 23"))
       } else {
         Valid(h)
       }
@@ -71,7 +71,7 @@ object DateValidator {
     if (minute.matches("[0-9]+")) {
       val h = minute.toInt
       if (h > 59) {
-        Invalid(Map(id -> s"Minute cannot be greater then 59"))
+        Invalid(Map(id -> s"Minute cannot be greater than 59"))
       } else {
         Valid(h)
       }

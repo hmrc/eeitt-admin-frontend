@@ -16,16 +16,17 @@
 
 package uk.gov.hmrc.eeittadminfrontend.repo
 
-import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts.descending
-
-import javax.inject.Inject
-import javax.inject.Singleton
-import scala.concurrent.{ ExecutionContext, Future }
-import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
+import uk.gov.hmrc.eeittadminfrontend.history.HistoryFilter
+import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.mongo.play.PlayMongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+
+import javax.inject.{ Inject, Singleton }
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
 class DeploymentRepo @Inject() (mongoComponent: PlayMongoComponent)(implicit ec: ExecutionContext)
@@ -45,4 +46,19 @@ class DeploymentRepo @Inject() (mongoComponent: PlayMongoComponent)(implicit ec:
 
   def save(deploymentRecord: DeploymentRecord): Future[Unit] =
     collection.insertOne(deploymentRecord).toFuture().map(_ => ())
+
+  def getWithHistoryFilter(historyFilter: HistoryFilter): Future[List[DeploymentRecord]] = {
+    val filter: Bson = (historyFilter.from, historyFilter.to) match {
+      case (Some(from), Some(to)) => and(from.gte, to.lte)
+      case (Some(from), None)     => from.gte
+      case (None, Some(to))       => to.lte
+      case (None, None)           => empty()
+    }
+
+    underlying.collection
+      .find(filter)
+      .sort(descending("createdAt"))
+      .toFuture()
+      .map(_.toList)
+  }
 }

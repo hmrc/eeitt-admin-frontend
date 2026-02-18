@@ -18,11 +18,23 @@ package uk.gov.hmrc.eeittadminfrontend.history
 
 import java.time.{ LocalDate, LocalDateTime }
 import julienrf.json.derived
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters
 import play.api.libs.json.{ Format, Json, OFormat }
 
 import java.time.format.DateTimeFormatter
 
-sealed trait DateFilter extends Product with Serializable
+sealed trait DateFilter extends Product with Serializable {
+  val lte: Bson = this match {
+    case DateFilter.DateOnly(localDate)     => Filters.lte("createdAt", localDate.plusDays(1))
+    case DateFilter.DateTime(localDateTime) => Filters.lte("createdAt", localDateTime)
+  }
+
+  val gte: Bson = this match {
+    case DateFilter.DateOnly(localDate)     => Filters.gte("createdAt", localDate)
+    case DateFilter.DateTime(localDateTime) => Filters.gte("createdAt", localDateTime)
+  }
+}
 
 object DateFilter {
   final case class DateOnly(localDate: LocalDate) extends DateFilter
