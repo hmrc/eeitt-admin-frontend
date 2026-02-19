@@ -31,6 +31,7 @@ import play.twirl.api.{ Html, HtmlFormat }
 import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
 import uk.gov.hmrc.eeittadminfrontend.deployment._
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
+import uk.gov.hmrc.eeittadminfrontend.history.DateFilter.{ DateOnly, DateTime }
 import uk.gov.hmrc.eeittadminfrontend.history.{ DateFilter, HistoryFilter }
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
 import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId, Username }
@@ -862,11 +863,27 @@ class DeploymentController @Inject() (
 
       (fromDateFilter, toDateFilter) match {
         case (Valid(fromDf), Valid(toDf)) =>
-          val hf = HistoryFilter(fromDf, toDf)
+          val historyFilter = HistoryFilter(fromDf, toDf)
+          val beforeDF = fromDf.map {
+            case DateOnly(date)     => DateOnly(date.minusDays(1))
+            case DateTime(dateTime) => DateTime(dateTime)
+          }
+          val priorDeploymentsFilter = HistoryFilter(None, beforeDF)
           val fromDateInput = fromDateTimeComponent(answers, Map.empty[String, String])
           val toDateInput = toDateTimeComponent(answers, Map.empty[String, String])
-          deploymentService.getWithHistoryFilter(hf).map { deploymentHistory =>
-            val table = overviewTableFull(fullOverviewTableRows(deploymentHistory))
+
+          for {
+            deploymentHistory <- deploymentService.getWithHistoryFilter(historyFilter)
+            formTemplateIds = deploymentHistory.groupBy(_.formTemplateId).keySet.toList
+            newTemplates <- Future.sequence {
+                              formTemplateIds.map { formTemplateId =>
+                                deploymentService
+                                  .countByTemplateAndDate(formTemplateId, priorDeploymentsFilter)
+                                  .map(count => formTemplateId -> (count === 0L))
+                              }
+                            }
+          } yield {
+            val table = overviewTableFull(fullOverviewTableRows(deploymentHistory, newTemplates.toMap))
             Ok(deployment_history_overview(table, fromDateInput, toDateInput))
           }
         case (Invalid(fromErrors), Invalid(toErrors)) =>
@@ -896,12 +913,23 @@ class DeploymentController @Inject() (
   private def toDateTimeComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
     dateTimeComponent("to", "Deployments before date", answers, errors)
 
-  private def fullOverviewTableRows(deploymentRecords: List[DeploymentRecord]): List[Seq[TableRow]] =
+  private def fullOverviewTableRows(
+    deploymentRecords: List[DeploymentRecord],
+    newMap: Map[FormTemplateId, Boolean]
+  ): List[Seq[TableRow]] = {
+    val earliest = deploymentRecords.groupBy(_.formTemplateId).map { case (formTemplateId, deployments) =>
+      formTemplateId -> deployments.minBy(_.createdAt)
+    }
     deploymentRecords.map { deployment =>
       val openLink = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history_link_open(deployment.formTemplateId)
+      val isEarliest = earliest.get(deployment.formTemplateId).forall(rec => rec.createdAt == deployment.createdAt)
+      val isNew = newMap.getOrElse(deployment.formTemplateId, true)
       Seq(
         TableRow(
           content = HtmlContent(openLink)
+        ),
+        TableRow(
+          content = Text(if (isNew && isEarliest) "Yes" else "No")
         ),
         TableRow(
           content = Text(DateUtils.formatInstant(deployment.createdAt))
@@ -917,6 +945,7 @@ class DeploymentController @Inject() (
         )
       )
     }
+  }
 
   private def overviewTableFull(
     rows: List[Seq[TableRow]]
@@ -925,6 +954,9 @@ class DeploymentController @Inject() (
       Seq(
         HeadCell(
           content = Text("Template id")
+        ),
+        HeadCell(
+          content = Text("New")
         ),
         HeadCell(
           content = Text("Deployed at")

@@ -35,11 +35,24 @@
     messages: Messages
 )
 
+<head>
+    <style>
+        #from > div:nth-child(4),
+        #from > div:nth-child(5),
+        #to > div:nth-child(4),
+        #to > div:nth-child(5) {
+            display: none;
+        }
+    </style>
+</head>
+
 @main_template(title = s"Deployment history overview", tab = "deployment"){
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentsByDateTimePost) {
         <h2 class="govuk-heading-m">Deployment history overview</h2>
-        @govukDateInput(fromDate)
-        @govukDateInput(toDate)
+        <div class="date-range-select">
+            @govukDateInput(fromDate)
+            @govukDateInput(toDate)
+        </div>
         @govukButton(Button(
             preventDoubleClick = Some(true),
             content = Text("Show")

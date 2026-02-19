@@ -28,4 +28,9 @@ class DeploymentService @Inject() (deploymentRepo: DeploymentRepo) {
   def save(deploymentRecord: DeploymentRecord): Future[Unit] = deploymentRepo.save(deploymentRecord)
   def getWithHistoryFilter(historyFilter: HistoryFilter): Future[List[DeploymentRecord]] =
     deploymentRepo.getWithHistoryFilter(historyFilter)
+  def countByTemplateAndDate(
+    formTemplateId: FormTemplateId,
+    historyFilter: HistoryFilter
+  ): Future[Long] =
+    deploymentRepo.countByTemplateAndDate(formTemplateId, historyFilter)
 }

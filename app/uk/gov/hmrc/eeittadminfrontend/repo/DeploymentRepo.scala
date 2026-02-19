@@ -48,17 +48,33 @@ class DeploymentRepo @Inject() (mongoComponent: PlayMongoComponent)(implicit ec:
     collection.insertOne(deploymentRecord).toFuture().map(_ => ())
 
   def getWithHistoryFilter(historyFilter: HistoryFilter): Future[List[DeploymentRecord]] = {
-    val filter: Bson = (historyFilter.from, historyFilter.to) match {
-      case (Some(from), Some(to)) => and(from.gte, to.lte)
-      case (Some(from), None)     => from.gte
-      case (None, Some(to))       => to.lte
-      case (None, None)           => empty()
-    }
+    val filter: Bson = getFilter(historyFilter)
 
     underlying.collection
       .find(filter)
       .sort(descending("createdAt"))
       .toFuture()
       .map(_.toList)
+  }
+
+  def countByTemplateAndDate(
+    formTemplateId: FormTemplateId,
+    historyFilter: HistoryFilter
+  ): Future[Long] = {
+    val filter: Bson = and(
+      equal("formTemplateId", formTemplateId.value),
+      getFilter(historyFilter)
+    )
+
+    underlying.collection
+      .countDocuments(filter)
+      .toFuture()
+  }
+
+  private def getFilter(historyFilter: HistoryFilter): Bson = (historyFilter.from, historyFilter.to) match {
+    case (Some(from), Some(to)) => and(from.gte, to.lte)
+    case (Some(from), None)     => from.gte
+    case (None, Some(to))       => to.lte
+    case (None, None)           => empty()
   }
 }
