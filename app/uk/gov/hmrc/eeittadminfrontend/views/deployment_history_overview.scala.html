@@ -47,7 +47,7 @@
 </head>
 
 @main_template(title = s"Deployment history overview", tab = "deployment"){
-    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentsByDateTimePost) {
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentsByDatePost) {
         <h2 class="govuk-heading-m">Deployment history overview</h2>
         <div class="date-range-select">
             @govukDateInput(fromDate)

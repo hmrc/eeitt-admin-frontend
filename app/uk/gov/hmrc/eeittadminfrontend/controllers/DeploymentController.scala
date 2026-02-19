@@ -814,7 +814,7 @@ class DeploymentController @Inject() (
     )
   }
 
-  def deploymentsByDateTime(
+  def deploymentsByDate(
     fromDay: Option[String],
     fromMonth: Option[String],
     fromYear: Option[String],
@@ -964,7 +964,7 @@ class DeploymentController @Inject() (
     )
   }
 
-  def deploymentsByDateTimePost() = authorizedRead.async { implicit request =>
+  def deploymentsByDatePost() = authorizedRead.async { implicit request =>
     val answers: Map[String, String] = request.body.asFormUrlEncoded
       .map(_.collect {
         case (field, value :: _) if value.trim.nonEmpty =>
@@ -982,7 +982,7 @@ class DeploymentController @Inject() (
 
     Future.successful(
       Redirect(
-        routes.DeploymentController.deploymentsByDateTime(
+        routes.DeploymentController.deploymentsByDate(
           fromDay,
           fromMonth,
           fromYear,
