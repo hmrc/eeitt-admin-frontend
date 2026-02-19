@@ -80,7 +80,7 @@
 @defining(java.time.LocalDate.now()) { to =>
     @defining(to.minusDays(7)) { from =>
         <p class="govuk-body">
-            <a class="govuk-link" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentsByDateTime(Some(from.getDayOfMonth.toString), Some(from.getMonthValue.toString), Some(from.getYear.toString), None, None, Some(to.getDayOfMonth.toString), Some(to.getMonthValue.toString), Some(to.getYear.toString), None, None)">View deployment history</a>
+            <a class="govuk-link" href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentsByDateTime(Some(from.getDayOfMonth.toString), Some(from.getMonthValue.toString), Some(from.getYear.toString), Some(to.getDayOfMonth.toString), Some(to.getMonthValue.toString), Some(to.getYear.toString))">View deployment history</a>
         </p>
     }
 }

@@ -818,26 +818,18 @@ class DeploymentController @Inject() (
     fromDay: Option[String],
     fromMonth: Option[String],
     fromYear: Option[String],
-    fromHour: Option[String],
-    fromMinute: Option[String],
     toDay: Option[String],
     toMonth: Option[String],
-    toYear: Option[String],
-    toHour: Option[String],
-    toMinute: Option[String]
+    toYear: Option[String]
   ) =
     authorizedRead.async { implicit request =>
       val answers: Map[String, String] = Map(
-        "from-day"    -> fromDay.getOrElse(""),
-        "from-month"  -> fromMonth.getOrElse(""),
-        "from-year"   -> fromYear.getOrElse(""),
-        "from-hour"   -> fromHour.getOrElse(""),
-        "from-minute" -> fromMinute.getOrElse(""),
-        "to-day"      -> toDay.getOrElse(""),
-        "to-month"    -> toMonth.getOrElse(""),
-        "to-year"     -> toYear.getOrElse(""),
-        "to-hour"     -> toHour.getOrElse(""),
-        "to-minute"   -> toMinute.getOrElse("")
+        "from-day"   -> fromDay.getOrElse(""),
+        "from-month" -> fromMonth.getOrElse(""),
+        "from-year"  -> fromYear.getOrElse(""),
+        "to-day"     -> toDay.getOrElse(""),
+        "to-month"   -> toMonth.getOrElse(""),
+        "to-year"    -> toYear.getOrElse("")
       ).collect {
         case (field, value) if value.trim.nonEmpty =>
           (field, value.trim)
@@ -846,20 +838,16 @@ class DeploymentController @Inject() (
       val maybeFromDay: Option[String] = answers.get("from-day")
       val maybeFromMonth: Option[String] = answers.get("from-month")
       val maybeFromYear: Option[String] = answers.get("from-year")
-      val maybeFromHour: Option[String] = answers.get("from-hour")
-      val maybeFromMinute: Option[String] = answers.get("from-minute")
 
       val maybeToDay: Option[String] = answers.get("to-day")
       val maybeToMonth: Option[String] = answers.get("to-month")
       val maybeToYear: Option[String] = answers.get("to-year")
-      val maybeToHour: Option[String] = answers.get("to-hour")
-      val maybeToMinute: Option[String] = answers.get("to-minute")
 
       val fromDateFilter: Validated[Map[String, String], Option[DateFilter]] =
-        validateDateFilter("from", maybeFromDay, maybeFromMonth, maybeFromYear, maybeFromHour, maybeFromMinute)
+        validateDateFilter("from", maybeFromDay, maybeFromMonth, maybeFromYear, None, None)
 
       val toDateFilter: Validated[Map[String, String], Option[DateFilter]] =
-        validateDateFilter("to", maybeToDay, maybeToMonth, maybeToYear, maybeToHour, maybeToMinute)
+        validateDateFilter("to", maybeToDay, maybeToMonth, maybeToYear, None, None)
 
       (fromDateFilter, toDateFilter) match {
         case (Valid(fromDf), Valid(toDf)) =>
@@ -987,14 +975,10 @@ class DeploymentController @Inject() (
     val fromDay: Option[String] = answers.get("from-day")
     val fromMonth: Option[String] = answers.get("from-month")
     val fromYear: Option[String] = answers.get("from-year")
-    val fromHour: Option[String] = answers.get("from-hour")
-    val fromMinute: Option[String] = answers.get("from-minute")
 
     val toDay: Option[String] = answers.get("to-day")
     val toMonth: Option[String] = answers.get("to-month")
     val toYear: Option[String] = answers.get("to-year")
-    val toHour: Option[String] = answers.get("to-hour")
-    val toMinute: Option[String] = answers.get("to-minute")
 
     Future.successful(
       Redirect(
@@ -1002,13 +986,9 @@ class DeploymentController @Inject() (
           fromDay,
           fromMonth,
           fromYear,
-          fromHour,
-          fromMinute,
           toDay,
           toMonth,
-          toYear,
-          toHour,
-          toMinute
+          toYear
         )
       )
     )
