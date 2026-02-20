@@ -17,33 +17,37 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats._
-import cats.data.NonEmptyList
-import cats.syntax.all._
-import cats.data.EitherT
+import cats.data.Validated.{ Invalid, Valid }
+import cats.data.{ EitherT, NonEmptyList, Validated }
 import cats.effect.IO
-import io.circe.{ JsonObject, Json => CJson }
+import cats.syntax.all._
 import io.circe.syntax._
-
-import java.time.Instant
-import javax.inject.Inject
+import io.circe.{ JsonObject, Json => CJson }
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc.{ AnyContent, Call, MessagesControllerComponents, Request, Result }
+import play.api.mvc._
 import play.twirl.api.{ Html, HtmlFormat }
 import uk.gov.hmrc.eeittadminfrontend.deployment.GithubPath.asPath
-
-import scala.concurrent.{ ExecutionContext, Future }
-import uk.gov.hmrc.eeittadminfrontend.deployment.{ BlobSha, ContentValue, DeploymentDiff, DeploymentRecord, Filename, FullPath, GithubContent, GithubPath, MongoContent, Reconciliation, ReconciliationLookup }
+import uk.gov.hmrc.eeittadminfrontend.deployment._
 import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
-import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId, Username }
+import uk.gov.hmrc.eeittadminfrontend.history.DateFilter.{ DateOnly, DateTime }
+import uk.gov.hmrc.eeittadminfrontend.history.{ DateFilter, HistoryFilter }
 import uk.gov.hmrc.eeittadminfrontend.models.github.{ Authorization, LastCommitCheck, PrettyPrintJson }
-import uk.gov.hmrc.eeittadminfrontend.services.{ CacheStatus, CachingService, DeploymentService, GformService, GithubService }
+import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, FormTemplateId, Username }
+import uk.gov.hmrc.eeittadminfrontend.services._
+import uk.gov.hmrc.eeittadminfrontend.utils.DateUtils
+import uk.gov.hmrc.eeittadminfrontend.validators.DateValidator.validateDateFilter
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
+import uk.gov.hmrc.eeittadminfrontend.views.components.DateTime.dateTimeComponent
 import uk.gov.hmrc.govukfrontend.views.html.components._
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
 import uk.gov.hmrc.play.bootstrap.binders.{ OnlyRelative, RedirectUrl }
+
+import java.time.Instant
+import javax.inject.Inject
+import scala.concurrent.{ ExecutionContext, Future }
 
 class DeploymentController @Inject() (
   authorization: Authorization,
@@ -64,6 +68,7 @@ class DeploymentController @Inject() (
   deployment_history: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history,
   deployment_success: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_success,
   handlebars_template: uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template,
+  deployment_history_overview: uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history_overview,
   diffConfig: DiffConfig
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
@@ -808,4 +813,185 @@ class DeploymentController @Inject() (
       firstCellIsHeader = false
     )
   }
+
+  def deploymentsByDate(
+    fromDay: Option[String],
+    fromMonth: Option[String],
+    fromYear: Option[String],
+    toDay: Option[String],
+    toMonth: Option[String],
+    toYear: Option[String]
+  ) =
+    authorizedRead.async { implicit request =>
+      val answers: Map[String, String] = Map(
+        "from-day"   -> fromDay.getOrElse(""),
+        "from-month" -> fromMonth.getOrElse(""),
+        "from-year"  -> fromYear.getOrElse(""),
+        "to-day"     -> toDay.getOrElse(""),
+        "to-month"   -> toMonth.getOrElse(""),
+        "to-year"    -> toYear.getOrElse("")
+      ).collect {
+        case (field, value) if value.trim.nonEmpty =>
+          (field, value.trim)
+      }
+
+      val maybeFromDay: Option[String] = answers.get("from-day")
+      val maybeFromMonth: Option[String] = answers.get("from-month")
+      val maybeFromYear: Option[String] = answers.get("from-year")
+
+      val maybeToDay: Option[String] = answers.get("to-day")
+      val maybeToMonth: Option[String] = answers.get("to-month")
+      val maybeToYear: Option[String] = answers.get("to-year")
+
+      val fromDateFilter: Validated[Map[String, String], Option[DateFilter]] =
+        validateDateFilter("from", maybeFromDay, maybeFromMonth, maybeFromYear, None, None)
+
+      val toDateFilter: Validated[Map[String, String], Option[DateFilter]] =
+        validateDateFilter("to", maybeToDay, maybeToMonth, maybeToYear, None, None)
+
+      (fromDateFilter, toDateFilter) match {
+        case (Valid(fromDf), Valid(toDf)) =>
+          val historyFilter = HistoryFilter(fromDf, toDf)
+          val beforeDF = fromDf.map {
+            case DateOnly(date)     => DateOnly(date.minusDays(1))
+            case DateTime(dateTime) => DateTime(dateTime)
+          }
+          val priorDeploymentsFilter = HistoryFilter(None, beforeDF)
+          val fromDateInput = fromDateTimeComponent(answers, Map.empty[String, String])
+          val toDateInput = toDateTimeComponent(answers, Map.empty[String, String])
+
+          for {
+            deploymentHistory <- deploymentService.getWithHistoryFilter(historyFilter)
+            formTemplateIds = deploymentHistory.groupBy(_.formTemplateId).keySet.toList
+            newTemplates <- Future.sequence {
+                              formTemplateIds.map { formTemplateId =>
+                                deploymentService
+                                  .countByTemplateAndDate(formTemplateId, priorDeploymentsFilter)
+                                  .map(count => formTemplateId -> (count === 0L))
+                              }
+                            }
+          } yield {
+            val table = overviewTableFull(fullOverviewTableRows(deploymentHistory, newTemplates.toMap))
+            Ok(deployment_history_overview(table, fromDateInput, toDateInput))
+          }
+        case (Invalid(fromErrors), Invalid(toErrors)) =>
+          val fromDateInput = fromDateTimeComponent(answers, fromErrors)
+          val toDateInput = toDateTimeComponent(answers, toErrors)
+          Future.successful(
+            Ok(deployment_history_overview(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+          )
+        case (Valid(_), Invalid(toErrors)) =>
+          val fromDateInput = fromDateTimeComponent(answers, Map.empty[String, String])
+          val toDateInput = toDateTimeComponent(answers, toErrors)
+          Future.successful(
+            Ok(deployment_history_overview(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+          )
+        case (Invalid(fromErrors), Valid(_)) =>
+          val fromDateInput = fromDateTimeComponent(answers, fromErrors)
+          val toDateInput = toDateTimeComponent(answers, Map.empty[String, String])
+          Future.successful(
+            Ok(deployment_history_overview(overviewTableFull(List.empty[Seq[TableRow]]), fromDateInput, toDateInput))
+          )
+      }
+    }
+
+  private def fromDateTimeComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
+    dateTimeComponent("from", "Deployments after date", answers, errors)
+
+  private def toDateTimeComponent(answers: Map[String, String], errors: Map[String, String]): DateInput =
+    dateTimeComponent("to", "Deployments before date", answers, errors)
+
+  private def fullOverviewTableRows(
+    deploymentRecords: List[DeploymentRecord],
+    newMap: Map[FormTemplateId, Boolean]
+  ): List[Seq[TableRow]] = {
+    val earliest = deploymentRecords.groupBy(_.formTemplateId).map { case (formTemplateId, deployments) =>
+      formTemplateId -> deployments.minBy(_.createdAt)
+    }
+    deploymentRecords.map { deployment =>
+      val openLink = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_history_link_open(deployment.formTemplateId)
+      val isEarliest = earliest.get(deployment.formTemplateId).forall(rec => rec.createdAt == deployment.createdAt)
+      val isNew = newMap.getOrElse(deployment.formTemplateId, true)
+      Seq(
+        TableRow(
+          content = HtmlContent(openLink)
+        ),
+        TableRow(
+          content = Text(if (isNew && isEarliest) "Yes" else "No")
+        ),
+        TableRow(
+          content = Text(DateUtils.formatInstant(deployment.createdAt))
+        ),
+        TableRow(
+          content = Text(deployment.username.value)
+        ),
+        TableRow(
+          content = HtmlContent(
+            uk.gov.hmrc.eeittadminfrontend.views.html
+              .deployment_link_github_commit(authorization, deployment.commitSha)
+          )
+        )
+      )
+    }
+  }
+
+  private def overviewTableFull(
+    rows: List[Seq[TableRow]]
+  ): Table = {
+    val head = Some(
+      Seq(
+        HeadCell(
+          content = Text("Template id")
+        ),
+        HeadCell(
+          content = Text("New")
+        ),
+        HeadCell(
+          content = Text("Deployed at")
+        ),
+        HeadCell(
+          content = Text("Deployed by")
+        ),
+        HeadCell(
+          content = Text("Commit SHA")
+        )
+      )
+    )
+    Table(
+      rows = rows.toList,
+      head = head,
+      firstCellIsHeader = false
+    )
+  }
+
+  def deploymentsByDatePost() = authorizedRead.async { implicit request =>
+    val answers: Map[String, String] = request.body.asFormUrlEncoded
+      .map(_.collect {
+        case (field, value :: _) if value.trim.nonEmpty =>
+          (field, value.trim)
+      })
+      .getOrElse(Map.empty[String, String])
+
+    val fromDay: Option[String] = answers.get("from-day")
+    val fromMonth: Option[String] = answers.get("from-month")
+    val fromYear: Option[String] = answers.get("from-year")
+
+    val toDay: Option[String] = answers.get("to-day")
+    val toMonth: Option[String] = answers.get("to-month")
+    val toYear: Option[String] = answers.get("to-year")
+
+    Future.successful(
+      Redirect(
+        routes.DeploymentController.deploymentsByDate(
+          fromDay,
+          fromMonth,
+          fromYear,
+          toDay,
+          toMonth,
+          toYear
+        )
+      )
+    )
+  }
+
 }

@@ -37,6 +37,8 @@ POST       /deployment/no-version-change/:formTemplateId           uk.gov.hmrc.e
 POST       /deployment/version-change/:formTemplateId              uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.confirmAllowOldVersionJourney(formTemplateId: FormTemplateId, filename: Filename)
 GET        /deployment/new/:formTemplateId                         uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentNew(formTemplateId: FormTemplateId, filename: Filename, sha: BlobSha)
 GET        /deployment/deleted/:formTemplateId                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentDeleted(formTemplateId: FormTemplateId, path: GithubPath)
+GET        /deployment/history/by-date                             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentsByDate(fromDay: Option[String], fromMonth: Option[String], fromYear: Option[String], toDay: Option[String], toMonth: Option[String], toYear: Option[String])
+POST       /deployment/history/by-date                             uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.deploymentsByDatePost
 GET        /deployment/history/:formTemplateId/:sha1/:sha2         uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history(formTemplateId: FormTemplateId, sha1: BlobSha, sha2: BlobSha)
 GET        /deployment/history/:formTemplateId                     uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.history1(formTemplateId: FormTemplateId)
 POST       /deployment/refresh-cache                               uk.gov.hmrc.eeittadminfrontend.controllers.DeploymentController.refreshCache(redirectUrl: RedirectUrl)

@@ -33,3 +33,13 @@ $govuk-new-typography-scale: true;
 .sha {
     font-family: monospace;
 }
+
+.date-range-select {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 640px) {
+    .date-range-select {
+        grid-template-columns: 1fr;
+    }
+}

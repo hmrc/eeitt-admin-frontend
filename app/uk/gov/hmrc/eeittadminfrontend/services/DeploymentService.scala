@@ -19,10 +19,18 @@ package uk.gov.hmrc.eeittadminfrontend.services
 import javax.inject.Inject
 import scala.concurrent.Future
 import uk.gov.hmrc.eeittadminfrontend.deployment.DeploymentRecord
+import uk.gov.hmrc.eeittadminfrontend.history.HistoryFilter
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.repo.DeploymentRepo
 
 class DeploymentService @Inject() (deploymentRepo: DeploymentRepo) {
   def find(formTemplateId: FormTemplateId): Future[List[DeploymentRecord]] = deploymentRepo.get(formTemplateId)
   def save(deploymentRecord: DeploymentRecord): Future[Unit] = deploymentRepo.save(deploymentRecord)
+  def getWithHistoryFilter(historyFilter: HistoryFilter): Future[List[DeploymentRecord]] =
+    deploymentRepo.getWithHistoryFilter(historyFilter)
+  def countByTemplateAndDate(
+    formTemplateId: FormTemplateId,
+    historyFilter: HistoryFilter
+  ): Future[Long] =
+    deploymentRepo.countByTemplateAndDate(formTemplateId, historyFilter)
 }
