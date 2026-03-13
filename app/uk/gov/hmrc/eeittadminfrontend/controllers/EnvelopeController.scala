@@ -158,15 +158,19 @@ class EnvelopeController @Inject() (
       val destination: Option[SdesDestination] = destinationType.map(SdesDestination.fromString)
 
       for {
-        dataStoreResponse  <- gformConnector.downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
-        illuminateResponse <- gformConnector.downloadHmrcIlluminate(EnvelopeId(accessEnvelope.envelopeId))
-      } yield (destination, dataStoreResponse.status, illuminateResponse.status) match {
-        case (Some(SdesDestination.DataStore), 200, _) =>
+        dataStoreResponse     <- gformConnector.downloadDataStore(EnvelopeId(accessEnvelope.envelopeId))
+        illuminateResponse    <- gformConnector.downloadHmrcIlluminate(EnvelopeId(accessEnvelope.envelopeId))
+        dataLakehouseResponse <- gformConnector.downloadDataLakehouse(EnvelopeId(accessEnvelope.envelopeId))
+      } yield (destination, dataStoreResponse.status, illuminateResponse.status, dataLakehouseResponse.status) match {
+        case (Some(SdesDestination.DataStore), 200, _, _) =>
           logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope))
           streamBody(dataStoreResponse.bodyAsSource, "DataStore")
-        case (Some(SdesDestination.HmrcIlluminate), _, 200) =>
+        case (Some(SdesDestination.HmrcIlluminate), _, 200, _) =>
           logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded HmrcIlluminate JSON file", accessEnvelope))
           streamBody(illuminateResponse.bodyAsSource, "HmrcIlluminate")
+        case (Some(SdesDestination.DataLakehouse), _, _, 200) =>
+          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataLakehouse JSON file", accessEnvelope))
+          streamBody(dataLakehouseResponse.bodyAsSource, "DataLakehouse")
         case _ => redirect(accessEnvelope)
       }
     }
@@ -241,15 +245,18 @@ class EnvelopeController @Inject() (
               val envelopeZipFiles = retrieveAndSaveTemp(envelopeIds, ".zip", gformConnector.downloadEnvelope)
               val dataStoreJsonFiles =
                 retrieveAndSaveTemp(envelopeIds, "-DataStore.json", gformConnector.downloadDataStore)
-              val hmrcIlluminateJonFiles =
+              val hmrcIlluminateJsonFiles =
                 retrieveAndSaveTemp(envelopeIds, "-HmrcIlluminate.json", gformConnector.downloadHmrcIlluminate)
+              val dataLakehouseJsonFiles =
+                retrieveAndSaveTemp(envelopeIds, "-DataLakehouse.json", gformConnector.downloadDataLakehouse)
 
               for {
                 dmsEnvelopes        <- envelopeZipFiles
                 dataStoreJsons      <- dataStoreJsonFiles
-                hmrcIlluminateJsons <- hmrcIlluminateJonFiles
+                hmrcIlluminateJsons <- hmrcIlluminateJsonFiles
+                dataLakehouseJsons  <- dataLakehouseJsonFiles
               } yield {
-                val combinedFiles = dmsEnvelopes ++ dataStoreJsons ++ hmrcIlluminateJsons
+                val combinedFiles = dmsEnvelopes ++ dataStoreJsons ++ hmrcIlluminateJsons ++ dataLakehouseJsons
 
                 if (combinedFiles.nonEmpty) {
                   logSensitiveDataAccess(

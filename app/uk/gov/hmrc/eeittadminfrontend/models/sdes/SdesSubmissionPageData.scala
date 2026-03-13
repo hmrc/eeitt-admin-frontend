@@ -191,9 +191,11 @@ object SdesDestination {
   case object DataStore extends SdesDestination
   case object InfoArchive extends SdesDestination
   case object PegaCaseflow extends SdesDestination
+  case object DataLakehouse extends SdesDestination
 
-  val values: Set[SdesDestination] = Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, PegaCaseflow)
-  val workItemValues: Set[SdesDestination] = Set(Dms, DataStore, InfoArchive)
+  val values: Set[SdesDestination] =
+    Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, PegaCaseflow, DataLakehouse)
+  val workItemValues: Set[SdesDestination] = Set(Dms, DataStore, InfoArchive, DataLakehouse)
 
   implicit val equal: Eq[SdesDestination] = Eq.fromUniversalEquals
   implicit val format: Format[SdesDestination] = new Format[SdesDestination] {
@@ -204,6 +206,7 @@ object SdesDestination {
       case DataStore       => JsString("DataStore")
       case InfoArchive     => JsString("InfoArchive")
       case PegaCaseflow    => JsString("PegaCaseflow")
+      case DataLakehouse   => JsString("DataLakehouse")
     }
 
     override def reads(json: JsValue): JsResult[SdesDestination] =
@@ -214,6 +217,7 @@ object SdesDestination {
         case JsString("DataStore")       => JsSuccess(DataStore)
         case JsString("InfoArchive")     => JsSuccess(InfoArchive)
         case JsString("PegaCaseflow")    => JsSuccess(PegaCaseflow)
+        case JsString("DataLakehouse")   => JsSuccess(DataLakehouse)
         case JsString(err) =>
           JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy, DataStore or InfoArchive. $err is not allowed")
         case _ => JsError("Failure")
@@ -227,6 +231,7 @@ object SdesDestination {
     case DataStore       => "DataStore"
     case InfoArchive     => "InfoArchive"
     case PegaCaseflow    => "PegaCaseflow"
+    case DataLakehouse   => "DataLakehouse"
   }
 
   def fromString(destination: String): SdesDestination = destination match {
@@ -236,12 +241,14 @@ object SdesDestination {
     case "DataStore"       => DataStore
     case "InfoArchive"     => InfoArchive
     case "PegaCaseflow"    => PegaCaseflow
+    case "DataLakehouse"   => DataLakehouse
   }
 
   def fromNameForWorkItems(destination: SdesDestination): String = destination match {
-    case Dms         => "DMS / Pega Caseflow"
-    case DataStore   => "Data Store (incl legacy) / Illuminate"
-    case InfoArchive => "Info Archive"
-    case _           => ""
+    case Dms           => "DMS / Pega Caseflow"
+    case DataStore     => "Data Store (incl legacy) / Illuminate"
+    case InfoArchive   => "Info Archive"
+    case DataLakehouse => "Data Lakehouse"
+    case _             => ""
   }
 }
