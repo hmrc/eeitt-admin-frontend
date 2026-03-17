@@ -750,6 +750,14 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .get(url"$gformUrl/object-store/hmrc-illuminate/envelopes/${envelopeId.value}")
       .stream[HttpResponse]
 
+  def downloadDataLakehouse(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp
+      .get(url"$gformUrl/object-store/data-lakehouse/envelopes/${envelopeId.value}")
+      .stream[HttpResponse]
+
   def saveLog(
     log: CustomerDataAccessLog
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Int]] =
