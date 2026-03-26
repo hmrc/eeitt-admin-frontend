@@ -192,32 +192,39 @@ object SdesDestination {
   case object InfoArchive extends SdesDestination
   case object PegaCaseflow extends SdesDestination
   case object DataLakehouse extends SdesDestination
+  case object NrsOrchestrator extends SdesDestination
+  case object NrsOrchestratorAttachment extends SdesDestination
 
   val values: Set[SdesDestination] =
     Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, PegaCaseflow, DataLakehouse)
-  val workItemValues: Set[SdesDestination] = Set(Dms, DataStore, InfoArchive, DataLakehouse)
+  val workItemValues: Set[SdesDestination] =
+    Set(Dms, DataStore, InfoArchive, DataLakehouse, NrsOrchestrator, NrsOrchestratorAttachment)
 
   implicit val equal: Eq[SdesDestination] = Eq.fromUniversalEquals
   implicit val format: Format[SdesDestination] = new Format[SdesDestination] {
     override def writes(o: SdesDestination): JsValue = o match {
-      case Dms             => JsString("Dms")
-      case HmrcIlluminate  => JsString("HmrcIlluminate")
-      case DataStoreLegacy => JsString("DataStoreLegacy")
-      case DataStore       => JsString("DataStore")
-      case InfoArchive     => JsString("InfoArchive")
-      case PegaCaseflow    => JsString("PegaCaseflow")
-      case DataLakehouse   => JsString("DataLakehouse")
+      case Dms                       => JsString("Dms")
+      case HmrcIlluminate            => JsString("HmrcIlluminate")
+      case DataStoreLegacy           => JsString("DataStoreLegacy")
+      case DataStore                 => JsString("DataStore")
+      case InfoArchive               => JsString("InfoArchive")
+      case PegaCaseflow              => JsString("PegaCaseflow")
+      case DataLakehouse             => JsString("DataLakehouse")
+      case NrsOrchestrator           => JsString("NrsOrchestrator")
+      case NrsOrchestratorAttachment => JsString("NrsOrchestratorAttachment")
     }
 
     override def reads(json: JsValue): JsResult[SdesDestination] =
       json match {
-        case JsString("Dms")             => JsSuccess(Dms)
-        case JsString("HmrcIlluminate")  => JsSuccess(HmrcIlluminate)
-        case JsString("DataStoreLegacy") => JsSuccess(DataStoreLegacy)
-        case JsString("DataStore")       => JsSuccess(DataStore)
-        case JsString("InfoArchive")     => JsSuccess(InfoArchive)
-        case JsString("PegaCaseflow")    => JsSuccess(PegaCaseflow)
-        case JsString("DataLakehouse")   => JsSuccess(DataLakehouse)
+        case JsString("Dms")                       => JsSuccess(Dms)
+        case JsString("HmrcIlluminate")            => JsSuccess(HmrcIlluminate)
+        case JsString("DataStoreLegacy")           => JsSuccess(DataStoreLegacy)
+        case JsString("DataStore")                 => JsSuccess(DataStore)
+        case JsString("InfoArchive")               => JsSuccess(InfoArchive)
+        case JsString("PegaCaseflow")              => JsSuccess(PegaCaseflow)
+        case JsString("DataLakehouse")             => JsSuccess(DataLakehouse)
+        case JsString("NrsOrchestrator")           => JsSuccess(NrsOrchestrator)
+        case JsString("NrsOrchestratorAttachment") => JsSuccess(NrsOrchestratorAttachment)
         case JsString(err) =>
           JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy, DataStore or InfoArchive. $err is not allowed")
         case _ => JsError("Failure")
@@ -225,30 +232,36 @@ object SdesDestination {
   }
 
   def fromName(destination: SdesDestination): String = destination match {
-    case Dms             => "Dms"
-    case HmrcIlluminate  => "HmrcIlluminate"
-    case DataStoreLegacy => "DataStoreLegacy"
-    case DataStore       => "DataStore"
-    case InfoArchive     => "InfoArchive"
-    case PegaCaseflow    => "PegaCaseflow"
-    case DataLakehouse   => "DataLakehouse"
+    case Dms                       => "Dms"
+    case HmrcIlluminate            => "HmrcIlluminate"
+    case DataStoreLegacy           => "DataStoreLegacy"
+    case DataStore                 => "DataStore"
+    case InfoArchive               => "InfoArchive"
+    case PegaCaseflow              => "PegaCaseflow"
+    case DataLakehouse             => "DataLakehouse"
+    case NrsOrchestrator           => "NrsOrchestrator"
+    case NrsOrchestratorAttachment => "NrsOrchestratorAttachment"
   }
 
   def fromString(destination: String): SdesDestination = destination match {
-    case "Dms"             => Dms
-    case "HmrcIlluminate"  => HmrcIlluminate
-    case "DataStoreLegacy" => DataStoreLegacy
-    case "DataStore"       => DataStore
-    case "InfoArchive"     => InfoArchive
-    case "PegaCaseflow"    => PegaCaseflow
-    case "DataLakehouse"   => DataLakehouse
+    case "Dms"                       => Dms
+    case "HmrcIlluminate"            => HmrcIlluminate
+    case "DataStoreLegacy"           => DataStoreLegacy
+    case "DataStore"                 => DataStore
+    case "InfoArchive"               => InfoArchive
+    case "PegaCaseflow"              => PegaCaseflow
+    case "DataLakehouse"             => DataLakehouse
+    case "NrsOrchestrator"           => NrsOrchestrator
+    case "NrsOrchestratorAttachment" => NrsOrchestratorAttachment
   }
 
   def fromNameForWorkItems(destination: SdesDestination): String = destination match {
-    case Dms           => "DMS / Pega Caseflow"
-    case DataStore     => "Data Store (incl legacy) / Illuminate"
-    case InfoArchive   => "Info Archive"
-    case DataLakehouse => "Data Lakehouse"
-    case _             => ""
+    case Dms                       => "DMS / Pega Caseflow"
+    case DataStore                 => "Data Store (incl legacy) / Illuminate"
+    case InfoArchive               => "Info Archive"
+    case DataLakehouse             => "Data Lakehouse"
+    case NrsOrchestrator           => "Nrs Orchestrator"
+    case NrsOrchestratorAttachment => "Nrs Orchestrator Attachment"
+    case _                         => ""
   }
 }
