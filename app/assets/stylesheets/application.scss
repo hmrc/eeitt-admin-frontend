@@ -43,3 +43,12 @@ $govuk-new-typography-scale: true;
         grid-template-columns: 1fr;
     }
 }
+
+.failure-reason-cell {
+    display: block;
+    max-width: 400px;
+    min-width: 200px;
+    max-height: 4.5em;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+}
