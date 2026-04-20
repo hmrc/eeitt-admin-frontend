@@ -115,7 +115,7 @@
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.numberOfFiles}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.uploadCount}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{convertToMB(sdesSubmission.size)}</span></td>
-                <td class="govuk-table__cell"><span style="word-break: break-all;">@{sdesSubmission.failureReason}</span></td>
+                <td class="govuk-table__cell"><span class="failure-reason-cell" >@{sdesSubmission.failureReason}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.lastUpdated.map(formatInstant).getOrElse("")}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.destination}</span></td>
                 <td class="govuk-table__cell"><span style="white-space: nowrap;">
