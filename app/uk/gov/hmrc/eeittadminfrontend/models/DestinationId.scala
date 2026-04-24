@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.eeittadminfrontend.models.fileupload
+package uk.gov.hmrc.eeittadminfrontend.models
 
-import uk.gov.hmrc.eeittadminfrontend.models.ValueClassFormatter
 import play.api.libs.json.{ Format, JsString }
 
-case class EnvelopeId(value: String) extends AnyVal {
-  override def toString = value
-}
-object EnvelopeId {
-  implicit val format: Format[EnvelopeId] = ValueClassFormatter.format(EnvelopeId.apply)(_.value)
-  val vformat: Format[EnvelopeId] = ValueClassFormatter.vformat("envelopeId", EnvelopeId.apply, x => JsString(x.value))
-}
+case class DestinationId(id: String) extends AnyVal
 
-case class EnvelopeIdForm(envelopeId: EnvelopeId)
+object DestinationId {
+  implicit val vformat: Format[DestinationId] =
+    ValueClassFormatter.vformat("envelopeId", DestinationId.apply, x => JsString(x.id))
+}

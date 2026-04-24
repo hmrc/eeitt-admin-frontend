@@ -129,8 +129,13 @@
             ),
             HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(Dms, 0, None, None).path),
-                content = Text("SDES Work Item"),
+                content = Text("Destination Work Items"),
                 active = if (tab == "sdes-work-item") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, None, None).path),
+                content = Text("Async API History"),
+                active = if (tab == "work-item-history") true else false
             ),
             HeaderNavigation(
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path),

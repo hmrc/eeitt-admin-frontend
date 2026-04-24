@@ -24,6 +24,7 @@ import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SdesDestination, SubmissionRef }
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
@@ -41,7 +42,8 @@ class WorkItemController @Inject() (
   gformConnector: GformConnector,
   messagesControllerComponents: MessagesControllerComponents,
   workitem: uk.gov.hmrc.eeittadminfrontend.views.html.workitem,
-  workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_confirmation
+  workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_confirmation,
+  workitem_history: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_history
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -58,6 +60,20 @@ class WorkItemController @Inject() (
       gformConnector.searchWorkItem(destination, page, pageSize, formTemplateId, status).map { sdesWorkItemPageData =>
         val pagination = Pagination(sdesWorkItemPageData.count, page, sdesWorkItemPageData.count.toInt, pageSize)
         Ok(workitem(destination, pagination, sdesWorkItemPageData, formTemplateId, status))
+      }
+    }
+
+  def searchWorkItemHistory(
+    page: Int,
+    envelopeId: Option[EnvelopeId],
+    formTemplateId: Option[FormTemplateId]
+  ) =
+    authorizedRead.async { implicit request =>
+      gformConnector.searchAsyncHandlebarsWorkItem(page, pageSize, envelopeId, formTemplateId).map {
+        workItemHistoryPageData =>
+          val pagination =
+            Pagination(workItemHistoryPageData.count, page, workItemHistoryPageData.count.toInt, pageSize)
+          Ok(workitem_history(pagination, workItemHistoryPageData, envelopeId, formTemplateId))
       }
     }
 
@@ -149,6 +165,13 @@ class WorkItemController @Inject() (
     )
   )
 
+  private val historyForm: Form[(Option[String], Option[String])] = play.api.data.Form(
+    Forms.tuple(
+      "envelopeId"     -> optional(text),
+      "formTemplateId" -> optional(text)
+    )
+  )
+
   def requestSearch(page: Int) = authorizedRead.async { implicit request =>
     form
       .bindFromRequest()
@@ -170,6 +193,31 @@ class WorkItemController @Inject() (
           case _ =>
             Redirect(
               routes.WorkItemController.searchWorkItem(Dms, page, None, None)
+            ).pure[Future]
+        }
+      )
+  }
+
+  def requestSearchHistory(page: Int) = authorizedRead.async { implicit request =>
+    historyForm
+      .bindFromRequest()
+      .fold(
+        _ =>
+          Redirect(
+            routes.WorkItemController.searchWorkItemHistory(page, None, None)
+          ).pure[Future],
+        {
+          case (maybeEnvelopeId, maybeFormTemplateId) =>
+            Redirect(
+              routes.WorkItemController.searchWorkItemHistory(
+                0,
+                maybeEnvelopeId.map(EnvelopeId(_)),
+                maybeFormTemplateId.map(FormTemplateId(_))
+              )
+            ).pure[Future]
+          case _ =>
+            Redirect(
+              routes.WorkItemController.searchWorkItemHistory(page, None, None)
             ).pure[Future]
         }
       )

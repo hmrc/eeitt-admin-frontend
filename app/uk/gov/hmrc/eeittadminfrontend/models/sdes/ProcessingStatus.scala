@@ -86,7 +86,8 @@ object ProcessingStatus {
   val removable: Set[ProcessingStatus] =
     Set(
       PermanentlyFailed,
-      Ignored
+      Ignored,
+      Deferred
     )
 
   private val nameToStatus: Map[String, ProcessingStatus] =
