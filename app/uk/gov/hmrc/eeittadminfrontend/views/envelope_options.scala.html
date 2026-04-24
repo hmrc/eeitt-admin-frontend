@@ -96,12 +96,8 @@
 
     <h2 class="govuk-heading-m">Envelope ID: @envelopeId.value</h2>
 
-    <div class="govuk-body govuk-!-margin-bottom-4">
-        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
-    </div>
-
     <div class="govuk-body govuk-!-margin-bottom-8">
-        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, Some(envelopeId), None)" class="govuk-link">View work item history</a>
+        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.showEnvelope(envelopeId)" class="govuk-link">View envelope data</a>
     </div>
 
     <h2 class="govuk-heading-m">Access sensitive customer data</h2>
@@ -183,7 +179,11 @@
         </tbody>
     </table>
 
-    <div class="govuk-body govuk-!-margin-bottom-8">
+    <h2 class="govuk-heading-m">Useful links</h2>
+    <div class="govuk-body govuk-!-margin-bottom-4">
         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0, None, Some(envelopeId.value), None, None, None, None, None, None, None, None)" class="govuk-link">View SDES submission reports for this envelope</a>
+    </div>
+    <div class="govuk-body govuk-!-margin-bottom-8">
+        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, Some(envelopeId), None)" class="govuk-link">View async API history for this envelope</a>
     </div>
 }

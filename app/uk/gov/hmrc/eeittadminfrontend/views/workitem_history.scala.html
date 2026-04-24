@@ -68,27 +68,6 @@
 
 @main_template(title = s"Work Item History", tab = "work-item-history"){
 
-    @request.flash.get("success").fold(Html("")) { notification =>
-        @govukNotificationBanner(
-            NotificationBanner(
-                title = Text("Success"),
-                content = HtmlContent(notification),
-                bannerType = Some("success"),
-                role = Some("alert")
-            )
-        )
-    }
-
-    @request.flash.get("failed").fold(Html("")) { notification =>
-        @govukNotificationBanner(
-            NotificationBanner(
-                title = Text("Failed"),
-                content = HtmlContent(notification),
-                role = Some("alert")
-            )
-        )
-    }
-
     @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestSearchHistory(pagination.page), args = 'class -> "js-form") {
 
         @govukInput(Input(
@@ -120,7 +99,7 @@
         ))
     }
 
-    <h2 class="govuk-heading-m">Showing @{pagination.from} - @{pagination.to} work item.</h2>
+    <h2 class="govuk-heading-m">Showing @{pagination.from} - @{pagination.to} history records.</h2>
 
     <table class="govuk-table stats-table govuk-body-s">
         <thead class="govuk-table__head">
