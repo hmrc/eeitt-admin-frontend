@@ -103,6 +103,9 @@ GET         /work-item/enqueue/:destination/:id                         uk.gov.h
 GET         /work-item/request-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestRemoval(destination: SdesDestination, id: String)
 GET         /work-item/confirm-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.confirmRemoval(destination: SdesDestination, id: String)
 
+GET         /work-item-history/search/:page                             uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.searchWorkItemHistory(page: Int, envelopeId: Option[EnvelopeId], formTemplateId: Option[FormTemplateId])
+GET         /work-item-history/request-search/:page                     uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestSearchHistory(page: Int)
+
 GET         /notification-banner                                        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.notificationBanner
 GET         /notification-banner/delete/:bannerId                       uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.deleteNotificationBanner(bannerId: BannerId)
 POST        /notification-banner                                        uk.gov.hmrc.eeittadminfrontend.controllers.NotificationBannerController.saveNotificationBanner

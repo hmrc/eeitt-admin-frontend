@@ -28,6 +28,8 @@ case class FormTemplateId(value: String) extends AnyVal {
 
 object FormTemplateId {
   implicit val format: Format[FormTemplateId] = ValueClassFormatter.format(FormTemplateId.apply)(_.value)
+  val vformat: Format[FormTemplateId] =
+    ValueClassFormatter.vformat("formTemplateId", FormTemplateId.apply, x => JsString(x.value))
 
   implicit val ordered: Order[FormTemplateId] = Order.by(_.value)
 }

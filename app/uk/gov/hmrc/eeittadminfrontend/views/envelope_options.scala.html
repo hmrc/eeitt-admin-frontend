@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes._
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 
 @this(
     main_template: main_template,
@@ -139,6 +140,11 @@
         </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
+        @if(submissions.isEmpty) {
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell" colspan="4">No data found, try checking <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(Dms, 0, None, None).path">work item</a> queues.</td>
+          </tr>
+        }
         @for(sdesSubmission <- submissions) {
         <tr class="govuk-table__row">
             <td class="govuk-table__cell"><span style="white-space: nowrap;">@{sdesSubmission.destination.map(SdesDestination.fromName)}</span></td>
@@ -173,7 +179,11 @@
         </tbody>
     </table>
 
-    <div class="govuk-body govuk-!-margin-bottom-8">
+    <h2 class="govuk-heading-m">Useful links</h2>
+    <div class="govuk-body govuk-!-margin-bottom-4">
         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0, None, Some(envelopeId.value), None, None, None, None, None, None, None, None)" class="govuk-link">View SDES submission reports for this envelope</a>
+    </div>
+    <div class="govuk-body govuk-!-margin-bottom-8">
+        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, Some(envelopeId), None)" class="govuk-link">View async API history for this envelope</a>
     </div>
 }

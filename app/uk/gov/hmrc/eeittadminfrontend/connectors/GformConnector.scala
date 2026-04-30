@@ -23,7 +23,7 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats }
+import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats, WorkItemHistoryPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
@@ -37,6 +37,7 @@ import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.Try
 
 class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
 
@@ -217,7 +218,7 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .execute[HttpResponse]
       .map { response =>
         if (response.status == 200) {
-          response.json.validate[List[SdesSubmission]] match {
+          responseJson(response).validate[List[SdesSubmission]] match {
             case JsSuccess(list, _) =>
               list.sortWith((x, y) => if (x.destination === Some(Dms)) true else y.destination =!= Some(Dms))
             case JsError(_) =>
@@ -237,6 +238,8 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
         logger.error(message, ex)
         List.empty[SdesSubmission]
       }
+
+  private def responseJson(response: HttpResponse): JsValue = Try(response.json).getOrElse(JsNull)
 
   def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     wsHttp
@@ -275,6 +278,26 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/destination-work-item/search/$page/$pageSize?$queryParams")
       .execute[SdesWorkItemPageData]
+  }
+
+  def searchAsyncHandlebarsWorkItem(
+    page: Int,
+    pageSize: Int,
+    envelopeId: Option[EnvelopeId],
+    formTemplateId: Option[FormTemplateId]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[WorkItemHistoryPageData] = {
+    val queryParams = Seq(
+      "envelopeId"     -> envelopeId.map(_.value),
+      "formTemplateId" -> formTemplateId.map(_.value)
+    ).collect { case (name, Some(value)) =>
+      name -> value
+    }
+    wsHttp
+      .get(url"$gformUrl/work-item-history/search/$page/$pageSize?$queryParams")
+      .execute[WorkItemHistoryPageData]
   }
 
   def getWorkItem(destination: SdesDestination, id: String)(implicit

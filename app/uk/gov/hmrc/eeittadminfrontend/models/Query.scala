@@ -36,4 +36,22 @@ object ValueClassFormatter {
       },
       Writes[A](a => JsString(fromAToString(a)))
     )
+
+  def vformat[A](fieldName: String, read: String => A, write: A => JsValue): Format[A] =
+    validatedvformat(fieldName, s => JsSuccess(read(s)), write)
+
+  def validatedvformat[A](fieldName: String, read: String => JsResult[A], write: A => JsValue): Format[A] =
+    Format[A](
+      Reads[A] {
+        case JsString(str) => read(str)
+        case JsObject(x) =>
+          x.get(fieldName) match {
+            case Some(JsString(str)) => read(str)
+            case _                   => JsError(s"Expected $fieldName field")
+          }
+        case other => JsError(s"Invalid json, not found '$fieldName'")
+      },
+      Writes[A](a => write(a))
+    )
+
 }
