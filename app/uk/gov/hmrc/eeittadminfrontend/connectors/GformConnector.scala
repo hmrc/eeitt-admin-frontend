@@ -679,7 +679,7 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def runSdesMigration()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] =
     wsHttp
       .post(
-        url"$gformUrl/sdes/submissions/migration/DataStore/DataStoreLegacy"
+        url"$gformUrl/sdes/submissions/migration/PegaCaseflow/Caseflow"
       )
       .execute[HttpResponse]
       .map { response =>
@@ -696,7 +696,7 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def rollbackSdesMigration()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, String]] =
     wsHttp
       .post(
-        url"$gformUrl/sdes/submissions/migration/DataStoreLegacy/DataStore"
+        url"$gformUrl/sdes/submissions/migration/Caseflow/PegaCaseflow"
       )
       .execute[HttpResponse]
       .map { response =>
