@@ -185,7 +185,7 @@ class EnvelopeController @Inject() (
     )
 
   private def handleCommonAuthAndBind(f: AccessEnvelopeForm => AuthRequest => Future[Result]): Action[AnyContent] =
-    authorizedRead.async { implicit request =>
+    authorizedDataAccess.async { implicit request =>
       accessEnvelopeForm
         .bindFromRequest()
         .fold(
@@ -226,7 +226,7 @@ class EnvelopeController @Inject() (
     def getEnvelopeIds(envelopeIds: String): List[EnvelopeId] =
       envelopeIds.split(",").map(_.trim).filterNot(_.isEmpty).toSet.toList.map(EnvelopeId(_))
 
-    authorizedRead.async { implicit request =>
+    authorizedDataAccess.async { implicit request =>
       accessEnvelopesForm
         .bindFromRequest()
         .fold(
