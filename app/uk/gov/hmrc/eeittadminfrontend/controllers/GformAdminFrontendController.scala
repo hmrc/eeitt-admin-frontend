@@ -21,6 +21,8 @@ import uk.gov.hmrc.internalauth.client.{ FrontendAuthComponents, Retrieval }
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import uk.gov.hmrc.internalauth.client.{ IAAction, Predicate, Resource, ResourceLocation, ResourceType }
 
+import scala.concurrent.Future
+
 abstract class GformAdminFrontendController(
   frontendAuthComponents: FrontendAuthComponents,
   messagesControllerComponents: MessagesControllerComponents
@@ -29,9 +31,11 @@ abstract class GformAdminFrontendController(
   private val readAction = IAAction("READ")
   private val writeAction = IAAction("WRITE")
   private val deleteAction = IAAction("DELETE")
+  private val adminAction = IAAction("ADMIN")
   def authorizedRead = authAction("*", readAction)
   def authorizedWrite = authAction("*", writeAction)
   def authorizedDelete = authAction("*", deleteAction)
+  def authorizedDataAccess = authAction("envelope/*", adminAction)
 
   private def authAction =
     (location: String, action: IAAction) =>
@@ -42,6 +46,7 @@ abstract class GformAdminFrontendController(
             Resource(ResourceType("eeitt-admin-frontend"), ResourceLocation(location)),
             action
           ),
-          retrieval = Retrieval.username
+          retrieval = Retrieval.username,
+          onForbiddenError = Future.successful(Forbidden)
         )
 }
