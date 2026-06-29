@@ -19,7 +19,7 @@ package controllers
 
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.Pagination
@@ -44,8 +44,10 @@ class DataAccessController @Inject() (
 
   private def accessLogRow(accessLog: CustomerDataAccessLog): Seq[TableRow] = {
 
-    val envelopeLinks = accessLog.envelopeIds
+    val envelopeLinks: List[Html] = accessLog.envelopeIds
       .map(envelopeId => views.html.envelope_link(EnvelopeId(envelopeId)))
+
+    val envelopeLinksHtml: Html = Html(envelopeLinks.map(_.body).mkString("<br>"))
 
     Seq(
       TableRow(
@@ -58,7 +60,7 @@ class DataAccessController @Inject() (
         content = Text(accessLog.reason)
       ),
       TableRow(
-        content = HtmlContent(HtmlFormat.fill(envelopeLinks))
+        content = HtmlContent(envelopeLinksHtml)
       ),
       TableRow(
         content = Text(DateUtils.formatInstant(accessLog.createdAt))
