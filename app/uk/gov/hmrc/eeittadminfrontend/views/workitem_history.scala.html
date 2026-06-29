@@ -123,9 +123,7 @@
                     <span style="white-space: nowrap;">@{workItem.submissionRef.value}</span>
                 </td>
                 <td class="govuk-table__cell">
-                    <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelopeOptions(workItem.envelopeId)" class="govuk-link">
-                        <span style="white-space: nowrap;">@{workItem.envelopeId.value}</span>
-                    </a>
+                    <span style="white-space: nowrap;">@{envelope_link(workItem.envelopeId)}</span>
                 </td>
                 <td class="govuk-table__cell">
                     @{workItem.destinationId.id}
