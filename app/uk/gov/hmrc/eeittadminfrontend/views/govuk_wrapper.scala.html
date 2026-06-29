@@ -161,6 +161,11 @@
                 href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.TranslationAuditController.translationAudit.path),
                 content = Text("Translation audit"),
                 active = if (tab == "translation-audit") true else false
+            ),
+            HeaderNavigation(
+                href = Some(uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataAccessController.dataAccess(0).path),
+                content = Text("Data Access"),
+                active = if (tab == "data-access") true else false
             ))
         )
     )

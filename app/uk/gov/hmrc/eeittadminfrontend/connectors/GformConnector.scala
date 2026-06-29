@@ -23,9 +23,9 @@ import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
+import uk.gov.hmrc.eeittadminfrontend.models.logging.{ CustomerDataAccessLog, DataAccessLogPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats, WorkItemHistoryPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
 import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
@@ -798,5 +798,13 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
             )
         }
       }
+
+  def getDataAccessLog(page: Int, pageSize: Int)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DataAccessLogPageData] =
+    wsHttp
+      .get(url"$gformUrl/access-logs/$page/$pageSize")
+      .execute[DataAccessLogPageData]
 
 }
