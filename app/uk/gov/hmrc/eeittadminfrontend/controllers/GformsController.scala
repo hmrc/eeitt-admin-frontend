@@ -52,7 +52,7 @@ import java.util.zip.{ ZipEntry, ZipOutputStream }
 import scala.concurrent.{ ExecutionContext, Future }
 
 sealed trait RefreshTemplateResult extends Product with Serializable
-case class RefreshSuccesful(formTemplateId: FormTemplateId) extends RefreshTemplateResult
+case class RefreshSuccesful(formTemplateId: FormTemplateId, warning: Option[String]) extends RefreshTemplateResult
 case class RefreshError(formTemplateId: FormTemplateId, errorMessage: String) extends RefreshTemplateResult
 
 object RefreshTemplateResult {
@@ -246,7 +246,7 @@ class GformsController @Inject() (
       } yield Ok(Json.toJson(result))
     }
 
-  def fetchAndSave(
+  private def fetchAndSave(
     formTemplateIds: List[FormTemplateId],
     maybeHandlebarsTemplateIds: List[FormTemplateId],
     maybeHandlebarsSchemaIds: List[FormTemplateId]
@@ -312,11 +312,11 @@ class GformsController @Inject() (
   private def processResult(
     formTemplateId: FormTemplateId,
     results: RefreshTemplateResults,
-    resultTemplates: Either[String, Unit]
+    resultTemplates: Either[String, Option[String]]
   ): Future[RefreshTemplateResults] =
     resultTemplates match {
-      case Left(error) => Future.successful(results.addResult(RefreshError(formTemplateId, error)))
-      case Right(())   => Future.successful(results.addResult(RefreshSuccesful(formTemplateId)))
+      case Left(error)    => Future.successful(results.addResult(RefreshError(formTemplateId, error)))
+      case Right(warning) => Future.successful(results.addResult(RefreshSuccesful(formTemplateId, warning)))
     }
 
   def getAllSchema =

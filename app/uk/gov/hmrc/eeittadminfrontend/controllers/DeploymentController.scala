@@ -255,7 +255,7 @@ class DeploymentController @Inject() (
       commitSha = githubContent.commitSha
     )
 
-    val saveResult = githubContent.path match {
+    val saveResult: EitherT[Future, String, Option[String]] = githubContent.path match {
       case GithubPath.RootPath =>
         gformService.saveTemplate(githubContent.formTemplateId, githubContent.content.jsonContent)
       case GithubPath.HandlebarsPath =>
@@ -268,17 +268,17 @@ class DeploymentController @Inject() (
     }
 
     val saveDeployment =
-      saveResult.flatMap(_ => EitherT.rightT[Future, String](deploymentService.save(deploymentRecord)))
+      saveResult.flatTap(_ => EitherT.rightT[Future, String](deploymentService.save(deploymentRecord)))
 
     saveDeployment.bimap(
       error => {
         logDeploymentStatus(username, filename, s"failed with: $error")
         error
       },
-      _ => {
+      maybeWarning => {
         val formTemplateId = githubContent.formTemplateId
         logDeploymentStatus(username, filename, formTemplateId.value + " successfully deployed")
-        Ok(deployment_success(formTemplateId, filename))
+        Ok(deployment_success(formTemplateId, filename, maybeWarning))
       }
     )
   }

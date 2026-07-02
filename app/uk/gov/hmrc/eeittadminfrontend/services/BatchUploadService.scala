@@ -120,7 +120,7 @@ class BatchUploadService @Inject() (gformConnector: GformConnector)(implicit
     gformConnector
       .saveHandlebarsTemplate(templateId, new String(template, "UTF-8"))
       .map { result =>
-        result.fold(err => err, _ => "Ok")
+        result.fold(err => err, maybeWarning => maybeWarning.map("Ok - " + _).getOrElse("Ok"))
       }
       .map { uploadResult =>
         UploadedForm(templateId, UploadedFormType.Handlebars, uploadResult)

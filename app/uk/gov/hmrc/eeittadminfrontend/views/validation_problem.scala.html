@@ -25,6 +25,6 @@
 )(implicit request : Request[_], messages: Messages)
 
 @validationWarning.fold(HtmlFormat.empty)(warning => govukErrorSummary(ErrorSummary(
-    title = Text("Email template validation problem"),
+    title = Text("Validation problem"),
     description = Text(warning)
 )))

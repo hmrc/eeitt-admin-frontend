@@ -69,7 +69,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, String, Unit] = EitherT(
+  ): EitherT[Future, String, Option[String]] = EitherT(
     gformConnector.saveTemplate(
       formTemplateId,
       CircePlayHelpers.circeToPlayUnsafe(json)
@@ -87,7 +87,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, String, Unit] = EitherT(
+  ): EitherT[Future, String, Option[String]] = EitherT(
     gformConnector.saveHandlebarsTemplate(
       formTemplateId,
       payload
@@ -100,7 +100,7 @@ class GformService @Inject() (gformConnector: GformConnector) {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, String, Unit] = EitherT(
+  ): EitherT[Future, String, Option[String]] = EitherT(
     gformConnector.saveHandlebarsSchema(
       formTemplateId,
       payload

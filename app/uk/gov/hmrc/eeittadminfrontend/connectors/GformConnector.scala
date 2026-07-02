@@ -89,14 +89,14 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def saveTemplate(
     formTemplateId: FormTemplateId,
     gformTemplate: JsValue
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] =
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Option[String]]] =
     wsHttp
       .post(url"$gformUrl/formtemplates")
       .withBody(gformTemplate)
       .execute[HttpResponse]
       .map { response =>
         if (response.status == 204) // Results.NoContent
-          Right(())
+          Right(Option.empty[String])
         else
           Left((Json.parse(response.body) \ "error").as[String])
       }
@@ -490,7 +490,7 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def saveHandlebarsTemplate(formTemplateId: FormTemplateId, payload: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Either[String, Unit]] =
+  ): Future[Either[String, Option[String]]] =
     wsHttp
       .post(
         url"$gformUrl/handlebarstemplates/${formTemplateId.value}"
@@ -499,9 +499,11 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .setHeader(("Content-Type" -> "text/plain;charset=UTF-8"))
       .execute[HttpResponse]
       .map { response =>
-        if (response.status == 204)
-          Right(())
-        else
+        if (response.status == 204) {
+          Right(Option.empty[String])
+        } else if (response.status == 200) {
+          Right(Some(response.body))
+        } else
           Left(s"error: ${response.body}")
       }
       .recover { case ex =>
@@ -547,14 +549,14 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def saveHandlebarsSchema(formTemplateId: FormTemplateId, schema: JsValue)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Either[String, Unit]] =
+  ): Future[Either[String, Option[String]]] =
     wsHttp
       .post(url"$gformUrl/handlebars-schemas/${formTemplateId.value}")
       .withBody(schema)
       .execute[HttpResponse]
       .map { response =>
         if (response.status == 204)
-          Right(())
+          Right(Option.empty[String])
         else
           Left((Json.parse(response.body) \ "error").as[String])
       }

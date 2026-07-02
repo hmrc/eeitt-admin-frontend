@@ -17,16 +17,20 @@
 @import uk.gov.hmrc.eeittadminfrontend.deployment.Filename
 
 @this(
-  main_template: main_template
+  main_template: main_template,
+  validation_problem: validation_problem
 )
 
 @(
     formTemplateId: FormTemplateId,
-    filename: Filename
+    filename: Filename,
+    validationWarning: Option[String]
 )(implicit request : Request[_], messages: Messages)
 
 @main_template(title = "Deployment ", tab = "deployment") {
     <h2 class="govuk-heading-m">Succesfully deployed @formTemplateId from file @filename.value</h2>
+
+    @validation_problem(validationWarning)
 
     <ul class="govuk-list govuk-list--bullet">
         <li>
