@@ -195,10 +195,12 @@ object SdesDestination {
   case object Caseflow extends SdesDestination
   case object DataLakehouse extends SdesDestination
   case object AsyncHandlebars extends SdesDestination
+  case object NRSOrchestrator extends SdesDestination
 
   val values: Set[SdesDestination] =
-    Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, Caseflow, DataLakehouse)
-  val workItemValues: List[SdesDestination] = List(Dms, DataStore, InfoArchive, DataLakehouse, AsyncHandlebars)
+    Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, Caseflow, DataLakehouse, NRSOrchestrator)
+  val workItemValues: List[SdesDestination] =
+    List(Dms, DataStore, InfoArchive, DataLakehouse, AsyncHandlebars, NRSOrchestrator)
 
   implicit val equal: Eq[SdesDestination] = Eq.fromUniversalEquals
   implicit val format: Format[SdesDestination] = new Format[SdesDestination] {
@@ -211,6 +213,7 @@ object SdesDestination {
       case Caseflow        => JsString("Caseflow")
       case DataLakehouse   => JsString("DataLakehouse")
       case AsyncHandlebars => JsString("AsyncHandlebars")
+      case NRSOrchestrator => JsString("NRSOrchestrator")
     }
 
     override def reads(json: JsValue): JsResult[SdesDestination] =
@@ -223,6 +226,7 @@ object SdesDestination {
         case JsString("Caseflow")        => JsSuccess(Caseflow)
         case JsString("DataLakehouse")   => JsSuccess(DataLakehouse)
         case JsString("AsyncHandlebars") => JsSuccess(AsyncHandlebars)
+        case JsString("NRSOrchestrator") => JsSuccess(NRSOrchestrator)
         case JsString(err) =>
           JsError(s"only for valid Dms, HmrcIlluminate, DataStoreLegacy, DataStore or InfoArchive. $err is not allowed")
         case _ => JsError("Failure")
@@ -238,6 +242,7 @@ object SdesDestination {
     case Caseflow        => "Caseflow"
     case DataLakehouse   => "DataLakehouse"
     case AsyncHandlebars => "AsyncHandlebars"
+    case NRSOrchestrator => "NRSOrchestrator"
   }
 
   def fromString(destination: String): SdesDestination = destination match {
@@ -249,6 +254,7 @@ object SdesDestination {
     case "Caseflow"        => Caseflow
     case "DataLakehouse"   => DataLakehouse
     case "AsyncHandlebars" => AsyncHandlebars
+    case "NRSOrchestrator" => NRSOrchestrator
   }
 
   def fromNameForWorkItems(destination: SdesDestination): String = destination match {
@@ -257,6 +263,7 @@ object SdesDestination {
     case InfoArchive     => "Info Archive"
     case DataLakehouse   => "Data Lakehouse"
     case AsyncHandlebars => "Async Handlebars"
+    case NRSOrchestrator => "NRSOrchestrator"
     case _               => ""
   }
 }

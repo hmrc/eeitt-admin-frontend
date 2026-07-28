@@ -24,6 +24,7 @@ modules
 precompiled
 /.project
 project/project
+project/metals.sbt
 project/target
 /RUNNING_PID
 server.pid
