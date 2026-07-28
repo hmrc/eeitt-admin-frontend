@@ -69,11 +69,10 @@ class WorkItemController @Inject() (
     formTemplateId: Option[FormTemplateId]
   ) =
     authorizedRead.async { implicit request =>
-      gformConnector.searchAsyncHandlebarsWorkItem(page, pageSize, envelopeId, formTemplateId).map {
-        workItemHistoryPageData =>
-          val pagination =
-            Pagination(workItemHistoryPageData.count, page, workItemHistoryPageData.count.toInt, pageSize)
-          Ok(workitem_history(pagination, workItemHistoryPageData, envelopeId, formTemplateId))
+      gformConnector.searchWorkItemHistory(page, pageSize, envelopeId, formTemplateId).map { workItemHistoryPageData =>
+        val pagination =
+          Pagination(workItemHistoryPageData.count, page, workItemHistoryPageData.count.toInt, pageSize)
+        Ok(workitem_history(pagination, workItemHistoryPageData, envelopeId, formTemplateId))
       }
     }
 
@@ -148,7 +147,7 @@ class WorkItemController @Inject() (
               .map(_ =>
                 Redirect(routes.WorkItemController.searchWorkItem(destination, 0, None, None))
                   .flashing(
-                    "success" -> s"Dms work-item successfully deleted."
+                    "success" -> s"Work-item successfully deleted."
                   )
               )
           case "No" =>

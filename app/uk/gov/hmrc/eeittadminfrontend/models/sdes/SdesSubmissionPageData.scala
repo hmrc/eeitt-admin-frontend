@@ -198,7 +198,7 @@ object SdesDestination {
   case object NRSOrchestrator extends SdesDestination
 
   val values: Set[SdesDestination] =
-    Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, Caseflow, DataLakehouse, NRSOrchestrator)
+    Set(Dms, HmrcIlluminate, DataStoreLegacy, DataStore, InfoArchive, Caseflow, DataLakehouse)
   val workItemValues: List[SdesDestination] =
     List(Dms, DataStore, InfoArchive, DataLakehouse, AsyncHandlebars, NRSOrchestrator)
 
@@ -263,7 +263,7 @@ object SdesDestination {
     case InfoArchive     => "Info Archive"
     case DataLakehouse   => "Data Lakehouse"
     case AsyncHandlebars => "Async Handlebars"
-    case NRSOrchestrator => "NRSOrchestrator"
+    case NRSOrchestrator => "NRS Orchestrator"
     case _               => ""
   }
 }

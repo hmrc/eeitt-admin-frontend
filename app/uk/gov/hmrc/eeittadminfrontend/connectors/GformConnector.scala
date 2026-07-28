@@ -280,7 +280,7 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .execute[SdesWorkItemPageData]
   }
 
-  def searchAsyncHandlebarsWorkItem(
+  def searchWorkItemHistory(
     page: Int,
     pageSize: Int,
     envelopeId: Option[EnvelopeId],
