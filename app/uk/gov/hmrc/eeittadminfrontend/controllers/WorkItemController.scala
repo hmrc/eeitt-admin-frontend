@@ -18,7 +18,7 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import cats.implicits.catsSyntaxApplicativeId
 import org.slf4j.{ Logger, LoggerFactory }
-import play.api.data.Forms.{ nonEmptyText, optional, text }
+import play.api.data.Forms.{ boolean, nonEmptyText, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
@@ -66,13 +66,15 @@ class WorkItemController @Inject() (
   def searchWorkItemHistory(
     page: Int,
     envelopeId: Option[EnvelopeId],
-    formTemplateId: Option[FormTemplateId]
+    formTemplateId: Option[FormTemplateId],
+    showFailuresOnly: Option[Boolean]
   ) =
     authorizedRead.async { implicit request =>
-      gformConnector.searchWorkItemHistory(page, pageSize, envelopeId, formTemplateId).map { workItemHistoryPageData =>
-        val pagination =
-          Pagination(workItemHistoryPageData.count, page, workItemHistoryPageData.count.toInt, pageSize)
-        Ok(workitem_history(pagination, workItemHistoryPageData, envelopeId, formTemplateId))
+      gformConnector.searchWorkItemHistory(page, pageSize, envelopeId, formTemplateId, showFailuresOnly).map {
+        workItemHistoryPageData =>
+          val pagination =
+            Pagination(workItemHistoryPageData.count, page, workItemHistoryPageData.count.toInt, pageSize)
+          Ok(workitem_history(pagination, workItemHistoryPageData, envelopeId, formTemplateId, showFailuresOnly))
       }
     }
 
@@ -164,10 +166,11 @@ class WorkItemController @Inject() (
     )
   )
 
-  private val historyForm: Form[(Option[String], Option[String])] = play.api.data.Form(
+  private val historyForm: Form[(Option[String], Option[String], Option[Boolean])] = play.api.data.Form(
     Forms.tuple(
-      "envelopeId"     -> optional(text),
-      "formTemplateId" -> optional(text)
+      "envelopeId"       -> optional(text),
+      "formTemplateId"   -> optional(text),
+      "showFailuresOnly" -> optional(boolean)
     )
   )
 
@@ -203,20 +206,21 @@ class WorkItemController @Inject() (
       .fold(
         _ =>
           Redirect(
-            routes.WorkItemController.searchWorkItemHistory(page, None, None)
+            routes.WorkItemController.searchWorkItemHistory(page, None, None, None)
           ).pure[Future],
         {
-          case (maybeEnvelopeId, maybeFormTemplateId) =>
+          case (maybeEnvelopeId, maybeFormTemplateId, maybeShowFailuresOnly) =>
             Redirect(
               routes.WorkItemController.searchWorkItemHistory(
                 0,
                 maybeEnvelopeId.map(EnvelopeId(_)),
-                maybeFormTemplateId.map(FormTemplateId(_))
+                maybeFormTemplateId.map(FormTemplateId(_)),
+                maybeShowFailuresOnly.map(_.booleanValue)
               )
             ).pure[Future]
           case _ =>
             Redirect(
-              routes.WorkItemController.searchWorkItemHistory(page, None, None)
+              routes.WorkItemController.searchWorkItemHistory(page, None, None, None)
             ).pure[Future]
         }
       )

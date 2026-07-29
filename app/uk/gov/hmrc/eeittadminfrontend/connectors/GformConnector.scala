@@ -284,14 +284,16 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     page: Int,
     pageSize: Int,
     envelopeId: Option[EnvelopeId],
-    formTemplateId: Option[FormTemplateId]
+    formTemplateId: Option[FormTemplateId],
+    showFailuresOnly: Option[Boolean]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[WorkItemHistoryPageData] = {
     val queryParams = Seq(
       "envelopeId"     -> envelopeId.map(_.value),
-      "formTemplateId" -> formTemplateId.map(_.value)
+      "formTemplateId" -> formTemplateId.map(_.value),
+      "failuresOnly"   -> showFailuresOnly.map(_.toString)
     ).collect { case (name, Some(value)) =>
       name -> value
     }
