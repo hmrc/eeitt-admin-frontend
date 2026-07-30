@@ -142,7 +142,7 @@
                 <td class="govuk-table__cell">
                     @{workItem.destinationId.id}
                 </td>
-                @if(workItem.responseStatus >= 400) {
+                @if(workItem.responseStatus < 200 || workItem.responseStatus > 299) {
                 <td class="govuk-table__cell error-response">
                 } else {
                 <td class="govuk-table__cell">
@@ -157,7 +157,7 @@
                 </td>
             </tr>
             <tr id="@workItem.id" class="govuk-table__row hidden">
-                @if(workItem.responseStatus >= 400) {
+                @if(workItem.responseStatus < 200 || workItem.responseStatus > 299) {
                 <td colspan="6" class="govuk-table__cell error-response">
                 } else {
                 <td colspan="6" class="govuk-table__cell">
