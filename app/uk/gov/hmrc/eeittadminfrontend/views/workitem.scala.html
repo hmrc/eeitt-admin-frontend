@@ -141,6 +141,7 @@
                 <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
                 <th class="govuk-table__header" scope="col" title="Re-process the work item">Enqueue</th>
                 <th class="govuk-table__header" scope="col" title="Delete the work item">Delete</th>
+                <th class="govuk-table__header" scope="col" title="Delete the work item">Edit</th>
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
@@ -181,6 +182,11 @@
                 <td class="govuk-table__cell">
                     @if(ProcessingStatus.removable.contains(workItem.status)) {
                         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestRemoval(destination, workItem.id)" class="govuk-link">Delete</a>
+                    }
+                </td>
+                <td class="govuk-table__cell">
+                    @if(ProcessingStatus.reProcessable.contains(workItem.status) && workItem.isEditable) {
+                        <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestEdit(destination, workItem.id)" class="govuk-link">Edit</a>
                     }
                 </td>
             </tr>

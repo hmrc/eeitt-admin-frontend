@@ -28,6 +28,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.deployment.ContentValue.JsonContent
 import uk.gov.hmrc.eeittadminfrontend.deployment.{ ContentValue, Filename, GithubContent, GithubPath, MongoContent }
+import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.{ CircePlayHelpers, DeleteResult, DeleteResults, FormTemplateId }
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -257,4 +258,18 @@ class GformService @Inject() (gformConnector: GformConnector) {
         } yield mongoContentsForHandlebars -> githubContents2).value
       case _ => Future.successful(Right((List.empty[MongoContent], List.empty[(Filename, GithubContent)])))
     }
+
+  def logSensitiveDataAccess(
+    accessLog: CustomerDataAccessLog
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+    logger.warn(accessLog.getMessage)
+    gformConnector
+      .saveLog(accessLog)
+      .map {
+        case Right(_)    => ()
+        case Left(error) => logger.error(s"Unable to persist $accessLog with reason '$error'")
+      }
+    ()
+  }
+
 }

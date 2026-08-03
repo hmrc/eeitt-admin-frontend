@@ -18,24 +18,21 @@ package uk.gov.hmrc.eeittadminfrontend.connectors
 
 import cats.implicits.catsSyntaxEq
 import org.apache.pekko.http.scaladsl.model.StatusCodes
-
-import javax.inject.Inject
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
-import uk.gov.hmrc.eeittadminfrontend.models.logging.{ CustomerDataAccessLog, DataAccessLogPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats, WorkItemHistoryPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+import uk.gov.hmrc.eeittadminfrontend.models.logging.{ CustomerDataAccessLog, DataAccessLogPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
-import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditId
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.eeittadminfrontend.models.sdes._
+import uk.gov.hmrc.eeittadminfrontend.models._
+import uk.gov.hmrc.eeittadminfrontend.translation.{ TranslationAuditId, TranslationAuditOverview }
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.eeittadminfrontend.translation.TranslationAuditOverview
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
+import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 
@@ -309,6 +306,23 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
     wsHttp
       .get(url"$gformUrl/destination-work-item/$id?destination=${destination.toString}")
       .execute[SdesWorkItemData]
+
+  def getAsyncWorkItem(id: String)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[AsyncWorkItemData] =
+    wsHttp
+      .get(url"$gformUrl/destination-work-item/async-handlebars/$id")
+      .execute[AsyncWorkItemData]
+
+  def updateAsyncWorkItem(asyncWorkItem: AsyncWorkItemData)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    wsHttp
+      .post(url"$gformUrl/destination-work-item/async-handlebars/update")
+      .withBody(Json.toJson(asyncWorkItem))
+      .execute[HttpResponse]
 
   def enqueueWorkItem(destination: SdesDestination, id: String)(implicit
     hc: HeaderCarrier,

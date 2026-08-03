@@ -32,6 +32,7 @@ import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
+import uk.gov.hmrc.eeittadminfrontend.services.GformService
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
@@ -50,7 +51,8 @@ class EnvelopeController @Inject() (
   messagesControllerComponents: MessagesControllerComponents,
   envelope_html: views.html.envelope,
   envelope_options: views.html.envelope_options,
-  defaultTemporaryFileCreator: DefaultTemporaryFileCreator
+  defaultTemporaryFileCreator: DefaultTemporaryFileCreator,
+  gformService: GformService
 )(implicit ec: ExecutionContext, materializer: Materializer)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -133,7 +135,7 @@ class EnvelopeController @Inject() (
         .map { response =>
           if (response.status == 200) {
             val prefixMsg = prefix.fold("")(p => s" (for $p submission prefix)")
-            logSensitiveDataAccess(
+            gformService.logSensitiveDataAccess(
               CustomerDataAccessLog(username, s"downloaded DMS envelope$prefixMsg", accessEnvelope)
             )
             Ok.streamed(response.bodyAsSource, None)
@@ -163,13 +165,19 @@ class EnvelopeController @Inject() (
         dataLakehouseResponse <- gformConnector.downloadDataLakehouse(EnvelopeId(accessEnvelope.envelopeId))
       } yield (destination, dataStoreResponse.status, illuminateResponse.status, dataLakehouseResponse.status) match {
         case (Some(SdesDestination.DataStore), 200, _, _) =>
-          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope))
+          gformService.logSensitiveDataAccess(
+            CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope)
+          )
           streamBody(dataStoreResponse.bodyAsSource, "DataStore")
         case (Some(SdesDestination.HmrcIlluminate), _, 200, _) =>
-          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded HmrcIlluminate JSON file", accessEnvelope))
+          gformService.logSensitiveDataAccess(
+            CustomerDataAccessLog(username, "downloaded HmrcIlluminate JSON file", accessEnvelope)
+          )
           streamBody(illuminateResponse.bodyAsSource, "HmrcIlluminate")
         case (Some(SdesDestination.DataLakehouse), _, _, 200) =>
-          logSensitiveDataAccess(CustomerDataAccessLog(username, "downloaded DataLakehouse JSON file", accessEnvelope))
+          gformService.logSensitiveDataAccess(
+            CustomerDataAccessLog(username, "downloaded DataLakehouse JSON file", accessEnvelope)
+          )
           streamBody(dataLakehouseResponse.bodyAsSource, "DataLakehouse")
         case _ => redirect(accessEnvelope)
       }
@@ -208,7 +216,7 @@ class EnvelopeController @Inject() (
     f.map {
       case Right(payload) =>
         toLog match {
-          case Right(sd) => logSensitiveDataAccess(sd)
+          case Right(sd) => gformService.logSensitiveDataAccess(sd)
           case Left(msg) => logger.info(msg)
         }
         Ok(Json.prettyPrint(payload))
@@ -259,7 +267,7 @@ class EnvelopeController @Inject() (
                 val combinedFiles = dmsEnvelopes ++ dataStoreJsons ++ hmrcIlluminateJsons ++ dataLakehouseJsons
 
                 if (combinedFiles.nonEmpty) {
-                  logSensitiveDataAccess(
+                  gformService.logSensitiveDataAccess(
                     CustomerDataAccessLog(
                       username,
                       "downloaded ALL files",
@@ -321,18 +329,5 @@ class EnvelopeController @Inject() (
     } finally zos.close()
 
     zipFile
-  }
-
-  private def logSensitiveDataAccess(
-    accessLog: CustomerDataAccessLog
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
-    logger.warn(accessLog.getMessage)
-    gformConnector
-      .saveLog(accessLog)
-      .map {
-        case Right(_)    => ()
-        case Left(error) => logger.error(s"Unable to persist $accessLog with reason '$error'")
-      }
-    ()
   }
 }
