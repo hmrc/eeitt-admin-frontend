@@ -101,9 +101,7 @@
             Radios(
                 fieldset = Some(Fieldset(legend =
                     Some(Legend(
-                        content = Text("Save or edit"),
-                        isPageHeading = false,
-                        classes = "govuk-label--l"
+                        content = Text("Select what you want to do now:")
                     ))
                 )),
                 errorMessage = fieldErrors.get("saveOrEdit"),
@@ -111,11 +109,15 @@
                 items = List(
                     RadioItem(
                         value = Some("save"),
-                        content = Text("Save updated payload")
+                        content = Text("Save the updated payload")
                     ),
                     RadioItem(
                         value = Some("edit"),
-                        content = Text("Return to edit payload")
+                        content = Text("Make further changes to the payload")
+                    ),
+                    RadioItem(
+                        value = Some("cancel"),
+                        content = Text("Cancel editing and return to work items")
                     )
                 )
             ))

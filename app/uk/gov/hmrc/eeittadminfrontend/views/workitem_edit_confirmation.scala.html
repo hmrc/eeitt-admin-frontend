@@ -40,7 +40,6 @@
         <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
         <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
         <th class="govuk-table__header" scope="col" title="Status of the work item">Status</th>
-        <th class="govuk-table__header" scope="col" title="Failure Count">Failure Count</th>
         <th class="govuk-table__header" scope="col" title="Local date time of received time">Received At</th>
         <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
     </tr>
@@ -60,9 +59,6 @@
             @{workItemData.status.name}
         </td>
         <td class="govuk-table__cell">
-            @{workItemData.failureCount}
-        </td>
-        <td class="govuk-table__cell">
             @{formatInstant(workItemData.receivedAt)}
         </td>
         <td class="govuk-table__cell">
@@ -80,6 +76,7 @@
             name = "accessReason",
             hint = Some(Hint(content = Text("You are about to access potentially sensitive customer data so a valid incident number (or reason) is required."))),
             errorMessage = fieldErrors.get("accessReason"),
+            autocomplete = Some("off"),
             label = Label(
                 isPageHeading = false,
                 classes = "govuk-label--s",

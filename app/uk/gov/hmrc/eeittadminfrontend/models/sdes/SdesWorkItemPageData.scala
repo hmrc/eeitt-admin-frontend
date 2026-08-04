@@ -19,7 +19,6 @@ package uk.gov.hmrc.eeittadminfrontend.models.sdes
 import play.api.libs.json.{ Format, Json, OFormat }
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.AsyncHandlebars
 
 import java.time.Instant
 
@@ -40,13 +39,7 @@ case class SdesWorkItemData(
   failureCount: Int,
   receivedAt: Instant,
   updatedAt: Instant
-) {
-  def isEditable: Boolean =
-    this.destination match {
-      case AsyncHandlebars => true
-      case _               => false
-    }
-}
+)
 
 object SdesWorkItemData {
   implicit val processingStatus: Format[ProcessingStatus] = ProcessingStatus.format

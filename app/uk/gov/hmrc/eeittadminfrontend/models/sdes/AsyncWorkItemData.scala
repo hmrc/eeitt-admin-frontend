@@ -29,9 +29,7 @@ case class AsyncWorkItemData(
   submissionRef: SubmissionRef,
   uri: String,
   method: String,
-  contentType: String,
   payload: String,
-  credential: Option[String],
   username: Option[String]
 )
 
