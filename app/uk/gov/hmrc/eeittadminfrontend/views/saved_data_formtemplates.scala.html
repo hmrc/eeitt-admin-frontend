@@ -20,11 +20,10 @@
   main_template: main_template
 )
 
-@(allSavedVersions: AllSavedVersions, formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages, request: Request[_])
+@(formTemplateIds: Seq[FormTemplateId])(implicit messages: Messages, request: Request[_])
 
 @main_template(title = "Saved Data ", tab = "saved-data") {
     <h2 class="govuk-heading-m">Form templates</h2>
-    <div class="govuk-body">All saved versions: @{allSavedVersions.stats.mkString(", ")}</div>
     @for(formTemplateId <- formTemplateIds) {
         <div>
             <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.findSavedData(formTemplateId)" class="govuk-link">@formTemplateId</a>

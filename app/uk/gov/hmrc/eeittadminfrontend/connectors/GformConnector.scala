@@ -24,7 +24,7 @@ import org.slf4j.{ Logger, LoggerFactory }
 import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.logging.{ CustomerDataAccessLog, DataAccessLogPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.{ AllSavedVersions, BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats, WorkItemHistoryPageData }
+import uk.gov.hmrc.eeittadminfrontend.models.{ BannerId, CircePlayHelpers, DbLookupId, DeleteResult, DeleteResults, FormId, FormRedirectPageData, FormTemplateId, FormTemplateRaw, FormTemplateRawId, GformNotificationBanner, GformNotificationBannerFormTemplate, GformNotificationBannerView, GformServiceError, HandlebarsSchema, PIIDetailsResponse, SavedFormDetail, SdesSubmissionsStats, Shutter, ShutterFormTemplate, ShutterMessageId, ShutterView, SignedFormDetails, SubmissionPageData, VersionStats, WorkItemHistoryPageData }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ CorrelationId, ProcessingStatus, SdesDestination, SdesFilter, SdesHistoryView, SdesSubmission, SdesSubmissionData, SdesSubmissionPageData, SdesWorkItemData, SdesWorkItemPageData }
@@ -150,11 +150,6 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .get(url)
       .execute[PIIDetailsResponse]
   }
-
-  def getAllSavedVersions(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[AllSavedVersions] =
-    wsHttp
-      .get(url"$gformUrl/formStatistics/all-saved-versions")
-      .execute[AllSavedVersions]
 
   def getFormCount(
     formTemplateId: FormTemplateId
