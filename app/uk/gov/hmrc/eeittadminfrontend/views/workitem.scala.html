@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesWorkItemPageData
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.ProcessingStatus
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
-@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.AsyncHandlebars
 
 @this(
   main_template: main_template,
@@ -39,6 +39,13 @@
     <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(destination, page, formTemplateId, status)" class="govuk-link">@label</a>
 }
 
+@isEditable = @{
+    destination match {
+        case AsyncHandlebars => true
+        case _               => false
+    }
+}
+
 @main_template(title = s"SDES Work Item", tab = "sdes-work-item"){
 
     @request.flash.get("success").fold(Html("")) { notification =>
@@ -47,6 +54,16 @@
                 title = Text("Success"),
                 content = HtmlContent(notification),
                 bannerType = Some("success"),
+                role = Some("alert")
+            )
+        )
+    }
+
+    @request.flash.get("info").fold(Html("")) { notification =>
+        @govukNotificationBanner(
+            NotificationBanner(
+                title = Text("Information"),
+                content = HtmlContent(notification),
                 role = Some("alert")
             )
         )
@@ -141,6 +158,9 @@
                 <th class="govuk-table__header" scope="col" title="Local date time of last update">Last updated</th>
                 <th class="govuk-table__header" scope="col" title="Re-process the work item">Enqueue</th>
                 <th class="govuk-table__header" scope="col" title="Delete the work item">Delete</th>
+                @if(isEditable) {
+                    <th class="govuk-table__header" scope="col" title="Edit the work item">Edit</th>
+                }
             </tr>
         </thead>
         <tbody class="govuk-table__body stats-results">
@@ -183,6 +203,13 @@
                         <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestRemoval(destination, workItem.id)" class="govuk-link">Delete</a>
                     }
                 </td>
+                @if(isEditable) {
+                    <td class="govuk-table__cell">
+                        @if(ProcessingStatus.reProcessable.contains(workItem.status)) {
+                            <a href="@uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.requestEdit(destination, workItem.id)" class="govuk-link">Edit</a>
+                        }
+                    </td>
+                }
             </tr>
         }
         </tbody>

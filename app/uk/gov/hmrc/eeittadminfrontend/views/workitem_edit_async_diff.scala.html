@@ -1,0 +1,123 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.views._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.AsyncWorkItemData
+@import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.AsyncHandlebars
+@import scala.math.BigDecimal.RoundingMode.DOWN
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukFormGroup
+@import uk.gov.hmrc.govukfrontend.views.html.helpers.GovukHintAndErrorMessage
+
+@this(
+    main_template: main_template,
+    formWithCSRF: FormWithCSRF,
+    govukButton: GovukButton,
+    govukTextarea : GovukTextarea,
+)
+
+@(
+    workItemData: AsyncWorkItemData,
+    updatedPayload: String,
+    diff: Html,
+    pageLevelError: HasErrors = NoErrors,
+    fieldErrors: Map[String, ErrorMessage] = Map.empty
+)(implicit messages: Messages, request: Request[_])
+
+@main_template(title = s"Async API Work Item", tab = "sdes-work-item", backLink = None) {
+@pageLevelError.render
+
+<h2 class="govuk-heading-m">Confirm changes</h2>
+
+<table class="govuk-table stats-table govuk-body-s">
+    <tbody class="govuk-table__body stats-results">
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Form template Id">Form Template Id</th>
+            <td class="govuk-table__cell">
+                @{workItemData.formTemplateId.value}
+            </td>
+        </tr>
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Submission Reference">Submission Reference</th>
+            <td class="govuk-table__cell">
+                @{workItemData.submissionRef.value}
+            </td>
+        </tr>
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Envelope Id">Envelope Id</th>
+            <td class="govuk-table__cell">
+                @{workItemData.envelopeId.value}
+            </td>
+        </tr>
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Destination Id">Destination Id</th>
+            <td class="govuk-table__cell">
+                @{workItemData.destinationId}
+            </td>
+        </tr>
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="URI">URI</th>
+            <td class="govuk-table__cell">
+                @{workItemData.uri}
+            </td>
+        </tr>
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col" title="Method">Method</th>
+            <td class="govuk-table__cell">
+                @{workItemData.method}
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+@diff
+
+    @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.saveOrEdit(workItemData.id), args = 'method -> "POST", 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-sdes-work-item") {
+        @{new GovukRadios(new GovukFieldset(), new GovukHint(), new GovukLabel(), new GovukFormGroup(), new GovukHintAndErrorMessage(new GovukHint(), new GovukErrorMessage()))(
+            Radios(
+                fieldset = Some(Fieldset(legend =
+                    Some(Legend(
+                        content = Text("Select what you want to do now:")
+                    ))
+                )),
+                errorMessage = fieldErrors.get("saveOrEdit"),
+                name = "action",
+                items = List(
+                    RadioItem(
+                        value = Some("save"),
+                        content = Text("Save the updated payload")
+                    ),
+                    RadioItem(
+                        value = Some("edit"),
+                        content = Text("Make further changes to the payload")
+                    ),
+                    RadioItem(
+                        value = Some("cancel"),
+                        content = Text("Cancel editing and return to work items")
+                    )
+                )
+            ))
+        }
+        <input type="hidden" name="updatedPayload" id="updatedPayload" value="@{updatedPayload}"/>
+
+        @govukButton(Button(
+            content = Text("Save and continue"),
+            inputType = Some("submit"),
+            name = Some("save"),
+            preventDoubleClick = Some(true)
+        ))
+    }
+}

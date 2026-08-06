@@ -102,6 +102,11 @@ GET         /work-item/request-search/:page                             uk.gov.h
 GET         /work-item/enqueue/:destination/:id                         uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.enqueue(destination: SdesDestination, page: Int, id: String, submissionRef: SubmissionRef)
 GET         /work-item/request-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestRemoval(destination: SdesDestination, id: String)
 GET         /work-item/confirm-removal/:destination/:id                 uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.confirmRemoval(destination: SdesDestination, id: String)
+GET         /work-item/request-edit/:destination/:id                    uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestEdit(destination: SdesDestination, id: String)
+GET         /work-item/confirm-edit/:destination/:id                    uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.confirmEdit(destination: SdesDestination, id: String)
+GET         /work-item/async/edit/:id                                   uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.startEdit(id: String)
+POST        /work-item/async/check/:id                                  uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.differenceCheck(id: String)
+POST        /work-item/async/save-or-edit/:id                           uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.saveOrEdit(id: String)
 
 GET         /work-item-history/search/:page                             uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.searchWorkItemHistory(page: Int, envelopeId: Option[EnvelopeId], formTemplateId: Option[FormTemplateId], showFailuresOnly: Option[Boolean])
 GET         /work-item-history/request-search/:page                     uk.gov.hmrc.eeittadminfrontend.controllers.WorkItemController.requestSearchHistory(page: Int)

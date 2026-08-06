@@ -16,23 +16,28 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import cats.implicits.catsSyntaxApplicativeId
+import cats.implicits.{ catsSyntaxApplicativeId, catsSyntaxEq }
 import org.slf4j.{ Logger, LoggerFactory }
 import play.api.data.Forms.{ boolean, nonEmptyText, optional, text }
 import play.api.data.{ Form, Forms }
 import play.api.i18n.I18nSupport
-import play.api.mvc.MessagesControllerComponents
+import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, Result }
+import play.twirl.api.Html
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
+import uk.gov.hmrc.eeittadminfrontend.deployment.ContentValue
+import uk.gov.hmrc.eeittadminfrontend.diff.{ DiffConfig, DiffMaker }
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination._
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.{ ProcessingStatus, SdesDestination, SubmissionRef }
+import uk.gov.hmrc.eeittadminfrontend.services.GformService
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import uk.gov.hmrc.govukfrontend.views.html.components
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errormessage.ErrorMessage
 import uk.gov.hmrc.govukfrontend.views.viewmodels.errorsummary.{ ErrorLink, ErrorSummary }
-import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
+import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -40,10 +45,15 @@ import scala.concurrent.{ ExecutionContext, Future }
 class WorkItemController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   gformConnector: GformConnector,
+  gformService: GformService,
   messagesControllerComponents: MessagesControllerComponents,
   workitem: uk.gov.hmrc.eeittadminfrontend.views.html.workitem,
   workitem_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_confirmation,
-  workitem_history: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_history
+  workitem_edit_confirmation: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_edit_confirmation,
+  workitem_edit_async: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_edit_async,
+  workitem_edit_async_diff: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_edit_async_diff,
+  workitem_history: uk.gov.hmrc.eeittadminfrontend.views.html.workitem_history,
+  diffConfig: DiffConfig
 )(implicit ec: ExecutionContext)
     extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
@@ -102,26 +112,7 @@ class WorkItemController @Inject() (
     authorizedDelete.async { implicit request =>
       val (pageError, fieldErrors) =
         request.flash.get("removeParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) { _ =>
-          (
-            Errors(
-              new components.GovukErrorSummary()(
-                ErrorSummary(
-                  errorList = List(
-                    ErrorLink(
-                      href = Some("#remove"),
-                      content = content.Text(request.messages.messages("generic.error.selectOption"))
-                    )
-                  ),
-                  title = content.Text(request.messages.messages("generic.error.selectOption.heading"))
-                )
-              )
-            ),
-            Map(
-              "remove" -> ErrorMessage(
-                content = Text(request.messages.messages("generic.error.selectOption"))
-              )
-            )
-          )
+          makeError("remove", "remove", request.messages.messages("generic.error.selectOption"))
         }
       gformConnector.getWorkItem(destination, id).map { workItemData =>
         Ok(workitem_confirmation(workItemData, pageError, fieldErrors))
@@ -154,6 +145,242 @@ class WorkItemController @Inject() (
               )
           case "No" =>
             Redirect(routes.WorkItemController.searchWorkItem(destination, 0, None, None)).pure[Future]
+        }
+      )
+  }
+
+  private def username(implicit request: AuthenticatedRequest[AnyContent, Retrieval.Username]): String =
+    request.retrieval.value
+
+  def requestEdit(destination: SdesDestination, id: String): Action[AnyContent] =
+    authorizedDataAccess.async { implicit request =>
+      val (pageError, fieldErrors) =
+        request.flash.get("accessReasonParamMissing").fold((NoErrors: HasErrors, Map.empty[String, ErrorMessage])) {
+          _ =>
+            makeError(
+              "accessReason",
+              "accessReason",
+              "You must enter a valid incident code or reason to view and edit this data"
+            )
+        }
+      gformConnector.getWorkItem(destination, id).map { workItemData =>
+        Ok(workitem_edit_confirmation(workItemData, pageError, fieldErrors))
+      }
+    }
+
+  private val formAccessReason: Form[String] = Form(
+    Forms.single(
+      "accessReason" -> Forms.nonEmptyText
+    )
+  )
+
+  def confirmEdit(destination: SdesDestination, id: String): Action[AnyContent] = authorizedDataAccess.async {
+    implicit request =>
+      formAccessReason
+        .bindFromRequest()
+        .fold(
+          _ =>
+            Redirect(
+              routes.WorkItemController.requestEdit(destination, id)
+            ).flashing("accessReasonParamMissing" -> "true").pure[Future],
+          reason =>
+            gformConnector.getAsyncWorkItem(id).map { asyncWorkItem =>
+              gformService.logSensitiveDataAccess(
+                CustomerDataAccessLog(
+                  username,
+                  s"editing async work item payload for ${asyncWorkItem.destinationId}",
+                  reason,
+                  asyncWorkItem.envelopeId.value
+                )
+              )
+              Redirect(routes.WorkItemController.startEdit(id)).flashing("accessReasonProvided" -> "true")
+            }
+        )
+  }
+
+  private val formPayloadEdit: Form[String] = Form(
+    Forms.single(
+      "updatedPayload" -> Forms.nonEmptyText
+    )
+  )
+
+  def startEdit(id: String): Action[AnyContent] = authorizedDataAccess.async { implicit request =>
+    request.flash
+      .get("accessReasonProvided")
+      .fold(
+        Redirect(routes.WorkItemController.requestEdit(AsyncHandlebars, id))
+          .flashing("accessReasonParamMissing" -> "true")
+          .pure[Future]
+      ) { provided =>
+        if (provided === "true") {
+          gformConnector.getAsyncWorkItem(id).map { asyncWorkItemData =>
+            Ok(workitem_edit_async(asyncWorkItemData, asyncWorkItemData.payload))
+          }
+        } else {
+          Redirect(routes.WorkItemController.requestEdit(AsyncHandlebars, id))
+            .flashing("accessReasonParamMissing" -> "true")
+            .pure[Future]
+        }
+      }
+  }
+
+  def differenceCheck(id: String) = authorizedDataAccess.async { implicit request =>
+    formPayloadEdit
+      .bindFromRequest()
+      .fold(
+        _ =>
+          Redirect(
+            routes.WorkItemController.startEdit(id)
+          ).pure[Future],
+        updatedPayload => showDiff(id, updatedPayload, None, None)
+      )
+  }
+
+  private def makeError(href: String, key: String, msg: String)(implicit
+    request: AuthenticatedRequest[AnyContent, Retrieval.Username]
+  ): (HasErrors, Map[String, ErrorMessage]) =
+    (
+      Errors(
+        new components.GovukErrorSummary()(
+          ErrorSummary(
+            errorList = List(
+              ErrorLink(
+                href = Some(s"#$href"),
+                content = content.Text(msg)
+              )
+            ),
+            title = content.Text(request.messages.messages("generic.error.selectOption.heading"))
+          )
+        )
+      ),
+      Map(key -> ErrorMessage(content = Text(msg)))
+    )
+
+  private def showDiff(
+    id: String,
+    updatedPayload: String,
+    maybePageError: Option[HasErrors],
+    maybeFieldError: Option[Map[String, ErrorMessage]]
+  )(implicit
+    request: AuthenticatedRequest[AnyContent, Retrieval.Username]
+  ): Future[Result] =
+    gformConnector.getAsyncWorkItem(id).map { asyncWorkItemData =>
+      def stripCRs(s: String) = s.filter(_ != 13.toChar)
+
+      val maybeUpdatedContent: Option[ContentValue] =
+        io.circe.parser
+          .parse(updatedPayload)
+          .toOption
+          .map(ContentValue.JsonContent)
+
+      maybeUpdatedContent.fold {
+        val (pageError, fieldErrors) = makeError(
+          "updatedPayload",
+          "invalidJson",
+          "Your payload is not valid JSON. Please correct the errors and try again."
+        )
+
+        Ok(workitem_edit_async(asyncWorkItemData, updatedPayload, pageError, fieldErrors))
+      } { updatedJsonContent =>
+        // Match the content type otherwise every line will show as a difference
+        val (originalContent: ContentValue, matchedContent: ContentValue) =
+          io.circe.parser
+            .parse(asyncWorkItemData.payload)
+            .toOption
+            .fold[(ContentValue, ContentValue)] {
+              (
+                ContentValue.TextContent(stripCRs(asyncWorkItemData.payload)),
+                ContentValue.TextContent(stripCRs(updatedPayload))
+              )
+            } { json =>
+              ContentValue.JsonContent(json) -> updatedJsonContent
+            }
+
+        val filename = asyncWorkItemData.formTemplateId.value + "-" + asyncWorkItemData.destinationId
+
+        val diff: String = DiffMaker.getDiff(
+          filename,
+          filename,
+          originalContent,
+          matchedContent,
+          diffConfig.timeout
+        )
+
+        if (diff.isEmpty) {
+          val (pageError, fieldErrors) = makeError(
+            "updatedPayload",
+            "invalidJson",
+            "No material differences detected between the original and updated payloads."
+          )
+
+          Ok(workitem_edit_async(asyncWorkItemData, updatedPayload, pageError, fieldErrors))
+        } else {
+          val diffHtml = uk.gov.hmrc.eeittadminfrontend.views.html.deployment_diff(Html(diff))
+
+          Ok(
+            workitem_edit_async_diff(
+              asyncWorkItemData,
+              updatedPayload,
+              diffHtml,
+              maybePageError.getOrElse(NoErrors),
+              maybeFieldError.getOrElse(Map.empty[String, ErrorMessage])
+            )
+          )
+        }
+      }
+    }
+
+  private val formPayloadConfirm: Form[(Option[String], String)] = Form(
+    Forms.tuple(
+      "action"         -> optional(text),
+      "updatedPayload" -> Forms.nonEmptyText
+    )
+  )
+
+  def saveOrEdit(id: String): Action[AnyContent] = authorizedDataAccess.async { implicit request =>
+    formPayloadConfirm
+      .bindFromRequest()
+      .fold(
+        _ =>
+          Redirect(
+            routes.WorkItemController.startEdit(id)
+          ).pure[Future],
+        {
+          case (Some("save"), updatedPayload) =>
+            for {
+              asyncWorkItemData <- gformConnector.getAsyncWorkItem(id)
+              response <- gformConnector.updateAsyncWorkItem(
+                            asyncWorkItemData.copy(payload = updatedPayload, username = Some(username))
+                          )
+            } yield
+              if (response.status === 200) {
+                Redirect(routes.WorkItemController.searchWorkItem(AsyncHandlebars, 0, None, None))
+                  .flashing(
+                    "success" -> s"Work-item payload successfully updated."
+                  )
+              } else {
+                val (pageError, fieldErrors) = makeError(
+                  "updatedPayload",
+                  "invalidJson",
+                  "There was an error saving your changes."
+                )
+                Ok(workitem_edit_async(asyncWorkItemData, updatedPayload, pageError, fieldErrors))
+              }
+          case (Some("edit"), updatedPayload) =>
+            gformConnector.getAsyncWorkItem(id).map { asyncWorkItemData =>
+              Ok(workitem_edit_async(asyncWorkItemData, updatedPayload))
+            }
+          case (Some("cancel"), updatedPayload) =>
+            Redirect(routes.WorkItemController.searchWorkItem(AsyncHandlebars, 0, None, None))
+              .flashing(
+                "info" -> s"Edit cancelled. No changes were made."
+              )
+              .pure[Future]
+          case (_, updatedPayload) =>
+            val (pageError, fieldErrors) =
+              makeError("action", "saveOrEdit", "Please select either 'Save', 'Edit' or 'Cancel' to proceed.")
+
+            showDiff(id, updatedPayload, Some(pageError), Some(fieldErrors))
         }
       )
   }
