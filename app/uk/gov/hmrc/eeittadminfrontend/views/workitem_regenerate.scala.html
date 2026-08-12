@@ -66,8 +66,12 @@
     @{formatInstant(workItemData.updatedAt)}
     </td>
    </tr>
-  </tbody>
+ </tbody>
  </table>
+
+ <p class="govuk-body">
+  Regeneration uses the render model captured at the original submission time. Changes to the AsyncHandlebars payload will be applied (via updated Handlebars template), but changes elsewhere in the form template JSON that would alter the resolved model will not be recomputed.
+ </p>
 
  @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.confirmRegeneration(workItemData.destination, workItemData.id), args = 'class -> "js-form", 'autocomplete -> "on", 'novalidate -> "novalidate", 'id -> "gf-sdes-work-item-regenerate") {
   @{new GovukRadios(new GovukFieldset(), new GovukHint(), new GovukLabel(), new GovukFormGroup(), new GovukHintAndErrorMessage(new GovukHint(), new GovukErrorMessage()))(Radios(
