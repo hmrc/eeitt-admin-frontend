@@ -3,7 +3,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "eeitt-admin-frontend"
 ThisBuild / majorVersion := 1
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(
@@ -14,7 +14,8 @@ lazy val microservice = Project(appName, file("."))
     organization := "uk.gov.hmrc",
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
+    dependencyOverrides ++= AppDependencies.dependencyOverrides
   )
   .settings(
     scalacOptions ++= Seq(
