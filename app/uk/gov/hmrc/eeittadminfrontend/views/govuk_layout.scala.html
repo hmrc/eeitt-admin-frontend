@@ -39,8 +39,6 @@ govukTemplate: GovukTemplate
   @headerBlock.getOrElse {
     @govukHeader(Header(
       homepageUrl = Some("https://www.gov.uk/"),
-      serviceName = Some(messages("service.name")),
-      serviceUrl = Some(messages("service.homePageUrl")),
       containerClasses = None))
   }
 }
@@ -53,6 +51,14 @@ govukTemplate: GovukTemplate
 
 @bodyEndDefault = {
   @bodyEndBlock
+  <script src="/assets/lib/govuk-frontend/dist/govuk/govuk-frontend.min.js"></script>
+  <script src="/assets/lib/hmrc-frontend/hmrc/hmrc-frontend-7.3.0.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      window.GOVUKFrontend.initAll();
+      window.HMRCFrontend.initAll();
+    });
+  </script>
   @scriptsBlock
 }
 
@@ -64,10 +70,21 @@ govukTemplate: GovukTemplate
   </div>
 }
 
+@headDefault = {
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/assets/lib/govuk-frontend/dist/govuk/govuk-frontend.min.css">
+  <link rel="stylesheet" href="/assets/lib/hmrc-frontend/hmrc/hmrc-frontend-7.3.0.min.css">
+  <link rel="stylesheet" href="/assets/lib/hmrc-frontend/hmrc/accessible-autocomplete-7.3.0.css">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/diff2html.min.css")">
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/application.css")">
+  @headBlock
+}
+
 @govukTemplate(
   htmlLang = Some(messages.lang.code),
   pageTitle = pageTitle,
-  headBlock = headBlock,
+  headBlock = Some(headDefault),
   headerBlock = headerDefault,
   beforeContentBlock = beforeContentBlock,
   footerBlock = footerDefault,

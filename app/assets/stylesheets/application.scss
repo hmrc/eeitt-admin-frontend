@@ -3,7 +3,7 @@ $hmrc-assets-path: "/eeitt-admin-frontend/assets/lib/hmrc-frontend/hmrc/";
 $govuk-new-link-styles: true;
 $govuk-new-typography-scale: true;
 
-@import "lib/govuk-frontend/dist/govuk/all";
+@import "lib/govuk-frontend/dist/govuk/index";
 @import "lib/hmrc-frontend/hmrc/all";
 
 .in-sync {
@@ -51,4 +51,31 @@ $govuk-new-typography-scale: true;
     max-height: 4.5em;
     overflow-wrap: break-word;
     overflow-y: auto;
+}
+.govuk-service-navigation__container {
+    margin-bottom: 5px;
+}
+.govuk-service-navigation__service-name {
+    padding: 15px 0 8px 0;
+}
+.govuk-service-navigation__item {
+    padding: 8px 0;
+    line-height: 1;
+    &:hover {
+        border-bottom-width: 5px;
+        padding: 8px 0 3px 0;
+    }
+}
+.govuk-service-navigation__item--active {
+    padding: 8px 0 3px 0;
+    border-bottom-width: 5px;
+}
+.govuk-service-navigation__link {
+    padding: 0 0;
+}
+.govuk-service-navigation__link:hover,
+.govuk-service-navigation__link:focus {
+    text-decoration: none;
+    border-bottom-width: 0px;
+    box-shadow: none;
 }
