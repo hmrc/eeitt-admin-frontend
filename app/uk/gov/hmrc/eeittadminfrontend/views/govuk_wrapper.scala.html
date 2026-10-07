@@ -15,23 +15,23 @@
  *@
 
 @import play.twirl.api.HtmlFormat
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.{Footer, Meta}
-@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.banner.Banner
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.content.Text
-@import uk.gov.hmrc.eeittadminfrontend.views.components.FooterLinks
-@import uk.gov.hmrc.govukfrontend.views.html.components._
-@import uk.gov.hmrc.eeittadminfrontend.views.html.FullMainContent
 @import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+@import uk.gov.hmrc.eeittadminfrontend.views.components.FooterLinks
+@import uk.gov.hmrc.eeittadminfrontend.views.html.FullMainContent
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.content.Text
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.{Footer, Meta}
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.servicenavigation.ServiceNavigation
+@import uk.gov.hmrc.hmrcfrontend.views.html.components.HmrcHeader
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.header.v2.HeaderParams
 
 @this(
   fullMainContent: FullMainContent,
   govuk_layout: GovukLayout,
   govukBackLink: GovukBackLink,
-  govukHeader: GovukHeader,
   govukFooter: GovukFooter,
-  govukServiceNavigation: GovukServiceNavigation
+  hmrcHeader: HmrcHeader
 )
 
 @(
@@ -61,123 +61,121 @@
 }
 
 @serviceNavigation = @{
-    govukServiceNavigation(
-        ServiceNavigation(
-            serviceName = Some("EEITT Admin"),
-            serviceUrl = Some("#"),
-            navigation = Seq(
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage.path}",
-                    content = Text("G-forms"),
-                    active = if(tab == "gforms") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentHome.path}",
-                    content = Text("Deployment"),
-                    active = if(tab == "deployment") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.fileUpload.path}",
-                    content = Text("File Upload"),
-                    active = if(tab == "file-upload") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelope(None, None, None).path}",
-                    content = Text("Envelopes"),
-                    active = if(tab == "envelope") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submissions.path}",
-                    content = Text("Submissions"),
-                    active = if(tab == "submissions") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.savedData.path}",
-                    content = Text("Saved Data"),
-                    active = if(tab == "saved-data") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.stuckForms.path}",
-                    content = Text("Stuck forms"),
-                    active = if(tab == "stuck-forms") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path}",
-                    content = Text("Submission Consolidator"),
-                    active = if(tab == "submissionconsolidator") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner.path}",
-                    content = Text("Notification banner"),
-                    active = if(tab == "notification-banner") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter.path}",
-                    content = Text("Shutter"),
-                    active = if(tab == "shutter") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0, Some(false), None, None, None, None, None, None, None, None, None).path}",
-                    content = Text("SDES Submissions"),
-                    active = if(tab == "sdes-submissions") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.sdesSubmissions(0, Some(false), None, None).path}",
-                    content = Text("SDES Reports"),
-                    active = if(tab == "sdes-reports") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(Dms, 0, None, None).path}",
-                    content = Text("Destination Work Items"),
-                    active = if (tab == "sdes-work-item") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, None, None, None).path}",
-                    content = Text("Async API History"),
-                    active = if (tab == "work-item-history") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path}",
-                    content = Text("Legacy Forms"),
-                    active = if (tab == "legacy-forms") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.history.path}",
-                    content = Text("WIP Forms"),
-                    active = if (tab == "history") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesDestinationsMigrationController.sdesDestinationsMigration(None, None).path}",
-                    content = Text("SDES Submissions migration"),
-                    active = if (tab == "sdes-submissions-migration") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv().path}",
-                    content = Text("Reconcile DMS Subs"),
-                    active = if (tab == "reconcile-subs") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.TranslationAuditController.translationAudit.path}",
-                    content = Text("Translation audit"),
-                    active = if (tab == "translation-audit") true else false
-                ),
-                ServiceNavigationItem(
-                    href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataAccessController.dataAccess(0).path}",
-                    content = Text("Data Access"),
-                    active = if (tab == "data-access") true else false
-                )
+    ServiceNavigation(
+        serviceName = Some("EEITT Admin"),
+        serviceUrl = Some("#"),
+        navigation = Seq(
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.gformPage.path}",
+                content = Text("G-forms"),
+                active = if(tab == "gforms") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DeploymentController.deploymentHome.path}",
+                content = Text("Deployment"),
+                active = if(tab == "deployment") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.FileUploadController.fileUpload.path}",
+                content = Text("File Upload"),
+                active = if(tab == "file-upload") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.EnvelopeController.envelope(None, None, None).path}",
+                content = Text("Envelopes"),
+                active = if(tab == "envelope") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionController.submissions.path}",
+                content = Text("Submissions"),
+                active = if(tab == "submissions") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SavedDataController.savedData.path}",
+                content = Text("Saved Data"),
+                active = if(tab == "saved-data") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.StuckFormsController.stuckForms.path}",
+                content = Text("Stuck forms"),
+                active = if(tab == "stuck-forms") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionConsolidatorController.submissionConsolidatorPage.path}",
+                content = Text("Submission Consolidator"),
+                active = if(tab == "submissionconsolidator") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.NotificationBannerController.notificationBanner.path}",
+                content = Text("Notification banner"),
+                active = if(tab == "notification-banner") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.ShutterController.shutter.path}",
+                content = Text("Shutter"),
+                active = if(tab == "shutter") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SubmissionSdesController.sdesSubmissions(0, Some(false), None, None, None, None, None, None, None, None, None).path}",
+                content = Text("SDES Submissions"),
+                active = if(tab == "sdes-submissions") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesReportsController.sdesSubmissions(0, Some(false), None, None).path}",
+                content = Text("SDES Reports"),
+                active = if(tab == "sdes-reports") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItem(Dms, 0, None, None).path}",
+                content = Text("Destination Work Items"),
+                active = if (tab == "sdes-work-item") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.WorkItemController.searchWorkItemHistory(0, None, None, None).path}",
+                content = Text("Async API History"),
+                active = if (tab == "work-item-history") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.LegacyFormsController.legacyForms(0).path}",
+                content = Text("Legacy Forms"),
+                active = if (tab == "legacy-forms") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.HistoryController.history.path}",
+                content = Text("WIP Forms"),
+                active = if (tab == "history") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.SdesDestinationsMigrationController.sdesDestinationsMigration(None, None).path}",
+                content = Text("SDES Submissions migration"),
+                active = if (tab == "sdes-submissions-migration") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DmsSubsReconciliationController.dmsSubmissionsUploadCsv().path}",
+                content = Text("Reconcile DMS Subs"),
+                active = if (tab == "reconcile-subs") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.TranslationAuditController.translationAudit.path}",
+                content = Text("Translation audit"),
+                active = if (tab == "translation-audit") true else false
+            ),
+            ServiceNavigationItem(
+                href = s"${uk.gov.hmrc.eeittadminfrontend.controllers.routes.DataAccessController.dataAccess(0).path}",
+                content = Text("Data Access"),
+                active = if (tab == "data-access") true else false
             )
         )
     )
 }
 
 
-@headerBlock = @{
-    Html(govukHeader(
-        uk.gov.hmrc.govukfrontend.views.viewmodels.header.Header(
-            homepageUrl = Some("#")
-        )
-    ).toString + serviceNavigation.toString)
+@headerBlock = {
+  @hmrcHeader(
+    HeaderParams(
+      serviceNavigation = Some(serviceNavigation)
+    )
+  )
 }
 
 @bLink = @{govukBackLink(new BackLink(attributes = Map("id" -> "backButton"), href = backLink.getOrElse("javascript:window.history.back()"), content = new Text(messages("linkText.back"))))}
