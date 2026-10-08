@@ -128,10 +128,10 @@ class EnvelopeController @Inject() (
       )
     }
 
-  def downloadEnvelope(prefix: Option[String]): Action[AnyContent] =
+  def downloadEnvelope(destination: SdesDestination, prefix: Option[String]): Action[AnyContent] =
     handleCommonAuthAndBind { accessEnvelope => implicit request =>
       gformConnector
-        .downloadEnvelope(EnvelopeId(accessEnvelope.envelopeId), prefix)
+        .downloadEnvelope(EnvelopeId(accessEnvelope.envelopeId), destination, prefix)
         .map { response =>
           if (response.status == 200) {
             val prefixMsg = prefix.fold("")(p => s" (for $p submission prefix)")

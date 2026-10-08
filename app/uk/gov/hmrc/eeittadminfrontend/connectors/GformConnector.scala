@@ -23,7 +23,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.eeittadminfrontend.history.{ HistoryFilter, HistoryId, HistoryOverview, HistoryOverviewFull }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 import uk.gov.hmrc.eeittadminfrontend.models.logging.{ CustomerDataAccessLog, DataAccessLogPageData }
-import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.Dms
+import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination.{ Dms, fromName }
 import uk.gov.hmrc.eeittadminfrontend.models.sdes._
 import uk.gov.hmrc.eeittadminfrontend.models._
 import uk.gov.hmrc.eeittadminfrontend.translation.{ TranslationAuditId, TranslationAuditOverview }
@@ -766,15 +766,16 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   def downloadEnvelope(envelopeId: EnvelopeId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] = downloadEnvelope(envelopeId, None)
+  ): Future[HttpResponse] = downloadEnvelope(envelopeId, SdesDestination.Dms, None)
 
-  def downloadEnvelope(envelopeId: EnvelopeId, submissionPrefix: Option[String])(implicit
+  def downloadEnvelope(envelopeId: EnvelopeId, destination: SdesDestination, submissionPrefix: Option[String])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
+    val pathDir = fromName(destination).toLowerCase
     val queryParams = submissionPrefix.fold(Seq.empty[(String, String)])(p => Seq("prefix" -> p))
     wsHttp
-      .get(url"$gformUrl/object-store/dms/envelopes/${envelopeId.value}?$queryParams")
+      .get(url"$gformUrl/object-store/$pathDir/envelopes/${envelopeId.value}?$queryParams")
       .stream[HttpResponse]
   }
 
