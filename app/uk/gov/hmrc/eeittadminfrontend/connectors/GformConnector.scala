@@ -231,6 +231,36 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
         List.empty[SdesSubmission]
       }
 
+  def getVerifyEnvelopeFiles(envelopeId: EnvelopeId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Either[String, EnvelopeVerification]] =
+    wsHttp
+      .get(url"$gformUrl/sdes/verify/${envelopeId.value}")
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status == 200) {
+          responseJson(response).validate[EnvelopeVerification] match {
+            case JsSuccess(verification, _) => Right(verification)
+            case JsError(_) =>
+              val msg = s"Unable to parse EnvelopeVerification for envelopeId ${envelopeId.value}"
+              logger.error(msg)
+              Left(msg)
+          }
+        } else {
+          val msg =
+            s"Unable to retrieve EnvelopeVerification for envelopeId ${envelopeId.value}, status = ${response.status}, body = '${response.body}'"
+          logger.error(msg)
+          Left(msg)
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve EnvelopeVerification for envelopeId ${envelopeId.value}, exception: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+
   private def responseJson(response: HttpResponse): JsValue = Try(response.json).getOrElse(JsNull)
 
   def notifySDES(correlationId: CorrelationId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =

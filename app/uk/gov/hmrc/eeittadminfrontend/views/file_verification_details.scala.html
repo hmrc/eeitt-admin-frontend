@@ -1,0 +1,153 @@
+@*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
+
+@this(
+    main_template: main_template
+)
+
+@(
+    envelopeId: EnvelopeId,
+    maybeError: Option[String],
+    fileVerification: uk.gov.hmrc.eeittadminfrontend.models.EnvelopeVerification,
+    filesHtml: String
+)(implicit request : Request[_], messages: Messages)
+
+@main_template(title = "File verification", tab = "envelope") {
+
+    <h2 class="govuk-heading-m">Object store file verification</h2>
+    <div class="govuk-body">
+        <div class="govuk-input__wrapper">
+            <div class="govuk-input__prefix">Envelope ID</div>
+            <input class="govuk-input govuk-input--width-20" id="envelopeId" type="text" value="@envelopeId.value" readonly="">
+        </div>
+    </div>
+
+    @maybeError.map { error =>
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <h2 class="govuk-error-summary__title">Error</h2>
+            <div class="govuk-error-summary__body">
+                @error
+            </div>
+        </div>
+    }
+
+    @if(maybeError.isEmpty) {
+        @if(fileVerification.fileList.nonEmpty) {
+            <div class="details-layout">
+                <div class="govuk-body govuk-!-margin-bottom-0">Object store directory/filename</div>
+                <div class="govuk-body govuk-!-margin-bottom-0">Last modified</div>
+                <div class="govuk-body govuk-!-margin-bottom-0">Size</div>
+                <div class="govuk-body govuk-!-margin-bottom-0">Exist?</div>
+            </div>
+            <div class="tree govuk-body">
+                @Html(filesHtml)
+            </div>
+        }
+
+        @if(fileVerification.fileList.isEmpty) {
+            <p class="govuk-body">No files found for this envelope.</p>
+        }
+    }
+    <style>
+        .details-layout {
+            display: grid;
+            grid-template-columns: 1fr 180px 70px 60px;
+            font-size: 13px;
+            padding: 0 0 2px 0;
+            .exists {
+                content: url('data:image/svg+xml;utf8,<svg version="1.1" id="tick" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 96 96" enable-background="new 0 0 96 96" xml:space="preserve"><g><path fill-rule="evenodd" clip-rule="evenodd" fill="%230f7a52" d="M48,0c26.51,0,48,21.49,48,48S74.51,96,48,96S0,74.51,0,48 S21.49,0,48,0L48,0z M26.764,49.277c0.644-3.734,4.906-5.813,8.269-3.79c0.305,0.182,0.596,0.398,0.867,0.646l0.026,0.025 c1.509,1.446,3.2,2.951,4.876,4.443l1.438,1.291l17.063-17.898c1.019-1.067,1.764-1.757,3.293-2.101 c5.235-1.155,8.916,5.244,5.206,9.155L46.536,63.366c-2.003,2.137-5.583,2.332-7.736,0.291c-1.234-1.146-2.576-2.312-3.933-3.489 c-2.35-2.042-4.747-4.125-6.701-6.187C26.993,52.809,26.487,50.89,26.764,49.277L26.764,49.277z"/></g></svg>');
+            }
+            .not-exists {
+                content: url('data:image/svg+xml;utf8,<svg version="1.1" id="cross" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 122.879 122.879" enable-background="new 0 0 122.879 122.879" xml:space="preserve"><g><path fill-rule="evenodd" clip-rule="evenodd" fill="%23ca3535" d="M61.44,0c33.933,0,61.439,27.507,61.439,61.439 s-27.506,61.439-61.439,61.439C27.507,122.879,0,95.372,0,61.439S27.507,0,61.44,0L61.44,0z M73.451,39.151 c2.75-2.793,7.221-2.805,9.986-0.027c2.764,2.776,2.775,7.292,0.027,10.083L71.4,61.445l12.076,12.249 c2.729,2.77,2.689,7.257-0.08,10.022c-2.773,2.765-7.23,2.758-9.955-0.013L61.446,71.54L49.428,83.728 c-2.75,2.793-7.22,2.805-9.986,0.027c-2.763-2.776-2.776-7.293-0.027-10.084L51.48,61.434L39.403,49.185 c-2.728-2.769-2.689-7.256,0.082-10.022c2.772-2.765,7.229-2.758,9.953,0.013l11.997,12.165L73.451,39.151L73.451,39.151z"/></g></svg>')
+            }
+            :nth-child(3) {
+                justify-self: end;
+            }
+            :nth-child(4) {
+                justify-self: center;
+            }
+        }
+
+        .tree {
+            position: relative;
+            font-family: 'Roboto Mono', monospace;
+            font-size: .85rem;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #212529;
+
+            i {
+                padding-right: 5px;
+            }
+
+            .folder-open {
+                vertical-align: middle;
+                content: url('data:image/svg+xml;utf8,<svg fill="%231d70b8" version="1.1" id="folder" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 507.177 507.177" xml:space="preserve"><g><path d="M382.237,420.524c11.278,0,24.519-7.294,29.342-17.236l93.815-177.539c5.615-10.802-2.548-17.239-17.236-17.239H393.42v-42.421c0-14.641-11.91-26.551-26.551-26.551H134.943l-17.207-45.167c-1.791-4.69-6.289-7.793-11.313-7.793H12.335c-3.218,0-6.312,1.283-8.588,3.57c-2.27,2.288-3.535,5.379-3.517,8.606l0.23,67.335L0,394.049C0,408.69,11.913,420.6,26.554,420.6M369.209,208.516H162.634c-9.522,0-18.527,7.696-23.291,17.239L54.994,396.39H26.554c-1.289,0-2.344-1.052-2.344-2.341V166.024l-0.012-55.23h73.884l17.209,45.164c1.791,4.69,6.286,7.796,11.31,7.796H366.87c1.288,0,2.34,1.052,2.34,2.341V208.516z"/></g></svg>');
+            }
+
+            span {
+                font-size: 13px;
+                font-style: italic;
+                letter-spacing: .4px;
+                color: #858686;
+            }
+
+            ul {
+                padding-left: 5px;
+                list-style: none;
+
+                li {
+                    position: relative;
+                    padding-top: 5px;
+                    padding-bottom: 2px;
+                    padding-left: 15px;
+                    -webkit-box-sizing: border-box;
+                    -moz-box-sizing: border-box;
+                    box-sizing: border-box;
+
+                    &:before {
+                        position: absolute;
+                        top: 15px;
+                        left: 0;
+                        width: 10px;
+                        height: 1px;
+                        margin: auto;
+                        content: '';
+                        background-color: #666;
+                    }
+
+                    &:after {
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        left: 0;
+                        width: 1px;
+                        height: 100%;
+                        content: '';
+                        background-color: #666;
+                    }
+
+                    &:last-child:after {
+                        height: 15px;
+                    }
+                }
+            }
+        }
+    </style>
+}
+

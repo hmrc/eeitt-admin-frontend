@@ -29,9 +29,11 @@ import play.api.libs.Files.DefaultTemporaryFileCreator
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Action, AnyContent, MessagesControllerComponents, Result }
 import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
+import uk.gov.hmrc.eeittadminfrontend.models.EnvelopeVerification
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.{ EnvelopeId, EnvelopeIdForm }
 import uk.gov.hmrc.eeittadminfrontend.models.logging.CustomerDataAccessLog
 import uk.gov.hmrc.eeittadminfrontend.models.sdes.SdesDestination
+import uk.gov.hmrc.eeittadminfrontend.utils.FileTreeBuilder
 import uk.gov.hmrc.eeittadminfrontend.services.GformService
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.internalauth.client.{ AuthenticatedRequest, FrontendAuthComponents, Retrieval }
@@ -51,6 +53,7 @@ class EnvelopeController @Inject() (
   messagesControllerComponents: MessagesControllerComponents,
   envelope_html: views.html.envelope,
   envelope_options: views.html.envelope_options,
+  file_verification_details: views.html.file_verification_details,
   defaultTemporaryFileCreator: DefaultTemporaryFileCreator,
   gformService: GformService
 )(implicit ec: ExecutionContext, materializer: Materializer)
@@ -101,6 +104,24 @@ class EnvelopeController @Inject() (
     authorizedRead.async { implicit request =>
       gformConnector.getSdesSubmissionsByEnvelopeId(envelopeId).map { subs =>
         Ok(envelope_options(envelopeId, reason, subs))
+      }
+    }
+
+  def showFileVerificationDetails(envelopeId: EnvelopeId) =
+    authorizedRead.async { implicit request =>
+      gformConnector.getVerifyEnvelopeFiles(envelopeId).map { response =>
+        val (maybeError, envelopeVerification, filesHtml) = response match {
+          case Left(err) => (Some(err), EnvelopeVerification(envelopeId), "")
+          case Right(ev) =>
+            logger.info(s"User '$username' viewed object-store file verification for envelopeId '$envelopeId'")
+            (
+              None,
+              ev,
+              FileTreeBuilder
+                .buildTreeHtml(ev.fileList)
+            )
+        }
+        Ok(file_verification_details(envelopeId, maybeError, envelopeVerification, filesHtml))
       }
     }
 
