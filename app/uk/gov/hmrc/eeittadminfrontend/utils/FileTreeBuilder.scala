@@ -31,12 +31,12 @@ object FileTreeBuilder {
   )
 
   private def formatBytes(bytes: Long): String =
-    if (bytes <= 0) "0b"
+    if (bytes <= 0) "0&nbsp;B"
     else {
       val k = 1024L
       val sizes = Array("&nbsp;B", "KB", "MB", "GB")
       val i = (Math.log(bytes.toDouble) / Math.log(k.toDouble)).toInt
-      s"${Math.round((bytes / Math.pow(k.toDouble, i.toDouble)) * 100) / 100} ${sizes(i)}"
+      s"${Math.round((bytes / Math.pow(k.toDouble, i.toDouble)) * 100) / 100}&nbsp;${sizes(i)}"
     }
 
   private def buildTree(files: List[FileVerification]): TreeNode = {
