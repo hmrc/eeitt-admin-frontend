@@ -17,6 +17,8 @@
 package uk.gov.hmrc.eeittadminfrontend.utils
 
 import uk.gov.hmrc.eeittadminfrontend.models.FileVerification
+import uk.gov.hmrc.eeittadminfrontend.models.FileVerificationSource._
+
 import scala.collection.mutable
 
 object FileTreeBuilder {
@@ -77,11 +79,19 @@ object FileTreeBuilder {
         } else {
           val file = child.files.headOption
           val exists = if (file.exists(_.exists)) "exists" else "not-exists"
-          val highlight = if (file.exists(_.source == "workItem")) "not-sent" else ""
+          val (source, sourceText) = file
+            .flatMap(_.source match {
+              case Envelope       => Some("envelope" -> "GForm tracked envelope file")
+              case SdesSubmission => Some("sdes-submission" -> "GForm tracked SDES submission file")
+              case WorkItem       => Some("work-item" -> "GForm tracked work item file")
+              case ObjectStore    => Some("object-store" -> "Untracked object store file")
+              case _              => None
+            })
+            .getOrElse("" -> "")
           val modified = file.flatMap(_.lastModified).map(ts => s"<span>${ts.toString}</span>").getOrElse("")
           val sizeStr = file.flatMap(_.contentLength).map(size => s"<span>${formatBytes(size)}</span>").getOrElse("")
           html.append(
-            s"""<li><div class="details-layout"><div class="$highlight">${child.name}</div><div>$modified</div><div>$sizeStr</div><div class="$exists">&nbsp;</div></div></li>"""
+            s"""<li><div class="details-layout"><div class="tooltip $source">${child.name}<span class="tooltiptext">$sourceText</span></div><div>$modified</div><div>$sizeStr</div><div class="$exists">&nbsp;</div></div></li>"""
           )
         }
       }

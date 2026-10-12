@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.eeittadminfrontend.models
 
-import play.api.libs.json.{ Json, OFormat }
+import play.api.libs.json.{ Format, JsError, JsResult, JsString, JsSuccess, JsValue, Json, OFormat }
 import uk.gov.hmrc.eeittadminfrontend.models.fileupload.EnvelopeId
 
 import java.time.Instant
@@ -30,7 +30,7 @@ case class FileVerification(
   contentLength: Option[Long] = None,
   contentType: Option[String] = None,
   lastModified: Option[Instant] = None,
-  source: String
+  source: FileVerificationSource
 )
 
 object FileVerification {
@@ -46,4 +46,34 @@ object EnvelopeVerification {
   implicit val format: OFormat[EnvelopeVerification] = Json.format[EnvelopeVerification]
 
   def apply(envelope: EnvelopeId): EnvelopeVerification = EnvelopeVerification(envelope.value, List.empty)
+}
+
+sealed trait FileVerificationSource
+
+object FileVerificationSource {
+  case object Envelope extends FileVerificationSource
+  case object SdesSubmission extends FileVerificationSource
+  case object WorkItem extends FileVerificationSource
+  case object ObjectStore extends FileVerificationSource
+
+  implicit val format: Format[FileVerificationSource] = new Format[FileVerificationSource] {
+    override def writes(o: FileVerificationSource): JsValue = o match {
+      case Envelope       => JsString("Envelope")
+      case SdesSubmission => JsString("SdesSubmission")
+      case WorkItem       => JsString("WorkItem")
+      case ObjectStore    => JsString("ObjectStore")
+    }
+
+    override def reads(json: JsValue): JsResult[FileVerificationSource] =
+      json match {
+        case JsString("Envelope")       => JsSuccess(Envelope)
+        case JsString("SdesSubmission") => JsSuccess(SdesSubmission)
+        case JsString("WorkItem")       => JsSuccess(WorkItem)
+        case JsString("ObjectStore")    => JsSuccess(ObjectStore)
+        case JsString(err) =>
+          JsError(s"only for valid Envelope, SdesSubmission, WorkItem or ObjectStore. $err is not allowed")
+        case _ => JsError("Failure")
+      }
+  }
+
 }
