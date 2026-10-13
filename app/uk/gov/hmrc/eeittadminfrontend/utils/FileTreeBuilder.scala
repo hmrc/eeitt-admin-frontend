@@ -26,8 +26,8 @@ object FileTreeBuilder {
   private case class TreeNode(
     name: String,
     isFolder: Boolean,
-    children: mutable.Map[String, TreeNode] = mutable.Map(),
-    files: List[FileVerification] = List()
+    children: mutable.Map[String, TreeNode] = mutable.Map.empty,
+    file: Option[FileVerification] = None
   )
 
   private def formatBytes(bytes: Long): String =
@@ -40,7 +40,7 @@ object FileTreeBuilder {
     }
 
   private def buildTree(files: List[FileVerification]): TreeNode = {
-    val root = TreeNode("root", true)
+    val root = TreeNode("root", isFolder = true)
 
     files.foreach { file =>
       val pathParts = file.directory.split("/").filter(_.nonEmpty)
@@ -48,13 +48,13 @@ object FileTreeBuilder {
 
       pathParts.foreach { part =>
         if (!currentNode.children.contains(part)) {
-          currentNode.children(part) = TreeNode(part, true)
+          currentNode.children(part) = TreeNode(part, isFolder = true)
         }
         currentNode = currentNode.children(part)
       }
 
       if (!currentNode.children.contains(file.fileName)) {
-        currentNode.children(file.fileName) = TreeNode(file.fileName, false, files = List(file))
+        currentNode.children(file.fileName) = TreeNode(file.fileName, isFolder = false, file = Some(file))
       }
     }
 
@@ -68,16 +68,20 @@ object FileTreeBuilder {
     val html = new StringBuilder
 
     if (items.nonEmpty) {
-      html.append("<ul>\n")
+      html.append("<ul>")
       items.foreach { child =>
         if (child.isFolder) {
           html.append(
-            s"""<li><div class="details-layout"><div><i class="folder-open"></i>${child.name}</div></div>\n"""
+            s"""<li>
+               |  <div class="details-layout">
+               |    <div><i class="folder-open"></i>${child.name}</div>
+               |  </div>
+               |""".stripMargin
           )
           html.append(renderTree(child, level + 1))
-          html.append("</li>\n")
+          html.append("</li>")
         } else {
-          val file = child.files.headOption
+          val file = child.file
           val exists = if (file.exists(_.exists)) "exists" else "not-exists"
           val (source, sourceText) = file
             .flatMap(_.source match {
@@ -85,17 +89,23 @@ object FileTreeBuilder {
               case SdesSubmission => Some("sdes-submission" -> "GForm tracked SDES submission file")
               case WorkItem       => Some("work-item" -> "GForm tracked work item file")
               case ObjectStore    => Some("object-store" -> "Untracked object store file")
-              case _              => None
             })
             .getOrElse("" -> "")
           val modified = file.flatMap(_.lastModified).map(ts => s"<span>${ts.toString}</span>").getOrElse("")
           val sizeStr = file.flatMap(_.contentLength).map(size => s"<span>${formatBytes(size)}</span>").getOrElse("")
           html.append(
-            s"""<li><div class="details-layout"><div class="tooltip $source">${child.name}<span class="tooltiptext">$sourceText</span></div><div>$modified</div><div>$sizeStr</div><div class="$exists">&nbsp;</div></div></li>"""
+            s"""<li>
+               |  <div class="details-layout">
+               |    <div class="tooltip $source">${child.name}<span class="tooltiptext">$sourceText</span></div>
+               |    <div>$modified</div>
+               |    <div>$sizeStr</div>
+               |    <div class="$exists">&nbsp;</div>
+               |  </div>
+               |</li>""".stripMargin
           )
         }
       }
-      html.append("</ul>\n")
+      html.append("</ul>")
     }
 
     html.toString

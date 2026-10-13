@@ -27,9 +27,9 @@ case class FileVerification(
   directory: String,
   fileName: String,
   exists: Boolean,
-  contentLength: Option[Long] = None,
-  contentType: Option[String] = None,
-  lastModified: Option[Instant] = None,
+  contentLength: Option[Long],
+  contentType: Option[String],
+  lastModified: Option[Instant],
   source: FileVerificationSource
 )
 
@@ -71,8 +71,13 @@ object FileVerificationSource {
         case JsString("WorkItem")       => JsSuccess(WorkItem)
         case JsString("ObjectStore")    => JsSuccess(ObjectStore)
         case JsString(err) =>
-          JsError(s"only for valid Envelope, SdesSubmission, WorkItem or ObjectStore. $err is not allowed")
-        case _ => JsError("Failure")
+          JsError(
+            s"FileVerificationSource can only be Envelope, SdesSubmission, WorkItem or ObjectStore. $err is not allowed"
+          )
+        case _ =>
+          JsError(
+            "Failed to match valid value for FileVerificationSource. Must be a string value of Envelope, SdesSubmission, WorkItem or ObjectStore"
+          )
       }
   }
 
