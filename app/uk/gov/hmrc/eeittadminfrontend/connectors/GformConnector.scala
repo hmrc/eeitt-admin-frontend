@@ -65,6 +65,29 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       }
   }
 
+  def getInternalGformsTemplate(
+    formTemplateId: FormTemplateId
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
+    val url = url"$gformUrl/formtemplates/$formTemplateId/internal"
+    wsHttp
+      .get(url)
+      .execute[HttpResponse]
+      .map { response =>
+        logger.info(s"Get internal $formTemplateId from gform ${response.status}")
+        if (response.status == 200) Right(response.json)
+        else {
+          logger.error(s"Wrong status code ${response.body} when calling $url, response body ${response.body}")
+          Left(response.body)
+        }
+      }
+      .recover { case ex =>
+        val message =
+          s"Unknown problem when trying to retrieve internal template $formTemplateId, by calling $url, exception: " + ex.getMessage
+        logger.error(message, ex)
+        Left(message)
+      }
+  }
+
   def getAllSubmissons(formTemplateId: FormTemplateId, page: Int, pageSize: Int)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
