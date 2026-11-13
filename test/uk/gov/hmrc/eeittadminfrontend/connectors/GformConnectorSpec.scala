@@ -59,7 +59,7 @@ class GformConnectorSpec
     )
   )
 
-  "getInternalGformsTemplate" should "return the internal template from the internal endpoint" in {
+  "getGformsTemplate" should "return the internal template from the internal endpoint" in {
     stubFor(
       get(urlEqualTo(requestUrl))
         .willReturn(
@@ -70,7 +70,7 @@ class GformConnectorSpec
         )
     )
 
-    whenReady(connector.getInternalGformsTemplate(formTemplateId)) { result =>
+    whenReady(connector.getGformsTemplate(formTemplateId, true)) { result =>
       result shouldBe Right(internalTemplate)
     }
 
@@ -83,7 +83,7 @@ class GformConnectorSpec
         .willReturn(aResponse().withStatus(404).withBody("template not found"))
     )
 
-    whenReady(connector.getInternalGformsTemplate(formTemplateId)) { result =>
+    whenReady(connector.getGformsTemplate(formTemplateId, true)) { result =>
       result shouldBe Left("template not found")
     }
   }

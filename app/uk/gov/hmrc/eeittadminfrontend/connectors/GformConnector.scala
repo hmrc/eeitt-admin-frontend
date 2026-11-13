@@ -43,9 +43,13 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
-    formTemplateId: FormTemplateId
+    formTemplateId: FormTemplateId,
+    isInternal: Boolean = false
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = url"$gformUrl/formtemplates/$formTemplateId/sensitive"
+    val typePath =
+      if (isInternal) "internal"
+      else "sensitive"
+    val url = url"$gformUrl/formtemplates/$formTemplateId/$typePath"
     wsHttp
       .get(url)
       .execute[HttpResponse]
@@ -60,29 +64,6 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
       .recover { case ex =>
         val message =
           s"Unknown problem when trying to retrieve template $formTemplateId, by calling $url, exception: " + ex.getMessage
-        logger.error(message, ex)
-        Left(message)
-      }
-  }
-
-  def getInternalGformsTemplate(
-    formTemplateId: FormTemplateId
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = url"$gformUrl/formtemplates/$formTemplateId/internal"
-    wsHttp
-      .get(url)
-      .execute[HttpResponse]
-      .map { response =>
-        logger.info(s"Get internal $formTemplateId from gform ${response.status}")
-        if (response.status == 200) Right(response.json)
-        else {
-          logger.error(s"Wrong status code ${response.body} when calling $url, response body ${response.body}")
-          Left(response.body)
-        }
-      }
-      .recover { case ex =>
-        val message =
-          s"Unknown problem when trying to retrieve internal template $formTemplateId, by calling $url, exception: " + ex.getMessage
         logger.error(message, ex)
         Left(message)
       }

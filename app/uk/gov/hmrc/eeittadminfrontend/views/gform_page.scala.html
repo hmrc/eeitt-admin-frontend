@@ -46,8 +46,8 @@
     content = Text("Download")
 ))
 
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getInternalGformByFormType) {
-    <h2 class="govuk-heading-m">Find an internal JSON</h2>
+@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType) {
+    <h2 class="govuk-heading-m">Find a Gform Template</h2>
     @govukInput(Input(
         id = "value",
         name = "formTemplateId.value",
@@ -63,15 +63,15 @@
     ))
 }
 
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType) {
-    <h2 class="govuk-heading-m">Find a Gform Template</h2>
+@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getInternalGformByFormType) {
+    <h2 class="govuk-heading-m">Find an internal JSON</h2>
     @govukInput(Input(
         id = "value",
         name = "formTemplateId.value",
         label = Label(
-        isPageHeading = true,
-        classes = "govuk-label--s",
-        content = Text("Form Template ID:")
+            isPageHeading = true,
+            classes = "govuk-label--s",
+            content = Text("Form Template ID:")
         )
     ))
     @govukButton(Button(

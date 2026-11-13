@@ -116,4 +116,62 @@ class GformsControllerSpec
     contentAsString(result) shouldBe Json.prettyPrint(internalTemplate)
     verify(getRequestedFor(urlEqualTo(requestUrl)))
   }
+
+  it should "preserve the internal template error message when the lookup fails" in {
+    stubFor(
+      get(urlEqualTo(requestUrl))
+        .willReturn(aResponse().withStatus(404).withBody("template not found"))
+    )
+
+    val result = controller.getInternalGformByFormType.apply(
+      FakeRequest(POST, "/get-internal-gform")
+        .withSession("authToken" -> "test-token")
+        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
+    )
+
+    status(result) shouldBe OK
+    contentAsString(result) shouldBe
+      s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
+  }
+
+  "getGformByFormType" should "return the template JSON from the sensitive endpoint" in {
+    val sensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
+    val template = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
+    stubFor(
+      get(urlEqualTo(sensitiveUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", "application/json")
+            .withBody(Json.stringify(template))
+        )
+    )
+
+    val result = controller.getGformByFormType.apply(
+      FakeRequest(POST, "/get-gform")
+        .withSession("authToken" -> "test-token")
+        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
+    )
+
+    status(result) shouldBe OK
+    contentAsString(result) shouldBe Json.prettyPrint(template)
+    verify(getRequestedFor(urlEqualTo(sensitiveUrl)))
+  }
+
+  it should "preserve the template error message when the lookup fails" in {
+    stubFor(
+      get(urlEqualTo(s"/gform/formtemplates/${formTemplateId.value}/sensitive"))
+        .willReturn(aResponse().withStatus(404).withBody("template not found"))
+    )
+
+    val result = controller.getGformByFormType.apply(
+      FakeRequest(POST, "/get-gform")
+        .withSession("authToken" -> "test-token")
+        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
+    )
+
+    status(result) shouldBe OK
+    contentAsString(result) shouldBe
+      s"Problem when fetching form template: $formTemplateId. Reason: template not found"
+  }
 }
