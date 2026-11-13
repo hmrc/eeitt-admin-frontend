@@ -194,6 +194,12 @@ class GformsController @Inject() (
     }
 
   def getGformByFormType =
+    getFormTemplate(isInternal = false)
+
+  def getInternalGformByFormType =
+    getFormTemplate(isInternal = true)
+
+  private def getFormTemplate(isInternal: Boolean) =
     authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       gFormForm
@@ -201,10 +207,14 @@ class GformsController @Inject() (
         .fold(
           formWithErrors => Future.successful(BadRequest(gform_page(gFormForm))),
           gformIdAndVersion => {
-            logger.info(s"$username Queried for ${gformIdAndVersion.formTemplateId}")
-            gformConnector.getGformsTemplate(gformIdAndVersion.formTemplateId).map {
+            val formTemplateId = gformIdAndVersion.formTemplateId
+            logger.info(s"$username Queried for $formTemplateId")
+            val template =
+              gformConnector.getGformsTemplate(formTemplateId, isInternal)
+            template.map {
               case Left(ex) =>
-                Ok(s"Problem when fetching form template: ${gformIdAndVersion.formTemplateId}. Reason: $ex")
+                val templateType = if (isInternal) "internal form template" else "form template"
+                Ok(s"Problem when fetching $templateType: $formTemplateId. Reason: $ex")
               case Right(r) => Ok(Json.prettyPrint(r))
             }
           }

@@ -43,9 +43,13 @@ class GformConnector @Inject() (wsHttp: HttpClientV2, sc: ServicesConfig) {
   val gformUrl = s"${sc.baseUrl("gform")}/gform"
 
   def getGformsTemplate(
-    formTemplateId: FormTemplateId
+    formTemplateId: FormTemplateId,
+    isInternal: Boolean = false
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, JsValue]] = {
-    val url = url"$gformUrl/formtemplates/$formTemplateId/sensitive"
+    val typePath =
+      if (isInternal) "internal"
+      else "sensitive"
+    val url = url"$gformUrl/formtemplates/$formTemplateId/$typePath"
     wsHttp
       .get(url)
       .execute[HttpResponse]

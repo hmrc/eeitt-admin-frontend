@@ -6,6 +6,7 @@
 GET        /                                                uk.gov.hmrc.eeittadminfrontend.controllers.AuthController.login
 
 GET        /get-blob                                        uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getBlob
+POST       /get-internal-gform                              uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getInternalGformByFormType
 POST       /get-gform                                       uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getGformByFormType
 GET        /get-all-templates                               uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.getAllTemplates
 GET        /form-templates-pii-home                         uk.gov.hmrc.eeittadminfrontend.controllers.GformsController.gformFormTemplatesWithPIIInTitleHome
