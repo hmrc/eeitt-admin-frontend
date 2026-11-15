@@ -53,7 +53,9 @@ class GformsControllerSpec
   implicit private val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   private val formTemplateId = FormTemplateId("test-form")
   private val internalTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "field" -> "value")
-  private val requestUrl = s"/gform/formtemplates/${formTemplateId.value}/internal"
+  private val requestSensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
+  private val requestInternalUrl = s"/gform/formtemplates/${formTemplateId.value}/internal"
+
   private val gformConnector = new GformConnector(
     mkHttpClientV2(),
     new ServicesConfig(
@@ -97,7 +99,7 @@ class GformsControllerSpec
 
   "getInternalGformByFormType" should "return the internal JSON for the submitted form template ID" in {
     stubFor(
-      get(urlEqualTo(requestUrl))
+      get(urlEqualTo(requestInternalUrl))
         .willReturn(
           aResponse()
             .withStatus(200)
@@ -114,12 +116,12 @@ class GformsControllerSpec
 
     status(result) shouldBe OK
     contentAsString(result) shouldBe Json.prettyPrint(internalTemplate)
-    verify(getRequestedFor(urlEqualTo(requestUrl)))
+    verify(getRequestedFor(urlEqualTo(requestInternalUrl)))
   }
 
   it should "preserve the internal template error message when the lookup fails" in {
     stubFor(
-      get(urlEqualTo(requestUrl))
+      get(urlEqualTo(requestInternalUrl))
         .willReturn(aResponse().withStatus(404).withBody("template not found"))
     )
 
@@ -135,10 +137,10 @@ class GformsControllerSpec
   }
 
   "getGformByFormType" should "return the template JSON from the sensitive endpoint" in {
-    val sensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
+    // val sensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
     val template = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
     stubFor(
-      get(urlEqualTo(sensitiveUrl))
+      get(urlEqualTo(requestSensitiveUrl))
         .willReturn(
           aResponse()
             .withStatus(200)
@@ -155,12 +157,12 @@ class GformsControllerSpec
 
     status(result) shouldBe OK
     contentAsString(result) shouldBe Json.prettyPrint(template)
-    verify(getRequestedFor(urlEqualTo(sensitiveUrl)))
+    verify(getRequestedFor(urlEqualTo(requestSensitiveUrl)))
   }
 
   it should "preserve the template error message when the lookup fails" in {
     stubFor(
-      get(urlEqualTo(s"/gform/formtemplates/${formTemplateId.value}/sensitive"))
+      get(urlEqualTo(requestSensitiveUrl))
         .willReturn(aResponse().withStatus(404).withBody("template not found"))
     )
 

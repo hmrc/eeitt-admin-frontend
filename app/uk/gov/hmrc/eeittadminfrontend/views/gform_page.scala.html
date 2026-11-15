@@ -57,27 +57,19 @@
         content = Text("Form Template ID:")
         )
     ))
-    @govukButton(Button(
-        preventDoubleClick = Some(true),
-        content = Text("Search")
-    ))
-}
-
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getInternalGformByFormType) {
-    <h2 class="govuk-heading-m">Find an internal JSON</h2>
-    @govukInput(Input(
-        id = "value",
-        name = "formTemplateId.value",
-        label = Label(
-            isPageHeading = true,
-            classes = "govuk-label--s",
-            content = Text("Form Template ID:")
-        )
-    ))
-    @govukButton(Button(
-        preventDoubleClick = Some(true),
-        content = Text("Search")
-    ))
+    <div class="govuk-button-group">
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Search")
+        ))
+        @govukButton(Button(
+            preventDoubleClick = Some(true),
+            content = Text("Search Internal"),
+            attributes = Map(
+                "formaction" -> uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getInternalGformByFormType.url
+            )
+        ))
+    </div>
 }
 
 @formWithCSRF(action = uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.deleteGformTemplate) {
