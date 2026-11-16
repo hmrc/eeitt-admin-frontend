@@ -23,7 +23,7 @@ import org.apache.pekko.stream.SystemMaterializer
 import munit.FunSuite
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.ControllerComponents
 import play.api.test.{ FakeRequest, Helpers }
 import play.api.test.Helpers._
@@ -48,8 +48,21 @@ class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSuppo
   implicit private val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   private val formTemplateId = FormTemplateId("test-form")
   private val internalTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "field" -> "value")
+  private val sensitiveTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
   private val requestExternalUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
   private val requestInternalUrl = s"/gform/formtemplates/${formTemplateId.value}/internal"
+  private case class TemplateEndpoint(
+    templateType: String,
+    requestUrl: String,
+    requestPath: String,
+    template: JsObject,
+    isInternal: Boolean
+  )
+
+  private val templateEndpoints = List(
+    TemplateEndpoint("internal", requestInternalUrl, "/get-internal-gform", internalTemplate, isInternal = true),
+    TemplateEndpoint("sensitive", requestExternalUrl, "/get-gform", sensitiveTemplate, isInternal = false)
+  )
 
   private val gformConnector = new GformConnector(
     mkHttpClientV2(),
@@ -92,86 +105,56 @@ class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSuppo
     val _ = Await.result(actorSystem.terminate(), 5.seconds)
   }
 
-  test("getInternalGformByFormType returns the internal JSON for the submitted form template ID") {
-    stubFor(
-      get(urlEqualTo(requestInternalUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withHeader("Content-Type", "application/json")
-            .withBody(Json.stringify(internalTemplate))
-        )
-    )
+  test("getFormTemplate returns the JSON for the submitted form template ID") {
+    templateEndpoints.foreach { endpoint =>
+      stubFor(
+        get(urlEqualTo(endpoint.requestUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(200)
+              .withHeader("Content-Type", "application/json")
+              .withBody(Json.stringify(endpoint.template))
+          )
+      )
 
-    val result = controller.getInternalGformByFormType.apply(
-      FakeRequest(POST, "/get-internal-gform")
+      val fakeRequest = FakeRequest(POST, endpoint.requestPath)
         .withSession("authToken" -> "test-token")
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-    )
+      val result =
+        if (endpoint.isInternal) controller.getInternalGformByFormType.apply(fakeRequest)
+        else controller.getGformByFormType.apply(fakeRequest)
 
-    assertEquals(status(result), OK)
-    assertEquals(contentAsString(result), Json.prettyPrint(internalTemplate))
-    verify(getRequestedFor(urlEqualTo(requestInternalUrl)))
+      assertEquals(status(result), OK, s"${endpoint.templateType} template status")
+      assertEquals(
+        contentAsString(result),
+        Json.prettyPrint(endpoint.template),
+        s"${endpoint.templateType} template body"
+      )
+      verify(getRequestedFor(urlEqualTo(endpoint.requestUrl)))
+    }
   }
 
-  test("getInternalGformByFormType preserves the internal template error message when the lookup fails") {
-    stubFor(
-      get(urlEqualTo(requestInternalUrl))
-        .willReturn(aResponse().withStatus(404).withBody("template not found"))
-    )
+  test("getFormTemplate preserves the downstream error message when the lookup fails") {
+    templateEndpoints.foreach { endpoint =>
+      stubFor(
+        get(urlEqualTo(endpoint.requestUrl))
+          .willReturn(aResponse().withStatus(404).withBody("template not found"))
+      )
 
-    val result = controller.getInternalGformByFormType.apply(
-      FakeRequest(POST, "/get-internal-gform")
+      val fakeRequest = FakeRequest(POST, endpoint.requestPath)
         .withSession("authToken" -> "test-token")
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-    )
+      val result =
+        if (endpoint.isInternal) controller.getInternalGformByFormType.apply(fakeRequest)
+        else controller.getGformByFormType.apply(fakeRequest)
+      val expectedTemplateType = if (endpoint.isInternal) "internal form template" else "form template"
 
-    assertEquals(status(result), OK)
-    assertEquals(
-      contentAsString(result),
-      s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
-    )
-  }
-
-  test("getGformByFormType returns the template JSON from the sensitive endpoint") {
-    val template = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
-    stubFor(
-      get(urlEqualTo(requestExternalUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withHeader("Content-Type", "application/json")
-            .withBody(Json.stringify(template))
-        )
-    )
-
-    val result = controller.getGformByFormType.apply(
-      FakeRequest(POST, "/get-gform")
-        .withSession("authToken" -> "test-token")
-        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-    )
-
-    assertEquals(status(result), OK)
-    assertEquals(contentAsString(result), Json.prettyPrint(template))
-    verify(getRequestedFor(urlEqualTo(requestExternalUrl)))
-  }
-
-  test("getGformByFormType preserves the template error message when the lookup fails") {
-    stubFor(
-      get(urlEqualTo(requestExternalUrl))
-        .willReturn(aResponse().withStatus(404).withBody("template not found"))
-    )
-
-    val result = controller.getGformByFormType.apply(
-      FakeRequest(POST, "/get-gform")
-        .withSession("authToken" -> "test-token")
-        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-    )
-
-    assertEquals(status(result), OK)
-    assertEquals(
-      contentAsString(result),
-      s"Problem when fetching form template: $formTemplateId. Reason: template not found"
-    )
+      assertEquals(status(result), OK, s"${endpoint.templateType} template status")
+      assertEquals(
+        contentAsString(result),
+        s"Problem when fetching $expectedTemplateType: $formTemplateId. Reason: template not found",
+        s"${endpoint.templateType} template error"
+      )
+    }
   }
 }
