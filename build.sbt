@@ -15,6 +15,11 @@ lazy val microservice = Project(appName, file("."))
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 9199,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
+    // Keep ScalaTest's CLI options from being interpreted by MUnit.
+    Test / testOptions ~= (_.map {
+      case Tests.Argument(None, args) => Tests.Argument(TestFrameworks.ScalaTest, args: _*)
+      case option => option
+    }),
     dependencyOverrides ++= AppDependencies.dependencyOverrides
   )
   .settings(
