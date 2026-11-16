@@ -20,10 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.{ aResponse, get, getRequ
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.SystemMaterializer
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.matchers.should.Matchers
+import munit.FunSuite
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -43,9 +40,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.duration._
 
-class GformsControllerSpec
-    extends AnyFlatSpecLike with Matchers with ScalaFutures with MockitoSugar with BeforeAndAfterAll
-    with WiremockSupport with HttpClientV2Support {
+class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSupport with HttpClientV2Support {
 
   implicit private val ec: ExecutionContext = ExecutionContext.global
   private val actorSystem = ActorSystem("GformsControllerSpec")
@@ -53,7 +48,7 @@ class GformsControllerSpec
   implicit private val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   private val formTemplateId = FormTemplateId("test-form")
   private val internalTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "field" -> "value")
-  private val requestSensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
+  private val requestExternalUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
   private val requestInternalUrl = s"/gform/formtemplates/${formTemplateId.value}/internal"
 
   private val gformConnector = new GformConnector(
@@ -89,15 +84,15 @@ class GformsControllerSpec
     mock[uk.gov.hmrc.eeittadminfrontend.views.html.confirmation]
   )
 
-  override protected def beforeAll(): Unit =
+  override def beforeAll(): Unit =
     startServer()
 
-  override protected def afterAll(): Unit = {
+  override def afterAll(): Unit = {
     stopServer()
     val _ = Await.result(actorSystem.terminate(), 5.seconds)
   }
 
-  "getInternalGformByFormType" should "return the internal JSON for the submitted form template ID" in {
+  test("getInternalGformByFormType returns the internal JSON for the submitted form template ID") {
     stubFor(
       get(urlEqualTo(requestInternalUrl))
         .willReturn(
@@ -114,12 +109,12 @@ class GformsControllerSpec
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
     )
 
-    status(result) shouldBe OK
-    contentAsString(result) shouldBe Json.prettyPrint(internalTemplate)
+    assertEquals(status(result), OK)
+    assertEquals(contentAsString(result), Json.prettyPrint(internalTemplate))
     verify(getRequestedFor(urlEqualTo(requestInternalUrl)))
   }
 
-  it should "preserve the internal template error message when the lookup fails" in {
+  test("getInternalGformByFormType preserves the internal template error message when the lookup fails") {
     stubFor(
       get(urlEqualTo(requestInternalUrl))
         .willReturn(aResponse().withStatus(404).withBody("template not found"))
@@ -131,16 +126,17 @@ class GformsControllerSpec
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
     )
 
-    status(result) shouldBe OK
-    contentAsString(result) shouldBe
+    assertEquals(status(result), OK)
+    assertEquals(
+      contentAsString(result),
       s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
+    )
   }
 
-  "getGformByFormType" should "return the template JSON from the sensitive endpoint" in {
-    // val sensitiveUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
+  test("getGformByFormType returns the template JSON from the sensitive endpoint") {
     val template = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
     stubFor(
-      get(urlEqualTo(requestSensitiveUrl))
+      get(urlEqualTo(requestExternalUrl))
         .willReturn(
           aResponse()
             .withStatus(200)
@@ -155,14 +151,14 @@ class GformsControllerSpec
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
     )
 
-    status(result) shouldBe OK
-    contentAsString(result) shouldBe Json.prettyPrint(template)
-    verify(getRequestedFor(urlEqualTo(requestSensitiveUrl)))
+    assertEquals(status(result), OK)
+    assertEquals(contentAsString(result), Json.prettyPrint(template))
+    verify(getRequestedFor(urlEqualTo(requestExternalUrl)))
   }
 
-  it should "preserve the template error message when the lookup fails" in {
+  test("getGformByFormType preserves the template error message when the lookup fails") {
     stubFor(
-      get(urlEqualTo(requestSensitiveUrl))
+      get(urlEqualTo(requestExternalUrl))
         .willReturn(aResponse().withStatus(404).withBody("template not found"))
     )
 
@@ -172,8 +168,10 @@ class GformsControllerSpec
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
     )
 
-    status(result) shouldBe OK
-    contentAsString(result) shouldBe
+    assertEquals(status(result), OK)
+    assertEquals(
+      contentAsString(result),
       s"Problem when fetching form template: $formTemplateId. Reason: template not found"
+    )
   }
 }
