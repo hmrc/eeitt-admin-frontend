@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock.{ aResponse, get, getRequestedFor, stubFor, urlEqualTo, verify }
-import org.apache.pekko.actor.ActorSystem
+import com.github.tomakehurst.wiremock.client.WireMock.{ aResponse, exactly, get, getRequestedFor, stubFor, urlEqualTo, verify }
 import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.SystemMaterializer
+import org.apache.pekko.stream.testkit.NoMaterializer
 import munit.FunSuite
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.Mockito.mock
 import play.api.Configuration
 import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.ControllerComponents
@@ -32,50 +31,47 @@ import uk.gov.hmrc.eeittadminfrontend.connectors.GformConnector
 import uk.gov.hmrc.eeittadminfrontend.models.FormTemplateId
 import uk.gov.hmrc.eeittadminfrontend.services.{ BatchUploadService, GformService }
 import uk.gov.hmrc.eeittadminfrontend.validators.FormTemplateValidator
+import uk.gov.hmrc.eeittadminfrontend.views.html._
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import uk.gov.hmrc.internalauth.client.{ FrontendAuthComponents, Predicate, Retrieval }
 import uk.gov.hmrc.internalauth.client.test.{ FrontendAuthComponentsStub, StubBehaviour }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.{ Await, ExecutionContext, Future }
-import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future }
 
-class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupport with HttpClientV2Support {
+class GformsControllerSuite extends FunSuite with WiremockSupport with HttpClientV2Support {
 
-  implicit private val ec: ExecutionContext = ExecutionContext.global
-  private val actorSystem = ActorSystem("GformsControllerSuite")
-  implicit private val materializer: Materializer = SystemMaterializer(actorSystem).materializer
+  // Responses are strict, so no stream needs to be materialized.
+  implicit private val materializer: Materializer = NoMaterializer
   implicit private val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
+  implicit private val ec: ExecutionContext = controllerComponents.executionContext
   private val formTemplateId = FormTemplateId("test-form")
   private val internalTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "field" -> "value")
   private val sensitiveTemplate = Json.obj("formTemplateId" -> formTemplateId.value, "representation" -> "sensitive")
   private val requestExternalUrl = s"/gform/formtemplates/${formTemplateId.value}/sensitive"
   private val requestInternalUrl = s"/gform/formtemplates/${formTemplateId.value}/internal"
   private case class TemplateEndpoint(
-    templateType: String,
     requestUrl: String,
     requestPath: String,
     template: JsObject,
     isInternal: Boolean,
-    error: String
+    expectedError: String
   )
 
   private val templateEndpoints = List(
     TemplateEndpoint(
-      "internal",
       requestInternalUrl,
       "/get-internal-gform",
       internalTemplate,
       isInternal = true,
-      error = s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
+      expectedError = s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
     ),
     TemplateEndpoint(
-      "sensitive",
       requestExternalUrl,
       "/get-gform",
       sensitiveTemplate,
       isInternal = false,
-      error = s"Problem when fetching form template: $formTemplateId. Reason: template not found"
+      expectedError = s"Problem when fetching form template: $formTemplateId. Reason: template not found"
     )
   )
 
@@ -99,26 +95,27 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
   private val controller = new GformsController(
     frontendAuthComponents,
     gformConnector,
-    mock[GformService],
-    mock[FormTemplateValidator],
-    mock[BatchUploadService],
+    mock(classOf[GformService]),
+    mock(classOf[FormTemplateValidator]),
+    mock(classOf[BatchUploadService]),
     Helpers.stubMessagesControllerComponents(),
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplate_pii],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplates_pii],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.gform_formtemplates_pii_home],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.gform_page],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.batch_upload],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.handlebars_template],
-    mock[uk.gov.hmrc.eeittadminfrontend.views.html.confirmation]
+    mock(classOf[gform_formtemplate_pii]),
+    mock(classOf[gform_formtemplates_pii]),
+    mock(classOf[gform_formtemplates_pii_home]),
+    mock(classOf[gform_page]),
+    mock(classOf[batch_upload]),
+    mock(classOf[handlebars_template]),
+    mock(classOf[confirmation])
   )
 
   override def beforeAll(): Unit =
     startServer()
 
-  override def afterAll(): Unit = {
+  override def beforeEach(context: BeforeEach): Unit =
+    wireMockServer.resetAll()
+
+  override def afterAll(): Unit =
     stopServer()
-    val _ = Await.result(actorSystem.terminate(), 5.seconds)
-  }
 
   templateEndpoints.foreach { endpoint =>
     val fakeRequest = FakeRequest(POST, endpoint.requestPath)
@@ -138,16 +135,15 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
 
       val result = controller.getFormTemplate(endpoint.isInternal).apply(fakeRequest)
 
-      assertEquals(status(result), OK, s"${endpoint.templateType} template status")
-      assertEquals(
-        contentAsString(result),
-        Json.prettyPrint(endpoint.template),
-        s"${endpoint.templateType} template body"
-      )
-      verify(getRequestedFor(urlEqualTo(endpoint.requestUrl)))
+      assertEquals(status(result), OK)
+      assertEquals(contentAsString(result), Json.prettyPrint(endpoint.template))
+      assertEquals(contentType(result), Some("text/plain"))
+      verify(exactly(1), getRequestedFor(urlEqualTo(endpoint.requestUrl)))
     }
 
-    test(s"getFormTemplate on ${endpoint.requestPath} returns error when the request fails") {
+    test(
+      s"getFormTemplate on ${endpoint.requestPath} responds 200 with an error message when the template lookup returns 404"
+    ) {
       stubFor(
         get(urlEqualTo(endpoint.requestUrl))
           .willReturn(aResponse().withStatus(404).withBody("template not found"))
@@ -155,12 +151,9 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
 
       val errorResult = controller.getFormTemplate(endpoint.isInternal).apply(fakeRequest)
 
-      assertEquals(status(errorResult), OK, s"${endpoint.templateType} template status")
-      assertEquals(
-        contentAsString(errorResult),
-        endpoint.error,
-        s"${endpoint.templateType} template error"
-      )
+      assertEquals(status(errorResult), OK)
+      assertEquals(contentAsString(errorResult), endpoint.expectedError)
+      verify(exactly(1), getRequestedFor(urlEqualTo(endpoint.requestUrl)))
     }
   }
 }
