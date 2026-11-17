@@ -46,7 +46,7 @@
     content = Text("Download")
 ))
 
-@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getGformByFormType) {
+@formWithCSRF(action=uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getFormTemplate(false)) {
     <h2 class="govuk-heading-m">Find a Gform Template</h2>
     @govukInput(Input(
         id = "value",
@@ -66,7 +66,7 @@
             preventDoubleClick = Some(true),
             content = Text("Search Internal"),
             attributes = Map(
-                "formaction" -> uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getInternalGformByFormType.url
+                "formaction" -> uk.gov.hmrc.eeittadminfrontend.controllers.routes.GformsController.getFormTemplate(true).url
             )
         ))
     </div>

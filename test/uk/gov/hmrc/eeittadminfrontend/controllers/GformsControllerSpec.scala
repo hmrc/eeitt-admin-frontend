@@ -56,12 +56,27 @@ class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSuppo
     requestUrl: String,
     requestPath: String,
     template: JsObject,
-    isInternal: Boolean
+    isInternal: Boolean,
+    error: String
   )
 
   private val templateEndpoints = List(
-    TemplateEndpoint("internal", requestInternalUrl, "/get-internal-gform", internalTemplate, isInternal = true),
-    TemplateEndpoint("sensitive", requestExternalUrl, "/get-gform", sensitiveTemplate, isInternal = false)
+    TemplateEndpoint(
+      "internal",
+      requestInternalUrl,
+      "/get-internal-gform",
+      internalTemplate,
+      isInternal = true,
+      error = s"Problem when fetching internal form template: $formTemplateId. Reason: template not found"
+    ),
+    TemplateEndpoint(
+      "sensitive",
+      requestExternalUrl,
+      "/get-gform",
+      sensitiveTemplate,
+      isInternal = false,
+      error = s"Problem when fetching form template: $formTemplateId. Reason: template not found"
+    )
   )
 
   private val gformConnector = new GformConnector(
@@ -120,9 +135,7 @@ class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSuppo
       val fakeRequest = FakeRequest(POST, endpoint.requestPath)
         .withSession("authToken" -> "test-token")
         .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-      val result =
-        if (endpoint.isInternal) controller.getInternalGformByFormType.apply(fakeRequest)
-        else controller.getGformByFormType.apply(fakeRequest)
+      val result = controller.getFormTemplate(endpoint.isInternal).apply(fakeRequest)
 
       assertEquals(status(result), OK, s"${endpoint.templateType} template status")
       assertEquals(
@@ -131,28 +144,19 @@ class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSuppo
         s"${endpoint.templateType} template body"
       )
       verify(getRequestedFor(urlEqualTo(endpoint.requestUrl)))
-    }
-  }
 
-  test("getFormTemplate preserves the downstream error message when the lookup fails") {
-    templateEndpoints.foreach { endpoint =>
+      // check error
       stubFor(
         get(urlEqualTo(endpoint.requestUrl))
           .willReturn(aResponse().withStatus(404).withBody("template not found"))
       )
 
-      val fakeRequest = FakeRequest(POST, endpoint.requestPath)
-        .withSession("authToken" -> "test-token")
-        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
-      val result =
-        if (endpoint.isInternal) controller.getInternalGformByFormType.apply(fakeRequest)
-        else controller.getGformByFormType.apply(fakeRequest)
-      val expectedTemplateType = if (endpoint.isInternal) "internal form template" else "form template"
+      val errorResult = controller.getFormTemplate(endpoint.isInternal).apply(fakeRequest)
 
-      assertEquals(status(result), OK, s"${endpoint.templateType} template status")
+      assertEquals(status(errorResult), OK, s"${endpoint.templateType} template status")
       assertEquals(
-        contentAsString(result),
-        s"Problem when fetching $expectedTemplateType: $formTemplateId. Reason: template not found",
+        contentAsString(errorResult),
+        endpoint.error,
         s"${endpoint.templateType} template error"
       )
     }

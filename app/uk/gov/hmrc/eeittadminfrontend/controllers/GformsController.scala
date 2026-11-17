@@ -193,13 +193,7 @@ class GformsController @Inject() (
       }
     }
 
-  def getGformByFormType =
-    getFormTemplate(isInternal = false)
-
-  def getInternalGformByFormType =
-    getFormTemplate(isInternal = true)
-
-  private def getFormTemplate(isInternal: Boolean) =
+  def getFormTemplate(isInternal: Boolean) =
     authorizedRead.async { implicit request =>
       val username = request.retrieval.value
       gFormForm
