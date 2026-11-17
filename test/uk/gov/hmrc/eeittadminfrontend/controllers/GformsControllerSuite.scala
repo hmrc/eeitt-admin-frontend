@@ -40,10 +40,10 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.duration._
 
-class GformsControllerSpec extends FunSuite with MockitoSugar with WiremockSupport with HttpClientV2Support {
+class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupport with HttpClientV2Support {
 
   implicit private val ec: ExecutionContext = ExecutionContext.global
-  private val actorSystem = ActorSystem("GformsControllerSpec")
+  private val actorSystem = ActorSystem("GformsControllerSuite")
   implicit private val materializer: Materializer = SystemMaterializer(actorSystem).materializer
   implicit private val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   private val formTemplateId = FormTemplateId("test-form")
