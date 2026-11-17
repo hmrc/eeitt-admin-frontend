@@ -145,10 +145,10 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
         s"${endpoint.templateType} template body"
       )
       verify(getRequestedFor(urlEqualTo(endpoint.requestUrl)))
-
     }
 
-    test(s"getFormTemplate on ${endpoint.requestPath} returns error when the request fails") {      stubFor(
+    test(s"getFormTemplate on ${endpoint.requestPath} returns error when the request fails") {
+      stubFor(
         get(urlEqualTo(endpoint.requestUrl))
           .willReturn(aResponse().withStatus(404).withBody("template not found"))
       )
