@@ -120,8 +120,12 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
     val _ = Await.result(actorSystem.terminate(), 5.seconds)
   }
 
-  test("getFormTemplate returns the JSON for the submitted form template ID") {
-    templateEndpoints.foreach { endpoint =>
+  templateEndpoints.foreach { endpoint =>
+    val fakeRequest = FakeRequest(POST, endpoint.requestPath)
+      .withSession("authToken" -> "test-token")
+      .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
+
+    test(s"getFormTemplate on ${endpoint.requestPath} returns the JSON for the submitted form template ID") {
       stubFor(
         get(urlEqualTo(endpoint.requestUrl))
           .willReturn(
@@ -132,9 +136,6 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
           )
       )
 
-      val fakeRequest = FakeRequest(POST, endpoint.requestPath)
-        .withSession("authToken" -> "test-token")
-        .withFormUrlEncodedBody("formTemplateId.value" -> formTemplateId.value)
       val result = controller.getFormTemplate(endpoint.isInternal).apply(fakeRequest)
 
       assertEquals(status(result), OK, s"${endpoint.templateType} template status")
@@ -145,8 +146,9 @@ class GformsControllerSuite extends FunSuite with MockitoSugar with WiremockSupp
       )
       verify(getRequestedFor(urlEqualTo(endpoint.requestUrl)))
 
-      // check error
-      stubFor(
+    }
+
+    test(s"getFormTemplate on ${endpoint.requestPath} returns error when the request fails") {      stubFor(
         get(urlEqualTo(endpoint.requestUrl))
           .willReturn(aResponse().withStatus(404).withBody("template not found"))
       )
