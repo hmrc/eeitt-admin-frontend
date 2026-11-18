@@ -19,12 +19,10 @@ package uk.gov.hmrc.eeittadminfrontend.common
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
-import org.scalatest.Suite
 
 import scala.util.Random
 
 trait WiremockSupport {
-  this: Suite =>
   val wiremockPort: Int = 10000 + Random.nextInt(10000)
   val wireMockServer: WireMockServer = new WireMockServer(options().port(wiremockPort))
   val url: String = s"http://localhost:$wiremockPort"

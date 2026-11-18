@@ -60,6 +60,7 @@ object AppDependencies {
       "com.github.tomakehurst"  % "wiremock-jre8"          % "3.0.1"             % scope,
       "org.scalamock"          %% "scalamock"              % "6.0.0"             % scope,
       "org.scalatest"          %% "scalatest"              % "3.2.18"            % scope,
+      "org.scalameta"          %% "munit"                  % "1.3.6"             % scope,
       "com.vladsch.flexmark"    % "flexmark-all"           % "0.64.8"            % scope
     )
 }
