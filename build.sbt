@@ -20,7 +20,8 @@ lazy val microservice = Project(appName, file("."))
       case Tests.Argument(None, args) => Tests.Argument(TestFrameworks.ScalaTest, args: _*)
       case option => option
     }),
-    dependencyOverrides ++= AppDependencies.dependencyOverrides
+    dependencyOverrides ++= AppDependencies.dependencyOverrides,
+    PlaywrightBrowserDownload.playwrightBrowserDownloadSetting
   )
   .settings(
     scalacOptions ++= Seq(
