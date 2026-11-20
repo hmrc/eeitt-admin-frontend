@@ -17,6 +17,7 @@
 package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import com.microsoft.playwright._
+import org.slf4j.{ Logger, LoggerFactory }
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
@@ -29,6 +30,9 @@ class ScreenshotController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
   messagesControllerComponents: MessagesControllerComponents
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
+
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
   def test(browserType: String) = authorizedRead { request =>
     val options = new Playwright.CreateOptions()
 
@@ -46,6 +50,10 @@ class ScreenshotController @Inject() (
           ).asJava
         )
       }
+
+    val optionsAsScalaMap: scala.collection.mutable.Map[String, String] = options.env.asScala
+
+    logger.info("Playwright options: " + optionsAsScalaMap)
 
     val playwright: Playwright = Playwright.create(options)
     val browser: Browser = browserType match {
