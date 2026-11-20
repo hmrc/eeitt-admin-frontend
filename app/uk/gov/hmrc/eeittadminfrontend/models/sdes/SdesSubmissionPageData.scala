@@ -191,6 +191,7 @@ object SdesDestination {
   case object HmrcIlluminate extends SdesDestination
   case object DataStoreLegacy extends SdesDestination // Alias for HmrcIlluminate (deprecated)
   case object DataStore extends SdesDestination
+  case object DataStoreScr extends SdesDestination
   case object InfoArchive extends SdesDestination
   case object Caseflow extends SdesDestination
   case object Pega extends SdesDestination
@@ -210,6 +211,7 @@ object SdesDestination {
       case HmrcIlluminate  => JsString("HmrcIlluminate")
       case DataStoreLegacy => JsString("DataStoreLegacy")
       case DataStore       => JsString("DataStore")
+      case DataStoreScr    => JsString("DataStoreSCR")
       case InfoArchive     => JsString("InfoArchive")
       case Caseflow        => JsString("Caseflow")
       case Pega            => JsString("Pega")
@@ -224,6 +226,7 @@ object SdesDestination {
         case JsString("HmrcIlluminate")  => JsSuccess(HmrcIlluminate)
         case JsString("DataStoreLegacy") => JsSuccess(DataStoreLegacy)
         case JsString("DataStore")       => JsSuccess(DataStore)
+        case JsString("DataStoreSCR")    => JsSuccess(DataStoreScr)
         case JsString("InfoArchive")     => JsSuccess(InfoArchive)
         case JsString("Caseflow")        => JsSuccess(Caseflow)
         case JsString("Pega")            => JsSuccess(Pega)
@@ -241,6 +244,7 @@ object SdesDestination {
     case HmrcIlluminate  => "HmrcIlluminate"
     case DataStoreLegacy => "DataStoreLegacy"
     case DataStore       => "DataStore"
+    case DataStoreScr    => "DataStoreSCR"
     case InfoArchive     => "InfoArchive"
     case Caseflow        => "Caseflow"
     case Pega            => "Pega"
@@ -254,6 +258,7 @@ object SdesDestination {
     case "HmrcIlluminate"  => HmrcIlluminate
     case "DataStoreLegacy" => DataStoreLegacy
     case "DataStore"       => DataStore
+    case "DataStoreSCR"    => DataStoreScr
     case "InfoArchive"     => InfoArchive
     case "Caseflow"        => Caseflow
     case "Pega"            => Pega
@@ -264,7 +269,7 @@ object SdesDestination {
 
   def fromNameForWorkItems(destination: SdesDestination): String = destination match {
     case Dms             => "DMS / Caseflow / Pega"
-    case DataStore       => "Data Store (incl legacy) / Illuminate"
+    case DataStore       => "Data Store (incl SCR & legacy) / Illuminate"
     case InfoArchive     => "Info Archive"
     case DataLakehouse   => "Data Lakehouse"
     case AsyncHandlebars => "Async Handlebars"
