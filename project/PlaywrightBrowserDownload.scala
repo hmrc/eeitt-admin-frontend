@@ -21,14 +21,16 @@ object PlaywrightBrowserDownload {
     playwrightBrowserDownload := {
       val confBrowsersDir = (baseDirectory.value / "conf" / "browsers"/ "bin")
       Process("npm install playwright@1.65.0 --no-save") #&&
-        Process("npm exec playwright install") #&&
+        Process("npm exec playwright install chromium-headless-shell ffmpeg", None, "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS" -> "1") #&&
         Process("mkdir " + (baseDirectory.value / "conf" / "browsers").getAbsolutePath) ###
         Process("mkdir " + confBrowsersDir.getAbsolutePath) ###
         Process(Seq("cp", "-R", browserDir, confBrowsersDir.getAbsolutePath)) !
     },
     executableFilesInTar := Seq(
       "chromium_headless_shell-1254/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-      "chromium_headless_shell-1254/chrome-headless-shell-linux64/chrome-headless-shell"),
+      "chromium_headless_shell-1254/chrome-headless-shell-linux64/chrome-headless-shell",
+      "ffmpeg-1013/ffmpeg-mac",
+      "ffmpeg-1013/ffmpeg-linux"),
     dist := { dist dependsOn playwrightBrowserDownload }.value
   )
 }
