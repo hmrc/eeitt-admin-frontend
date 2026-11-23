@@ -152,3 +152,5 @@ GET         /translation-audit/:translationAuditId                      uk.gov.h
 GET         /data-access/:page                                          uk.gov.hmrc.eeittadminfrontend.controllers.DataAccessController.dataAccess(page: Int)
 
 GET         /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
+
+GET         /screenshot/test/:browserType          uk.gov.hmrc.eeittadminfrontend.controllers.ScreenshotController.test(browserType: String)
