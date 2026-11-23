@@ -185,7 +185,7 @@ class EnvelopeController @Inject() (
         illuminateResponse    <- gformConnector.downloadHmrcIlluminate(EnvelopeId(accessEnvelope.envelopeId))
         dataLakehouseResponse <- gformConnector.downloadDataLakehouse(EnvelopeId(accessEnvelope.envelopeId))
       } yield (destination, dataStoreResponse.status, illuminateResponse.status, dataLakehouseResponse.status) match {
-        case (Some(SdesDestination.DataStore), 200, _, _) =>
+        case (Some(SdesDestination.DataStore) | Some(SdesDestination.DataStoreScr), 200, _, _) =>
           gformService.logSensitiveDataAccess(
             CustomerDataAccessLog(username, "downloaded DataStore JSON file", accessEnvelope)
           )
