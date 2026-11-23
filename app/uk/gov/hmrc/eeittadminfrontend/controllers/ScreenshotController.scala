@@ -129,20 +129,10 @@ class ScreenshotController @Inject() (
     }
     val context: BrowserContext = browser.newContext()
     val page: Page = context.newPage()
-    val authUrl = "https://www.qa.tax.service.gov.uk/auth-login-stub/gg-sign-in"
-    val screenshotUrl =
-      "https://www.qa.tax.service.gov.uk/submissions/form/give-additional-information-for-creative-industry-tax-relief-or-credit/automatic-capture?n=4,8,n9&se=t&ff=t"
-    val response: Response = page.navigate(
-      authUrl
-    )
-    page
-      .getByLabel("Redirect URL")
-      .fill(
-        s"https://www.qa.tax.service.gov.uk/submissions/new-form/give-additional-information-for-creative-industry-tax-relief-or-credit"
-      );
+    val authUrl =
+      "https://admin.qa.tax.service.gov.uk/internal-auth-frontend/sign-in?continue_url=%2Feeitt-admin-frontend"
+    val response: Response = page.navigate(authUrl)
 
-    page.locator("#submit-top").click()
-    page.navigate(screenshotUrl)
     val screenshot = page.screenshot(
       new Page.ScreenshotOptions().setFullPage(true)
     )
