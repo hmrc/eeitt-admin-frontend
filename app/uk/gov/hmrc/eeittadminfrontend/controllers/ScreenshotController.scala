@@ -129,14 +129,12 @@ class ScreenshotController @Inject() (
     }
     val context: BrowserContext = browser.newContext()
     val page: Page = context.newPage()
-    val authUrl =
-      "https://admin.qa.tax.service.gov.uk/internal-auth-frontend/sign-in?continue_url=%2Feeitt-admin-frontend"
-    val response: Response = page.navigate(authUrl)
+    // Inline HTML needs no network access, so it only verifies that the browser itself works.
+    page.setContent("<html><body><h1>Playwright works</h1></body></html>")
 
     val screenshot = page.screenshot(
       new Page.ScreenshotOptions().setFullPage(true)
     )
-    response.finished()
     playwright.close()
     Ok(screenshot).as("image/png")
   }
