@@ -18,8 +18,10 @@ package uk.gov.hmrc.eeittadminfrontend.controllers
 
 import com.microsoft.playwright._
 import org.slf4j.{ Logger, LoggerFactory }
+import play.api.Configuration
 import play.api.i18n.I18nSupport
 import play.api.mvc.MessagesControllerComponents
+import uk.gov.hmrc.eeittadminfrontend.proxy.ProxyProvider
 import uk.gov.hmrc.internalauth.client.FrontendAuthComponents
 
 import java.io.File
@@ -30,7 +32,9 @@ import javax.inject.Inject
 
 class ScreenshotController @Inject() (
   frontendAuthComponents: FrontendAuthComponents,
-  messagesControllerComponents: MessagesControllerComponents
+  messagesControllerComponents: MessagesControllerComponents,
+  proxyProvider: ProxyProvider,
+  configuration: Configuration
 ) extends GformAdminFrontendController(frontendAuthComponents, messagesControllerComponents) with I18nSupport {
 
   private val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -89,6 +93,24 @@ class ScreenshotController @Inject() (
     }
   }
 
+  // Chromium ignores the JVM proxy settings, so the platform proxy is passed to the browser explicitly.
+  private def launchOptions: BrowserType.LaunchOptions = {
+    val launchOptions = new BrowserType.LaunchOptions()
+    proxyProvider.maybeProxy.foreach { proxy =>
+      proxy.address() match {
+        case address: java.net.InetSocketAddress =>
+          val server = s"http://${address.getHostString}:${address.getPort}"
+          val playwrightProxy = new com.microsoft.playwright.options.Proxy(server)
+          configuration.getOptional[String]("proxy.username").foreach(playwrightProxy.setUsername)
+          configuration.getOptional[String]("proxy.password").foreach(playwrightProxy.setPassword)
+          logger.info(s"Playwright browser will use proxy $server")
+          launchOptions.setProxy(playwrightProxy)
+        case _ =>
+      }
+    }
+    launchOptions
+  }
+
   def test(browserType: String) = authorizedRead { request =>
     logDiagnostics()
     val options = new Playwright.CreateOptions()
@@ -122,15 +144,20 @@ class ScreenshotController @Inject() (
           throw e
       }
     val browser: Browser = browserType match {
-      case "chrome"  => playwright.chromium().launch()
-      case "firefox" => playwright.firefox().launch()
-      case "webkit"  => playwright.webkit().launch()
+      case "chrome"  => playwright.chromium().launch(launchOptions)
+      case "firefox" => playwright.firefox().launch(launchOptions)
+      case "webkit"  => playwright.webkit().launch(launchOptions)
       case _         => throw new RuntimeException(s"$browserType no such browser")
     }
     val context: BrowserContext = browser.newContext()
     val page: Page = context.newPage()
-    // Inline HTML needs no network access, so it only verifies that the browser itself works.
-    page.setContent("<html><body><h1>Playwright works</h1></body></html>")
+    request.getQueryString("url") match {
+      case Some(url) =>
+        logger.info(s"Playwright navigating to $url")
+        page.navigate(url)
+      // Inline HTML needs no network access, so it only verifies that the browser itself works.
+      case None => page.setContent("<html><body><h1>Playwright works</h1></body></html>")
+    }
 
     val screenshot = page.screenshot(
       new Page.ScreenshotOptions().setFullPage(true)
