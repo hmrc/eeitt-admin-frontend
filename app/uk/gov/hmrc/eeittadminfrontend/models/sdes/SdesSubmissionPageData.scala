@@ -200,7 +200,7 @@ object SdesDestination {
   case object NRSOrchestrator extends SdesDestination
 
   val values: List[SdesDestination] =
-    List(Dms, Caseflow, Pega, HmrcIlluminate, DataStore, DataStoreLegacy, InfoArchive, DataLakehouse)
+    List(Dms, Caseflow, Pega, HmrcIlluminate, DataStore, DataStoreScr, DataStoreLegacy, InfoArchive, DataLakehouse)
   val workItemValues: List[SdesDestination] =
     List(Dms, DataStore, InfoArchive, DataLakehouse, AsyncHandlebars, NRSOrchestrator)
 
@@ -258,7 +258,7 @@ object SdesDestination {
     case "HmrcIlluminate"  => HmrcIlluminate
     case "DataStoreLegacy" => DataStoreLegacy
     case "DataStore"       => DataStore
-    case "DataStoreSCR"    => DataStoreScr
+    case "DataStoreScr"    => DataStoreScr
     case "InfoArchive"     => InfoArchive
     case "Caseflow"        => Caseflow
     case "Pega"            => Pega
